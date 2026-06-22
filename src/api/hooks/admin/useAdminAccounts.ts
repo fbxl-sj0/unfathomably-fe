@@ -1,0 +1,40 @@
+import { Entities } from '@/entity-store/entities.ts';
+import { useEntities } from '@/entity-store/hooks/index.ts';
+import { useApi } from '@/hooks/useApi.ts';
+import { adminAccountSchema } from '@/schemas/admin-account.ts';
+
+import type { Account } from '@/schemas/account.ts';
+
+interface MastodonAdminFilters {
+  local?: boolean;
+  remote?: boolean;
+  active?: boolean;
+  pending?: boolean;
+  disabled?: boolean;
+  silenced?: boolean;
+  suspended?: boolean;
+  sensitized?: boolean;
+}
+
+/** https://docs.joinmastodon.org/methods/admin/accounts/#v1 */
+export function useAdminAccounts(filters: MastodonAdminFilters, limit?: number) {
+  const api = useApi();
+
+  const searchParams = new URLSearchParams();
+
+  for (const [name, value] of Object.entries(filters)) {
+    searchParams.append(name, value.toString());
+  }
+
+  if (typeof limit === 'number') {
+    searchParams.append('limit', limit.toString());
+  }
+
+  const { entities, ...rest } = useEntities<Account>(
+    [Entities.ACCOUNTS, searchParams.toString()],
+    () => api.get('/api/v1/admin/accounts', { searchParams }),
+    { schema: adminAccountSchema.transform(({ account }) => account) },
+  );
+
+  return { accounts: entities, ...rest };
+}

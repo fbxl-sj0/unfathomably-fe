@@ -1,0 +1,282 @@
+import clsx from 'clsx';
+import { debounce } from 'es-toolkit';
+import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
+import { createSelector } from 'reselect';
+
+import {
+  expandNotifications,
+  scrollTopNotifications,
+  dequeueNotifications,
+} from '@/actions/notifications.ts';
+import { getSettings } from '@/actions/settings.ts';
+import PullToRefresh from '@/components/pull-to-refresh.tsx';
+import ScrollTopButton from '@/components/scroll-top-button.tsx';
+import ScrollableList from '@/components/scrollable-list.tsx';
+import { Column } from '@/components/ui/column.tsx';
+import Portal from '@/components/ui/portal.tsx';
+import PlaceholderNotification from '@/features/placeholder/components/placeholder-notification.tsx';
+import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
+import { useAppSelector } from '@/hooks/useAppSelector.ts';
+import { useFeatures } from '@/hooks/useFeatures.ts';
+import { useSettings } from '@/hooks/useSettings.ts';
+
+import FilterBar from './components/filter-bar.tsx';
+import Notification from './components/notification.tsx';
+
+import type { RootState } from '@/store.ts';
+import type { Notification as NotificationEntity } from '@/types/entities.ts';
+import type { VirtuosoHandle } from 'react-virtuoso';
+
+const messages = defineMessages({
+  title: { id: 'column.notifications', defaultMessage: 'Notifications' },
+  queue: { id: 'notifications.queue_label', defaultMessage: 'Click to see {count} new {count, plural, one {notification} other {notifications}}' },
+  groupedOn: { id: 'notifications.grouped.on', defaultMessage: 'Grouped' },
+  groupedOff: { id: 'notifications.grouped.off', defaultMessage: 'Ungrouped' },
+});
+
+const GROUPABLE_NOTIFICATION_TYPES = ['favourite', 'reblog', 'follow'];
+
+const getNotificationValue = (notification: NotificationEntity, key: string) => {
+  const item = notification as any;
+  return typeof item.get === 'function' ? item.get(key) : item[key];
+};
+
+const getNotificationGroupKey = (notification: NotificationEntity) => {
+  const type = getNotificationValue(notification, 'type');
+
+  if (!GROUPABLE_NOTIFICATION_TYPES.includes(type)) {
+    return getNotificationValue(notification, 'id');
+  }
+
+  const status = getNotificationValue(notification, 'status');
+  const account = getNotificationValue(notification, 'account');
+
+  return `${type}:${status || account || getNotificationValue(notification, 'id')}`;
+};
+
+const groupNotifications = (notifications: ImmutableList<NotificationEntity>) => {
+  const groups = new Map<string, NotificationEntity[]>();
+
+  notifications.forEach((notification) => {
+    if (!notification) return;
+
+    const key = getNotificationGroupKey(notification);
+    const items = groups.get(key) || [];
+    items.push(notification);
+    groups.set(key, items);
+  });
+
+  return [...groups.entries()].map(([key, items]) => ({
+    key,
+    items,
+    representative: items[0]!,
+  }));
+};
+
+const getNotifications = createSelector([
+  state => getSettings(state).getIn(['notifications', 'quickFilter', 'show']),
+  state => getSettings(state).getIn(['notifications', 'quickFilter', 'active']),
+  state => ImmutableList((getSettings(state).getIn(['notifications', 'shows']) as ImmutableMap<string, boolean>).filter(item => !item).keys()),
+  (state: RootState) => state.notifications.items.toList(),
+], (showFilterBar, allowedType, excludedTypes, notifications: ImmutableList<NotificationEntity>) => {
+  if (!showFilterBar || allowedType === 'all') {
+    // used if user changed the notification settings after loading the notifications from the server
+    // otherwise a list of notifications will come pre-filtered from the backend
+    // we need to turn it off for FilterBar in order not to block ourselves from seeing a specific category
+    return notifications.filterNot(item => item !== null && excludedTypes.includes(item.get('type')));
+  }
+  return notifications.filter(item => item !== null && allowedType === item.get('type'));
+});
+
+const Notifications = () => {
+  const dispatch = useAppDispatch();
+  const intl = useIntl();
+  const settings = useSettings();
+  const features = useFeatures();
+
+  const showFilterBar = settings.notifications.quickFilter.show;
+  const activeFilter = settings.notifications.quickFilter.active;
+  const [grouped, setGrouped] = useState(features.groupedNotifications);
+  const notifications = useAppSelector(state => getNotifications(state));
+  const isLoading = useAppSelector(state => state.notifications.isLoading);
+  // const isUnread = useAppSelector(state => state.notifications.unread > 0);
+  const hasMore = useAppSelector(state => state.notifications.hasMore);
+  const totalQueuedNotificationsCount = useAppSelector(state => state.notifications.totalQueuedNotificationsCount || 0);
+
+  const node = useRef<VirtuosoHandle>(null);
+  const column = useRef<HTMLDivElement>(null);
+  const scrollableContentRef = useRef<ImmutableList<JSX.Element> | null>(null);
+  const groupedNotifications = useMemo(() => groupNotifications(notifications), [notifications]);
+
+  // const handleLoadGap = (maxId) => {
+  //   dispatch(expandNotifications({ maxId }));
+  // };
+
+  const handleLoadOlder = useCallback(debounce(() => {
+    const last = notifications.last();
+    dispatch(expandNotifications({ maxId: last && last.get('id') }));
+  }, 300, { edges: ['leading'] }), [notifications]);
+
+  const handleScrollToTop = useCallback(debounce(() => {
+    dispatch(scrollTopNotifications(true));
+  }, 100), []);
+
+  const handleScroll = useCallback(debounce(() => {
+    dispatch(scrollTopNotifications(false));
+  }, 100), []);
+
+  const handleMoveUp = (id: string) => {
+    const elementIndex = notifications.findIndex(item => item !== null && item.get('id') === id) - 1;
+    _selectChild(elementIndex);
+  };
+
+  const handleMoveDown = (id: string) => {
+    const elementIndex = notifications.findIndex(item => item !== null && item.get('id') === id) + 1;
+    _selectChild(elementIndex);
+  };
+
+  const _selectChild = (index: number) => {
+    node.current?.scrollIntoView({
+      index,
+      behavior: 'smooth',
+      done: () => {
+        const container = column.current;
+        const element = container?.querySelector(`[data-index="${index}"] .focusable`);
+
+        if (element) {
+          (element as HTMLDivElement).focus();
+        }
+      },
+    });
+  };
+
+  const handleDequeueNotifications = useCallback(() => {
+    dispatch(dequeueNotifications());
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    return dispatch(expandNotifications());
+  }, []);
+
+  useEffect(() => {
+    handleDequeueNotifications();
+    dispatch(scrollTopNotifications(true));
+
+    return () => {
+      handleLoadOlder.cancel();
+      handleScrollToTop.cancel();
+      handleScroll.cancel();
+      dispatch(scrollTopNotifications(false));
+    };
+  }, []);
+
+  const emptyMessage = activeFilter === 'all'
+    ? <FormattedMessage id='empty_column.notifications' defaultMessage="You don't have any notifications yet. Interact with others to start the conversation." />
+    : <FormattedMessage id='empty_column.notifications_filtered' defaultMessage="You don't have any notifications of this type yet." />;
+
+  let scrollableContent: ImmutableList<JSX.Element> | null = null;
+
+  const filterBarContainer = showFilterBar
+    ? (<FilterBar />)
+    : null;
+
+  if (isLoading && scrollableContentRef.current) {
+    scrollableContent = scrollableContentRef.current;
+  } else if (notifications.size > 0 || hasMore) {
+    if (grouped && features.groupedNotifications) {
+      scrollableContent = ImmutableList(groupedNotifications.map((group) => (
+        <div key={group.key} className='divide-y divide-solid divide-gray-200 dark:divide-gray-800'>
+          {group.items.length > 1 && (
+            <div className='px-4 py-2 text-xs font-medium uppercase text-gray-600 dark:text-gray-400'>
+              <FormattedMessage
+                id='notifications.grouped.summary'
+                defaultMessage='{count} similar notifications'
+                values={{ count: group.items.length }}
+              />
+            </div>
+          )}
+
+          <Notification
+            notification={group.representative}
+            onMoveUp={handleMoveUp}
+            onMoveDown={handleMoveDown}
+          />
+        </div>
+      )));
+    } else {
+      scrollableContent = notifications.map((item) => (
+        <Notification
+          key={item.id}
+          notification={item}
+          onMoveUp={handleMoveUp}
+          onMoveDown={handleMoveDown}
+        />
+      ));
+    }
+  } else {
+    scrollableContent = null;
+  }
+
+  scrollableContentRef.current = scrollableContent;
+
+  const scrollContainer = (
+    <ScrollableList
+      ref={node}
+      scrollKey='notifications'
+      isLoading={isLoading}
+      showLoading={isLoading && notifications.size === 0}
+      hasMore={hasMore}
+      emptyMessage={emptyMessage}
+      placeholderComponent={PlaceholderNotification}
+      placeholderCount={20}
+      onLoadMore={handleLoadOlder}
+      onScrollToTop={handleScrollToTop}
+      onScroll={handleScroll}
+      listClassName={clsx({
+        'divide-y divide-gray-200 black:divide-gray-800 dark:divide-primary-800 divide-solid': notifications.size > 0,
+        'space-y-2': notifications.size === 0,
+      })}
+    >
+      {scrollableContent as ImmutableList<JSX.Element>}
+    </ScrollableList>
+  );
+
+  return (
+    <Column
+      ref={column}
+      label={intl.formatMessage(messages.title)}
+      withHeader={false}
+      className='!p-0'
+    >
+      {filterBarContainer}
+
+      {features.groupedNotifications && (
+        <div className='border-b border-solid border-gray-200 px-4 py-2 text-right dark:border-gray-800'>
+          <button
+            type='button'
+            className='rounded-full border border-solid border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
+            onClick={() => setGrouped(value => !value)}
+          >
+            {intl.formatMessage(grouped ? messages.groupedOn : messages.groupedOff)}
+          </button>
+        </div>
+      )}
+
+      <Portal>
+        <ScrollTopButton
+          onClick={handleDequeueNotifications}
+          count={totalQueuedNotificationsCount}
+          message={messages.queue}
+        />
+      </Portal>
+
+      <PullToRefresh onRefresh={handleRefresh}>
+        {scrollContainer}
+      </PullToRefresh>
+    </Column>
+  );
+};
+
+export default Notifications;

@@ -1,0 +1,28 @@
+{
+  "css.validate": false,
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "files.associations": {
+    "*.conf.template": "properties"
+  },
+  "files.eol": "\n",
+  "files.insertFinalNewline": false,
+  "json.schemas": [
+    {
+      "fileMatch": [".lintstagedrc.json"],
+      "url": "https://json.schemastore.org/lintstagedrc.schema.json"
+    },
+    {
+      "fileMatch": ["renovate.json"],
+      "url": "https://docs.renovatebot.com/renovate-schema.json"
+    }
+  ],
+  "scss.validate": false,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "path-intellisense.extensionOnImport": true,
+  "javascript.preferences.importModuleSpecifierEnding": "js",
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.preferences.importModuleSpecifierEnding": "js",
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "deno.enable": false
+}

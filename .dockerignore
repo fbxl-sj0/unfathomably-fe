@@ -1,0 +1,35 @@
+.git
+
+/node_modules/
+/tmp/
+/build/
+/coverage/
+/.coverage/
+/.eslintcache
+/.env
+/deploy.sh
+/.vs/
+yarn-error.log*
+/junit.xml
+
+/dist/
+/static/
+/public/
+/dist/
+/unfathomably-fe.zip
+
+.idea
+.DS_Store
+
+# Custom build files
+/custom/**/*
+!/custom/*
+/custom/*.*
+!/custom/.gitkeep
+!/custom/**/.gitkeep
+
+# surge.sh
+/CNAME
+/AUTH
+/CORS
+/ROUTER

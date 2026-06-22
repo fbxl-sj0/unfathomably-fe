@@ -1,0 +1,88 @@
+import xIcon from '@tabler/icons/outline/x.svg';
+import { useEffect } from 'react';
+import { FormattedMessage } from 'react-intl';
+import { useHistory } from 'react-router-dom';
+
+import { expandRemoteTimeline } from '@/actions/timelines.ts';
+import { useRemoteStream } from '@/api/hooks/index.ts';
+import IconButton from '@/components/icon-button.tsx';
+import { Column } from '@/components/ui/column.tsx';
+import HStack from '@/components/ui/hstack.tsx';
+import Text from '@/components/ui/text.tsx';
+import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
+import { useAppSelector } from '@/hooks/useAppSelector.ts';
+import { useSettings } from '@/hooks/useSettings.ts';
+
+import Timeline from '../ui/components/timeline.tsx';
+
+import PinnedHostsPicker from './components/pinned-hosts-picker.tsx';
+
+interface IRemoteTimeline {
+  params?: {
+    instance?: string;
+  };
+}
+
+/** View statuses from a remote instance. */
+const RemoteTimeline: React.FC<IRemoteTimeline> = ({ params }) => {
+  const history = useHistory();
+  const dispatch = useAppDispatch();
+
+  const instance = params?.instance as string;
+  const settings = useSettings();
+
+  const timelineId = 'remote';
+  const onlyMedia = settings.remote.other.onlyMedia;
+  const next = useAppSelector(state => state.timelines.get('remote')?.next);
+
+  const pinned = settings.remote_timeline.pinnedHosts.includes(instance);
+
+  const handleCloseClick: React.MouseEventHandler = () => {
+    history.push('/timeline/fediverse');
+  };
+
+  const handleLoadMore = (maxId: string) => {
+    dispatch(expandRemoteTimeline(instance, { url: next, maxId, onlyMedia }));
+  };
+
+  useRemoteStream({ instance, onlyMedia });
+
+  useEffect(() => {
+    dispatch(expandRemoteTimeline(instance, { onlyMedia, maxId: undefined }));
+  }, [onlyMedia]);
+
+  return (
+    <Column label={instance} slim>
+      {instance && <PinnedHostsPicker host={instance} />}
+
+      {!pinned && (
+        <HStack className='mb-4 px-2' space={2}>
+          <IconButton iconClassName='h-5 w-5' src={xIcon} onClick={handleCloseClick} />
+          <Text>
+            <FormattedMessage
+              id='remote_timeline.filter_message'
+              defaultMessage='You are viewing the timeline of {instance}.'
+              values={{ instance }}
+            />
+          </Text>
+        </HStack>
+      )}
+
+      <Timeline
+        className='black:p-4 black:sm:p-5'
+        scrollKey={`${timelineId}_${instance}_timeline`}
+        timelineId={`${timelineId}${onlyMedia ? ':media' : ''}:${instance}`}
+        onLoadMore={handleLoadMore}
+        emptyMessage={
+          <FormattedMessage
+            id='empty_column.remote'
+            defaultMessage='There is nothing here! Manually follow users from {instance} to fill it up.'
+            values={{ instance }}
+          />
+        }
+      />
+    </Column>
+  );
+};
+
+export default RemoteTimeline;

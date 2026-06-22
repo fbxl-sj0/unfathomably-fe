@@ -1,0 +1,53 @@
+image: node:26
+
+default:
+  interruptible: true
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  timeout: 2 minutes
+  before_script:
+    - yarn install --ignore-scripts
+    - apt-get update -y && apt-get install -y zip
+  script:
+    - NODE_ENV=production yarn ci
+    - cp dist/index.html dist/404.html
+    - cd dist && zip -r ../unfathomably-fe.zip . && cd ..
+  artifacts:
+    paths:
+     - unfathomably-fe.zip
+
+review:
+  stage: deploy
+  timeout: 5 minutes
+  environment:
+    name: review/$CI_COMMIT_REF_NAME
+    url: https://unfathomably-fe-$CI_COMMIT_REF_SLUG.surge.sh
+  before_script:
+    - apt-get update -y && apt-get install -y unzip
+  script:
+    - unzip unfathomably-fe.zip -d dist
+    - npx -y surge dist unfathomably-fe-$CI_COMMIT_REF_SLUG.surge.sh
+  allow_failure: true
+  when: manual
+
+pages:
+  stage: deploy
+  timeout: 30 seconds
+  before_script:
+    - apt-get update -y && apt-get install -y unzip
+  script:
+    # artifacts are kept between jobs
+    - unzip unfathomably-fe.zip -d public
+  variables:
+    NODE_ENV: production
+  artifacts:
+    paths:
+    - public
+  only:
+    variables:
+      - $CI_DEFAULT_BRANCH == $CI_COMMIT_REF_NAME

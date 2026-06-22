@@ -1,0 +1,143 @@
+import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
+
+import { fetchGroupRelationshipsSuccess } from '@/actions/groups.ts';
+import { openModal } from '@/actions/modals.ts';
+import { useCancelMembershipRequest, useJoinGroup, useLeaveGroup, usePendingGroups } from '@/api/hooks/index.ts';
+import Button from '@/components/ui/button.tsx';
+import { importEntities } from '@/entity-store/actions.ts';
+import { Entities } from '@/entity-store/entities.ts';
+import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
+import { GroupRoles } from '@/schemas/group-member.ts';
+import toast from '@/toast.tsx';
+
+import type { Group, GroupRelationship } from '@/types/entities.ts';
+
+interface IGroupActionButton {
+  group: Group;
+}
+
+const messages = defineMessages({
+  confirmationConfirm: { id: 'confirmations.leave_group.confirm', defaultMessage: 'Leave' },
+  confirmationHeading: { id: 'confirmations.leave_group.heading', defaultMessage: 'Leave group' },
+  confirmationMessage: { id: 'confirmations.leave_group.message', defaultMessage: 'You are about to leave the group. Do you want to continue?' },
+  joinRequestSuccess: { id: 'group.join.request_success', defaultMessage: 'Request sent to group owner' },
+  joinSuccess: { id: 'group.join.success', defaultMessage: 'Group joined successfully!' },
+  leaveSuccess: { id: 'group.leave.success', defaultMessage: 'Left the group' },
+});
+
+const GroupActionButton = ({ group }: IGroupActionButton) => {
+  const dispatch = useAppDispatch();
+  const intl = useIntl();
+
+  const joinGroup = useJoinGroup(group);
+  const leaveGroup = useLeaveGroup(group);
+  const cancelRequest = useCancelMembershipRequest(group);
+  const { invalidate: invalidatePendingGroups } = usePendingGroups();
+
+  const isRequested = group.relationship?.requested;
+  const isNonMember = !group.relationship?.member && !isRequested;
+  const isOwner = group.relationship?.role === GroupRoles.OWNER;
+  const isAdmin = group.relationship?.role === GroupRoles.ADMIN;
+  const isModerator = group.relationship?.role === GroupRoles.MODERATOR;
+  const isBlocked = group.relationship?.blocked_by;
+
+  const onJoinGroup = () => joinGroup.mutate({}, {
+    onSuccess(entity) {
+      joinGroup.invalidate();
+      invalidatePendingGroups();
+      dispatch(fetchGroupRelationshipsSuccess([entity]));
+
+      const requestSent = entity.requested && !entity.member;
+
+      toast.success(
+        group.locked || requestSent
+          ? intl.formatMessage(messages.joinRequestSuccess)
+          : intl.formatMessage(messages.joinSuccess),
+      );
+    },
+    async onError(error) {
+      const message = (await error.response.json() as any).error;
+      if (message) {
+        toast.error(message);
+      }
+    },
+  });
+
+  const onLeaveGroup = () =>
+    dispatch(openModal('CONFIRM', {
+      heading: intl.formatMessage(messages.confirmationHeading),
+      message: intl.formatMessage(messages.confirmationMessage),
+      confirm: intl.formatMessage(messages.confirmationConfirm),
+      onConfirm: () => leaveGroup.mutate(group.relationship?.id as string, {
+        onSuccess(entity) {
+          leaveGroup.invalidate();
+          dispatch(fetchGroupRelationshipsSuccess([entity]));
+          toast.success(intl.formatMessage(messages.leaveSuccess));
+        },
+      }),
+    }));
+
+  const onCancelRequest = () => cancelRequest.mutate({}, {
+    onSuccess() {
+      const entity = {
+        ...group.relationship as GroupRelationship,
+        requested: false,
+      };
+      dispatch(importEntities([entity], Entities.GROUP_RELATIONSHIPS));
+      invalidatePendingGroups();
+    },
+  });
+
+  if (isBlocked) {
+    return null;
+  }
+
+  if (isOwner || isAdmin || isModerator) {
+    return (
+      <Button
+        theme='secondary'
+        to={`/group/${group.slug}/manage`}
+      >
+        <FormattedMessage id='group.manage' defaultMessage='Manage Group' />
+      </Button>
+    );
+  }
+
+  if (isNonMember) {
+    return (
+      <Button
+        theme='primary'
+        onClick={onJoinGroup}
+        disabled={joinGroup.isSubmitting}
+      >
+        {group.locked
+          ? <FormattedMessage id='group.join.private' defaultMessage='Request Access' />
+          : <FormattedMessage id='group.join.public' defaultMessage='Join Group' />}
+      </Button>
+    );
+  }
+
+  if (isRequested) {
+    return (
+      <Button
+        theme='secondary'
+        onClick={onCancelRequest}
+        disabled={cancelRequest.isSubmitting}
+      >
+        <FormattedMessage id='group.cancel_request' defaultMessage='Cancel Request' />
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      theme='secondary'
+      onClick={onLeaveGroup}
+      disabled={leaveGroup.isSubmitting}
+    >
+      <FormattedMessage id='group.leave' defaultMessage='Leave Group' />
+    </Button>
+  );
+};
+
+export default GroupActionButton;

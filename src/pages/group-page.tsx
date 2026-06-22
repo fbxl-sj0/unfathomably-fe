@@ -1,0 +1,203 @@
+import banIcon from '@tabler/icons/outline/ban.svg';
+import eyeOffIcon from '@tabler/icons/outline/eye-off.svg';
+import trashIcon from '@tabler/icons/outline/trash.svg';
+import { useMemo } from 'react';
+import { FormattedMessage, defineMessages, useIntl } from 'react-intl';
+import { useRouteMatch } from 'react-router-dom';
+
+import { useGroup, useGroupLookup, useGroupMembershipRequests } from '@/api/hooks/index.ts';
+import { Column } from '@/components/ui/column.tsx';
+import Icon from '@/components/ui/icon.tsx';
+import Layout from '@/components/ui/layout.tsx';
+import Stack from '@/components/ui/stack.tsx';
+import Tabs from '@/components/ui/tabs.tsx';
+import Text from '@/components/ui/text.tsx';
+import GroupHeader from '@/features/group/components/group-header.tsx';
+import LinkFooter from '@/features/ui/components/link-footer.tsx';
+import {
+  CtaBanner,
+  GroupMediaPanel,
+  SignUpPanel,
+  SuggestedGroupsPanel,
+} from '@/features/ui/util/async-components.ts';
+import { useFeatures } from '@/hooks/useFeatures.ts';
+import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
+
+import type { Group } from '@/schemas/index.ts';
+
+const messages = defineMessages({
+  all: { id: 'group.tabs.all', defaultMessage: 'All' },
+  members: { id: 'group.tabs.members', defaultMessage: 'Members' },
+  media: { id: 'group.tabs.media', defaultMessage: 'Media' },
+  tags: { id: 'group.tabs.tags', defaultMessage: 'Topics' },
+});
+
+interface IGroupPage {
+  params?: {
+    groupId?: string;
+    groupSlug?: string;
+  };
+  children: React.ReactNode;
+}
+
+const DeletedBlankslate = () => (
+  <Stack space={4} className='py-10' alignItems='center'>
+    <div className='rounded-full bg-danger-200 p-3 dark:bg-danger-400/20'>
+      <Icon
+        src={trashIcon}
+        className='size-6 text-danger-600 dark:text-danger-400'
+      />
+    </div>
+
+    <Text theme='muted'>
+      <FormattedMessage
+        id='group.deleted.message'
+        defaultMessage='This group has been deleted.'
+      />
+    </Text>
+  </Stack>
+);
+
+const PrivacyBlankslate = () => (
+  <Stack space={4} className='py-10' alignItems='center'>
+    <div className='rounded-full bg-gray-200 p-3 dark:bg-gray-800'>
+      <Icon
+        src={eyeOffIcon}
+        className='size-6 text-gray-600 dark:text-gray-600'
+      />
+    </div>
+
+    <Text theme='muted'>
+      <FormattedMessage
+        id='group.private.message'
+        defaultMessage='Content is only visible to group members'
+      />
+    </Text>
+  </Stack>
+);
+
+const BlockedBlankslate = ({ group }: { group: Group }) => (
+  <Stack space={4} className='py-10' alignItems='center'>
+    <div className='rounded-full bg-danger-200 p-3 dark:bg-danger-400/20'>
+      <Icon
+        src={banIcon}
+        className='size-6 text-danger-600 dark:text-danger-400'
+      />
+    </div>
+
+    <Text theme='muted'>
+      <FormattedMessage
+        id='group.banned.message'
+        defaultMessage='You are banned from {group}'
+        values={{
+          group: (
+            <Text theme='inherit' tag='span'>
+              {group.display_name}
+            </Text>
+          ),
+        }}
+      />
+    </Text>
+  </Stack>
+);
+
+/** Page to display a group. */
+const GroupPage: React.FC<IGroupPage> = ({ params, children }) => {
+  const intl = useIntl();
+  const features = useFeatures();
+  const match = useRouteMatch<{ groupId?: string; groupSlug?: string }>();
+  const { account: me } = useOwnAccount();
+
+  const routeParams = { ...(match.params || {}), ...(params || {}) } as IGroupPage['params'];
+  const id = routeParams?.groupId || '';
+  const slug = routeParams?.groupSlug || '';
+  const { entity: lookedUpGroup } = useGroupLookup(id ? '' : slug);
+  const groupId = id || lookedUpGroup?.id || '';
+
+  const { group: fetchedGroup } = useGroup(groupId);
+  const group = fetchedGroup || lookedUpGroup;
+  const { accounts: pending } = useGroupMembershipRequests(groupId);
+
+  const isMember = !!group?.relationship?.member;
+  const isBlocked = group?.relationship?.blocked_by;
+  const isPrivate = group?.locked;
+  const isDeleted = !!group?.deleted_at;
+
+  const tabItems = useMemo(() => {
+    const items = [];
+    items.push({
+      text: intl.formatMessage(messages.all),
+      to: `/group/${group?.slug}`,
+      name: '/group/:groupSlug',
+    });
+
+    if (features.groupsTags) {
+      items.push({
+        text: intl.formatMessage(messages.tags),
+        to: `/group/${group?.slug}/tags`,
+        name: '/group/:groupSlug/tags',
+      });
+    }
+
+    items.push(
+      {
+        text: intl.formatMessage(messages.media),
+        to: `/group/${group?.slug}/media`,
+        name: '/group/:groupSlug/media',
+      },
+      {
+        text: intl.formatMessage(messages.members),
+        to: `/group/${group?.slug}/members`,
+        name: '/group/:groupSlug/members',
+        count: pending.length,
+      },
+    );
+
+    return items;
+  }, [features.groupsTags, pending.length, group?.slug]);
+
+  const renderChildren = () => {
+    if (isDeleted) {
+      return <DeletedBlankslate />;
+    } else if (!isMember && isPrivate) {
+      return <PrivacyBlankslate />;
+    } else if (isBlocked) {
+      return <BlockedBlankslate group={group} />;
+    } else {
+      return children;
+    }
+  };
+
+  return (
+    <>
+      <Layout.Main>
+        <Column size='lg' label={group ? group.display_name : ''} withHeader={false}>
+          <GroupHeader group={group} />
+
+          <Tabs
+            key={`group-tabs-${groupId || slug}`}
+            items={tabItems}
+            activeItem={match.path}
+          />
+
+          {renderChildren()}
+        </Column>
+
+        {!me && (
+          <CtaBanner />
+        )}
+      </Layout.Main>
+
+      <Layout.Aside>
+        {!me && (
+          <SignUpPanel />
+        )}
+        <GroupMediaPanel group={group} />
+        <SuggestedGroupsPanel />
+        <LinkFooter />
+      </Layout.Aside>
+    </>
+  );
+};
+
+export default GroupPage;

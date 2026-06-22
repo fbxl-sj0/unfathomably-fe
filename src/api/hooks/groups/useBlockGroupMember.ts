@@ -1,0 +1,15 @@
+import { Entities } from '@/entity-store/entities.ts';
+import { useEntityActions } from '@/entity-store/hooks/index.ts';
+
+import type { Account, Group, GroupMember } from '@/schemas/index.ts';
+
+function useBlockGroupMember(group: Group, account: Account) {
+  const { createEntity } = useEntityActions<GroupMember>(
+    [Entities.GROUP_MEMBERSHIPS, account.id],
+    { post: `/api/v1/groups/${group?.id}/blocks` },
+  );
+
+  return createEntity;
+}
+
+export { useBlockGroupMember };

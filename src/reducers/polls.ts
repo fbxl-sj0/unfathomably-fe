@@ -1,0 +1,39 @@
+import { Map as ImmutableMap } from 'immutable';
+
+import { POLLS_IMPORT } from '@/actions/importer/index.ts';
+import { normalizeStatus } from '@/normalizers/status.ts';
+
+import type { Poll, APIEntity, EmbeddedEntity } from '@/types/entities.ts';
+import type { AnyAction } from 'redux';
+
+type State = ImmutableMap<string, Poll>;
+
+// HOTFIX: Convert the poll into a fake status to normalize it...
+// TODO: get rid of POLLS_IMPORT and use STATUS_IMPORT here.
+const normalizePoll = (poll: any): EmbeddedEntity<Poll> => {
+  const status = { poll };
+  return normalizeStatus(status).poll;
+};
+
+const importPolls = (state: State, polls: Array<APIEntity>) => {
+  return state.withMutations(map => {
+    return polls.forEach(poll => {
+      const normalPoll = normalizePoll(poll);
+
+      if (normalPoll && typeof normalPoll === 'object') {
+        map.set(normalPoll.id, normalPoll);
+      }
+    });
+  });
+};
+
+const initialState: State = ImmutableMap();
+
+export default function polls(state: State = initialState, action: AnyAction): State {
+  switch (action.type) {
+    case POLLS_IMPORT:
+      return importPolls(state, action.polls);
+    default:
+      return state;
+  }
+}

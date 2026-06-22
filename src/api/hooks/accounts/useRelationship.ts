@@ -1,0 +1,31 @@
+import { z } from 'zod';
+
+import { Entities } from '@/entity-store/entities.ts';
+import { useEntity } from '@/entity-store/hooks/index.ts';
+import { useApi } from '@/hooks/useApi.ts';
+import { useAppSelector } from '@/hooks/useAppSelector.ts';
+import { type Relationship, relationshipSchema } from '@/schemas/index.ts';
+import { getAccessToken } from '@/utils/auth.ts';
+
+interface UseRelationshipOpts {
+  enabled?: boolean;
+}
+
+function useRelationship(accountId: string | undefined, opts: UseRelationshipOpts = {}) {
+  const api = useApi();
+  const accessToken = useAppSelector(getAccessToken);
+  const { enabled = false } = opts;
+
+  const { entity: relationship, ...result } = useEntity<Relationship>(
+    [Entities.RELATIONSHIPS, accountId!],
+    () => api.get(`/api/v1/accounts/relationships?id[]=${accountId}`),
+    {
+      enabled: enabled && !!accountId && !!accessToken,
+      schema: z.array(relationshipSchema).nonempty().transform(arr => arr[0]),
+    },
+  );
+
+  return { relationship, ...result };
+}
+
+export { useRelationship };

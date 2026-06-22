@@ -1,0 +1,31 @@
+import { FormattedMessage } from 'react-intl';
+import { Link } from 'react-router-dom';
+
+import Text from '@/components/ui/text.tsx';
+import { Group } from '@/types/entities.ts';
+import { shortNumberFormat } from '@/utils/numbers.tsx';
+
+interface IGroupMemberCount {
+  group: Group;
+}
+
+const GroupMemberCount = ({ group }: IGroupMemberCount) => {
+  return (
+    <Link to={`/group/${group.slug}/members`} className='hover:underline'>
+      <Text theme='inherit' tag='span' size='sm' weight='medium' data-testid='group-member-count'>
+        {shortNumberFormat(group.members_count)}
+        {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
+        {' '}
+        <FormattedMessage
+          id='groups.discover.search.results.member_count'
+          defaultMessage='{members, plural, one {member} other {members}}'
+          values={{
+            members: group.members_count,
+          }}
+        />
+      </Text>
+    </Link>
+  );
+};
+
+export default GroupMemberCount;

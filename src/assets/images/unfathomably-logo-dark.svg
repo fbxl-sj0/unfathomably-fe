@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="Unfathomably FE">
+  <path d="M84 50A34 34 0 1 0 50 84" fill="none" stroke="#ff3046" stroke-linecap="round" stroke-width="9"/>
+  <path d="M74 50A24 24 0 1 0 50 74" fill="none" stroke="#1fe86a" stroke-linecap="round" stroke-width="9"/>
+  <path d="M64 50A14 14 0 1 0 50 64" fill="none" stroke="#2aa2ff" stroke-linecap="round" stroke-width="9"/>
+  <path d="M55 57A7 7 0 0 1 50 64" fill="none" stroke="#9a5cff" stroke-linecap="round" stroke-width="9"/>
+</svg>

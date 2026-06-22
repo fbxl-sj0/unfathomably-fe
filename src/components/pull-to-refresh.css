@@ -1,0 +1,6 @@
+@reference "../styles/tailwind.css";
+
+.ptr,
+.ptr__children {
+  @apply !overflow-visible;
+}

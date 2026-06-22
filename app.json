@@ -1,0 +1,7 @@
+{
+  "name": "Unfathomably FE",
+  "description": "A modern Fediverse frontend for Unfathomably and compatible backends.",
+  "keywords": ["fediverse"],
+  "website": "https://github.com/fbxl/unfathomably-fe",
+  "stack": "container"
+}
