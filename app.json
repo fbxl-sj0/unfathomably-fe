@@ -2,6 +2,6 @@
   "name": "Unfathomably FE",
   "description": "A modern Fediverse frontend for Unfathomably and compatible backends.",
   "keywords": ["fediverse"],
-  "website": "https://github.com/fbxl/unfathomably-fe",
+  "website": "https://github.com/fbxl-sj0/unfathomably-fe",
   "stack": "container"
 }

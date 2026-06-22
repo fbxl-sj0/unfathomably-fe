@@ -4,10 +4,10 @@
   "version": "3.2.0",
   "type": "module",
   "description": "Unfathomably frontend for the Fediverse.",
-  "homepage": "https://github.com/fbxl/unfathomably-fe",
+  "homepage": "https://github.com/fbxl-sj0/unfathomably-fe",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fbxl/unfathomably-fe"
+    "url": "https://github.com/fbxl-sj0/unfathomably-fe"
   },
   "keywords": [
     "unfathomably",
@@ -15,7 +15,7 @@
     "pleroma"
   ],
   "bugs": {
-    "url": "https://github.com/fbxl/unfathomably-fe/issues"
+    "url": "https://github.com/fbxl-sj0/unfathomably-fe/issues"
   },
   "scripts": {
     "start": "vite serve",

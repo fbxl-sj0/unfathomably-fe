@@ -411,7 +411,7 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 ### Added
 - Initial beta release.
 
-[Unreleased]: https://github.com/fbxl/unfathomably-fe/compare/v3.2.0...HEAD
-[Unreleased patch]: https://github.com/fbxl/unfathomably-fe/compare/v3.2.0...HEAD
-[1.0.0]: https://github.com/fbxl/unfathomably-fe/releases/tag/v1.0.0
-[0.9.0]: https://github.com/fbxl/unfathomably-fe/releases/tag/v0.9.0
+[Unreleased]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.0...HEAD
+[Unreleased patch]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.0...HEAD
+[1.0.0]: https://github.com/fbxl-sj0/unfathomably-fe/releases/tag/v1.0.0
+[0.9.0]: https://github.com/fbxl-sj0/unfathomably-fe/releases/tag/v0.9.0
