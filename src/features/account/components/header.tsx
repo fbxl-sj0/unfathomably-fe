@@ -591,7 +591,7 @@ const Header: React.FC<IHeader> = ({ account }) => {
       header = (
         <StillImage
           src={account.header}
-          alt={intl.formatMessage(messages.header)}
+          alt={account.header_description || intl.formatMessage(messages.header)}
         />
       );
 
@@ -706,6 +706,7 @@ const Header: React.FC<IHeader> = ({ account }) => {
             <a href={account.avatar} onClick={handleAvatarClick} target='_blank'>
               <Avatar
                 src={account.avatar}
+                alt={account.avatar_description || 'Avatar'}
                 size={96}
                 className='relative size-24 rounded-full bg-white ring-4 ring-white dark:bg-primary-900 dark:ring-primary-900'
               />

@@ -30,6 +30,7 @@ const roleSchema = z.object({
 const baseAccountSchema = z.object({
   acct: z.string().catch(''),
   avatar: z.string().catch(avatarMissing),
+  avatar_description: z.string().catch(''),
   avatar_static: z.string().url().optional().catch(undefined),
   bot: z.boolean().catch(false),
   created_at: z.string().datetime().catch(new Date().toUTCString()),
@@ -52,6 +53,7 @@ const baseAccountSchema = z.object({
   following_count: z.number().catch(0),
   fqn: z.string().optional().catch(undefined),
   header: z.string().url().catch(headerMissing),
+  header_description: z.string().catch(''),
   header_static: z.string().url().optional().catch(undefined),
   id: z.string(),
   last_status_at: z.string().datetime().optional().catch(undefined),

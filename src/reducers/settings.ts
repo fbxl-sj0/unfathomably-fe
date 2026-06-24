@@ -4,7 +4,7 @@ import { AnyAction } from 'redux';
 import { ME_FETCH_SUCCESS } from '@/actions/me.ts';
 
 import { EMOJI_CHOOSE } from '../actions/emojis.ts';
-import { NOTIFICATIONS_FILTER_SET } from '../actions/notifications.ts';
+import { NOTIFICATIONS_FILTER_SET, NOTIFICATIONS_GROUPED_SET } from '../actions/notifications.ts';
 import { SEARCH_FILTER_SET } from '../actions/search.ts';
 import {
   SETTING_CHANGE,
@@ -35,6 +35,7 @@ export default function settings(state: State = ImmutableMap<string, any>({ save
     case ME_FETCH_SUCCESS:
       return importSettings(state, action.me);
     case NOTIFICATIONS_FILTER_SET:
+    case NOTIFICATIONS_GROUPED_SET:
     case SEARCH_FILTER_SET:
     case SETTING_CHANGE:
       return state

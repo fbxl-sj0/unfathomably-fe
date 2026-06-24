@@ -3,10 +3,11 @@ import '@formatjs/intl-pluralrules/polyfill.js';
 import { defineMessages } from 'react-intl';
 
 import api from '@/api/index.ts';
+import { getGroupedNotifications } from '@/api/rebased/interop.ts';
 import { getFilters, regexFromFilters } from '@/selectors/index.ts';
 import { isLoggedIn } from '@/utils/auth.ts';
 import { compareId } from '@/utils/comparators.ts';
-import { getFeatures, parseVersion, PLEROMA, UNFATHOMABLY_BE } from '@/utils/features.ts';
+import { getFeatures, isPleromaApiFamily, parseVersion } from '@/utils/features.ts';
 import { htmlToPlaintext } from '@/utils/html.ts';
 import { EXCLUDE_TYPES, NOTIFICATION_TYPES } from '@/utils/notification.ts';
 
@@ -34,6 +35,7 @@ const NOTIFICATIONS_EXPAND_SUCCESS = 'NOTIFICATIONS_EXPAND_SUCCESS';
 const NOTIFICATIONS_EXPAND_FAIL    = 'NOTIFICATIONS_EXPAND_FAIL';
 
 const NOTIFICATIONS_FILTER_SET = 'NOTIFICATIONS_FILTER_SET';
+const NOTIFICATIONS_GROUPED_SET = 'NOTIFICATIONS_GROUPED_SET';
 
 const NOTIFICATIONS_CLEAR      = 'NOTIFICATIONS_CLEAR';
 const NOTIFICATIONS_SCROLL_TOP = 'NOTIFICATIONS_SCROLL_TOP';
@@ -52,17 +54,53 @@ const PLEROMA_UNSUPPORTED_INCLUDE_TYPES = [
   'ditto:zap',
 ] as const;
 
+const GROUPED_NOTIFICATION_TYPES = ['favourite', 'follow', 'reblog'] as const;
+
+interface GroupedNotificationsPayload {
+  accounts?: APIEntity[];
+  statuses?: APIEntity[];
+  notification_groups?: APIEntity[];
+}
+
 defineMessages({
   mention: { id: 'notification.mention', defaultMessage: '{name} mentioned you' },
   group: { id: 'notifications.group', defaultMessage: '{count, plural, one {# notification} other {# notifications}}' },
 });
 
 const fetchRelatedRelationships = (dispatch: AppDispatch, notifications: APIEntity[]) => {
-  const accountIds = notifications.filter(item => item.type === 'follow').map(item => item.account.id);
+  const accountIds = notifications
+    .filter(item => item.type === 'follow' && item.account?.id)
+    .map(item => item.account.id);
 
   if (accountIds.length > 0) {
     dispatch(fetchRelationships(accountIds));
   }
+};
+
+const normalizeGroupedNotificationsPayload = (payload: GroupedNotificationsPayload): APIEntity[] => {
+  const accounts = Array.isArray(payload.accounts) ? payload.accounts : [];
+  const statuses = Array.isArray(payload.statuses) ? payload.statuses : [];
+  const notificationGroups = Array.isArray(payload.notification_groups) ? payload.notification_groups : [];
+
+  const accountsById = new Map(accounts.map(account => [String(account.id), account]));
+  const statusesById = new Map(statuses.map(status => [String(status.id), status]));
+
+  return notificationGroups.map((group) => {
+    const sampleAccountIds = Array.isArray(group.sample_account_ids) ? group.sample_account_ids : [];
+    const account = sampleAccountIds.map(id => accountsById.get(String(id))).find(Boolean);
+    const status = group.status_id ? statusesById.get(String(group.status_id)) : undefined;
+    const id = group.most_recent_notification_id || group.page_max_id || group.group_key;
+
+    return {
+      id: String(id),
+      group_key: group.group_key,
+      type: group.type,
+      created_at: group.latest_page_notification_at,
+      account,
+      status,
+      total_count: group.notifications_count,
+    };
+  }).filter(notification => notification.id && notification.type);
 };
 
 const updateNotifications = (notification: APIEntity) =>
@@ -179,7 +217,7 @@ const dequeueNotifications = () =>
 const getSupportedNotificationTypes = (state: RootState) => {
   const v = parseVersion(state.instance.version);
 
-  if ([PLEROMA, UNFATHOMABLY_BE].includes(v.software!)) {
+  if (isPleromaApiFamily(v)) {
     return NOTIFICATION_TYPES.filter(type => !PLEROMA_UNSUPPORTED_INCLUDE_TYPES.includes(type as any));
   }
 
@@ -192,13 +230,18 @@ const excludeTypesFromFilter = (filter: string, notificationTypes: readonly stri
 
 const noOp = () => new Promise(f => f(undefined));
 
-const expandNotifications = ({ maxId }: Record<string, any> = {}, done: () => any = noOp) =>
+const expandNotifications = ({ maxId, grouped }: Record<string, any> = {}, done: () => any = noOp) =>
   (dispatch: AppDispatch, getState: () => RootState) => {
     if (!isLoggedIn(getState)) return dispatch(noOp);
 
     const state = getState();
     const features = getFeatures(state.instance);
     const activeFilter = getSettings(state).getIn(['notifications', 'quickFilter', 'active']) as string;
+    const groupedNotifications = features.groupedNotifications && (
+      typeof grouped === 'boolean'
+        ? grouped
+        : getSettings(state).getIn(['notifications', 'grouped'], true) !== false
+    );
     const notifications = state.notifications;
     const notificationTypes = getSupportedNotificationTypes(state);
     const supportedFilter = notificationTypes.includes(activeFilter as any);
@@ -231,11 +274,23 @@ const expandNotifications = ({ maxId }: Record<string, any> = {}, done: () => an
       params.since_id = notifications.getIn(['items', 0, 'id']);
     }
 
+    if (groupedNotifications) {
+      params.grouped_types = GROUPED_NOTIFICATION_TYPES;
+    }
+
     dispatch(expandNotificationsRequest(isLoadingMore));
 
-    return api(getState).get('/api/v1/notifications', { searchParams: params }).then(async (response) => {
+    const client = api(getState);
+    const request = groupedNotifications
+      ? getGroupedNotifications(client, params)
+      : client.get('/api/v1/notifications', { searchParams: params });
+
+    return request.then(async (response) => {
       const next = response.next();
-      const data = await response.json();
+      const responseData = await response.json();
+      const data = groupedNotifications
+        ? normalizeGroupedNotificationsPayload(responseData as GroupedNotificationsPayload)
+        : responseData as APIEntity[];
 
       const entries = (data as APIEntity[]).reduce((acc, item) => {
         if (item.account?.id) {
@@ -318,6 +373,17 @@ const setFilter = (filterType: string) =>
     dispatch(saveSettings());
   };
 
+const setGroupedNotifications = (grouped: boolean) =>
+  (dispatch: AppDispatch) => {
+    dispatch({
+      type: NOTIFICATIONS_GROUPED_SET,
+      path: ['notifications', 'grouped'],
+      value: grouped,
+    });
+    dispatch(expandNotifications({ grouped }));
+    dispatch(saveSettings());
+  };
+
 // Of course Markers don't work properly in Pleroma.
 // https://git.pleroma.social/pleroma/pleroma/-/issues/2769
 const markReadPleroma = (max_id: string | number) =>
@@ -343,7 +409,7 @@ const markReadNotifications = () =>
 
       dispatch(saveMarker(marker));
 
-      if (v.software === PLEROMA) {
+      if (isPleromaApiFamily(v)) {
         dispatch(markReadPleroma(topNotificationId));
       }
     }
@@ -358,6 +424,7 @@ export {
   NOTIFICATIONS_EXPAND_SUCCESS,
   NOTIFICATIONS_EXPAND_FAIL,
   NOTIFICATIONS_FILTER_SET,
+  NOTIFICATIONS_GROUPED_SET,
   NOTIFICATIONS_CLEAR,
   NOTIFICATIONS_SCROLL_TOP,
   NOTIFICATIONS_MARK_READ_REQUEST,
@@ -374,6 +441,8 @@ export {
   clearNotifications,
   scrollTopNotifications,
   setFilter,
+  setGroupedNotifications,
   markReadPleroma,
   markReadNotifications,
+  normalizeGroupedNotificationsPayload,
 };

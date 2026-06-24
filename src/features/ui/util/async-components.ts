@@ -139,6 +139,8 @@ export const EventParticipantsModal = lazy(() => import('@/features/ui/component
 export const Events = lazy(() => import('@/features/events/index.tsx'));
 export const Groups = lazy(() => import('@/features/groups/index.tsx'));
 export const Sources = lazy(() => import('@/features/sources/index.tsx'));
+export const SourcesFeed = lazy(() => import('@/features/sources/feed.tsx'));
+export const GroupsFeed = lazy(() => import('@/features/groups/feed.tsx'));
 export const GroupsDiscover = lazy(() => import('@/features/groups/discover.tsx'));
 export const GroupsPopular = lazy(() => import('@/features/groups/popular.tsx'));
 export const GroupsSuggested = lazy(() => import('@/features/groups/suggested.tsx'));

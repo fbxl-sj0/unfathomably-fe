@@ -103,6 +103,7 @@ const buildSearchIndex = (status: TransformableStatus): string => {
 
 type Translation = {
   content: string;
+  detected_source_language?: string;
   provider: string;
 }
 

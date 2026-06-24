@@ -246,6 +246,12 @@ const expandListTimeline = (id: string, { url, maxId }: Record<string, any> = {}
 const expandGroupTimeline = (id: string, { maxId }: Record<string, any> = {}, done = noOp) =>
   expandTimeline(`group:${id}`, `/api/v1/timelines/group/${id}`, { max_id: maxId }, done);
 
+const expandGroupsTimeline = ({ url, maxId }: Record<string, any> = {}, done = noOp) =>
+  expandTimeline('groups:feed', url || '/api/v1/timelines/groups', url ? {} : { max_id: maxId }, done);
+
+const expandSourcesTimeline = ({ url, maxId }: Record<string, any> = {}, done = noOp) =>
+  expandTimeline('sources:feed', url || '/api/v1/timelines/sources', url ? {} : { max_id: maxId }, done);
+
 const expandGroupFeaturedTimeline = (id: string) =>
   expandTimeline(`group:${id}:pinned`, `/api/v1/timelines/group/${id}`, { pinned: true });
 
@@ -351,6 +357,8 @@ export {
   expandAccountMediaTimeline,
   expandListTimeline,
   expandGroupTimeline,
+  expandGroupsTimeline,
+  expandSourcesTimeline,
   expandGroupFeaturedTimeline,
   expandGroupTimelineFromTag,
   expandGroupMediaTimeline,

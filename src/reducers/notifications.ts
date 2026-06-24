@@ -25,6 +25,7 @@ import {
   NOTIFICATIONS_EXPAND_REQUEST,
   NOTIFICATIONS_EXPAND_FAIL,
   NOTIFICATIONS_FILTER_SET,
+  NOTIFICATIONS_GROUPED_SET,
   NOTIFICATIONS_CLEAR,
   NOTIFICATIONS_SCROLL_TOP,
   NOTIFICATIONS_UPDATE_QUEUE,
@@ -210,6 +211,7 @@ export default function notifications(state: State = ReducerRecord(), action: An
     case NOTIFICATIONS_EXPAND_FAIL:
       return state.set('isLoading', false);
     case NOTIFICATIONS_FILTER_SET:
+    case NOTIFICATIONS_GROUPED_SET:
       return state.set('items', ImmutableOrderedMap()).set('hasMore', true);
     case NOTIFICATIONS_SCROLL_TOP:
       return updateTop(state, action.top);

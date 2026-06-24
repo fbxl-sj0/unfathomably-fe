@@ -7,6 +7,7 @@ import type { Item } from '@/components/ui/tabs.tsx';
 
 export enum TabItems {
   MY_GROUPS = 'MY_GROUPS',
+  GROUP_FEED = 'GROUP_FEED',
   FIND_GROUPS = 'FIND_GROUPS'
 }
 
@@ -22,6 +23,11 @@ const TabBar = ({ activeTab }: ITabBar) => {
       text: 'My Groups',
       action: () => history.push('/groups'),
       name: TabItems.MY_GROUPS,
+    },
+    {
+      text: 'Group Feed',
+      action: () => history.push('/groups/feed'),
+      name: TabItems.GROUP_FEED,
     },
     {
       text: 'Find Groups',

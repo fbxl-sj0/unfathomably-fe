@@ -25,7 +25,7 @@ const SiteLogo: React.FC<ISiteLogo> = ({ className, theme, ...rest }) => {
 
   // Use the right logo if provided, then use fallbacks.
   const getSrc = () => {
-    // Demo mode should ignore instance branding and show the built-in project logo.
+    // Demo mode should ignore instance branding and show the built-in site logo.
     if (demo) return defaultLogo;
 
     return (darkMode && logoDarkMode)

@@ -15,12 +15,25 @@ interface StreamingRequest {
   websocketUrl: string;
 }
 
+interface StreamSubscription {
+  close(): void;
+}
+
+interface StreamConnectionNotifier {
+  connect(): void;
+  disconnect(): void;
+}
+
 interface ParsedStreamDescriptor {
   params: URLSearchParams;
   stream: string;
 }
 
 const STREAMING_PATH = '/api/v1/streaming';
+const STREAM_HIDDEN_RECONNECT_AFTER = 30 * 1000;
+const STREAM_ONLINE_RECONNECT_DELAY = 500;
+const STREAM_VISIBLE_RECONNECT_DELAY = 1000;
+const STREAM_RECONNECT_JITTER = 750;
 
 const EVENT_SOURCE_EVENTS = [
   'announcement',
@@ -47,63 +60,192 @@ export function connectStream(
 ) {
   return (dispatch: AppDispatch, getState: () => RootState) => {
     const streamingAPIBaseURL = normalizeStreamingAPIBaseURL(getState().instance.configuration.urls.streaming);
+
+    if (!streamingAPIBaseURL) {
+      return () => {};
+    }
+
     const accessToken = getAccessToken(getState());
     const { onConnect, onDisconnect, onReceive } = callbacks(dispatch, getState);
+    const connection = createStreamConnectionNotifier(onConnect, onDisconnect);
 
-    let subscription: { close(): void } | undefined;
+    let hiddenAt: number | undefined;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+    let streamEpoch = 0;
+    let subscription: StreamSubscription | undefined;
+    let closed = false;
 
-    // If the WebSocket fails to be created, don't crash the whole page,
-    // and fall back to EventSource when the browser supports it. Some
-    // reverse proxies are friendlier to long-lived HTTP responses than
-    // WebSocket upgrades, and the backend exposes the same Mastodon
-    // streaming events over both transports.
-    try {
-      subscription = getStream(streamingAPIBaseURL!, accessToken, path, {
-        connected() {
-          onConnect();
-        },
+    const isCurrentStream = (epoch: number) => !closed && epoch === streamEpoch;
 
-        disconnected() {
-          onDisconnect();
-        },
+    const clearScheduledReconnect = () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = undefined;
+      }
+    };
 
-        received(data) {
-          onReceive(data);
-        },
+    const createSubscription = (epoch: number): StreamSubscription | undefined => {
+      // If the WebSocket fails to be created, don't crash the whole page,
+      // and fall back to EventSource when the browser supports it. Some
+      // reverse proxies are friendlier to long-lived HTTP responses than
+      // WebSocket upgrades, and the backend exposes the same Mastodon
+      // streaming events over both transports.
+      try {
+        return getStream(streamingAPIBaseURL, accessToken, path, {
+          connected() {
+            if (isCurrentStream(epoch)) connection.connect();
+          },
 
-        reconnected() {
-          onConnect();
-        },
+          disconnected() {
+            if (isCurrentStream(epoch)) connection.disconnect();
+          },
 
-      });
-    } catch (e) {
-      console.error(e);
+          received(data) {
+            if (isCurrentStream(epoch)) onReceive(data);
+          },
 
-      if (typeof EventSource !== 'undefined') {
+          reconnected() {
+            if (isCurrentStream(epoch)) connection.connect();
+          },
+
+        });
+      } catch (e) {
+        console.error(e);
+
+        if (typeof EventSource === 'undefined') {
+          return undefined;
+        }
+
         try {
-          subscription = getEventSourceStream(streamingAPIBaseURL!, accessToken, path, {
+          return getEventSourceStream(streamingAPIBaseURL, accessToken, path, {
             connected() {
-              onConnect();
+              if (isCurrentStream(epoch)) connection.connect();
             },
 
             disconnected() {
-              onDisconnect();
+              if (isCurrentStream(epoch)) connection.disconnect();
             },
 
             received(data) {
-              onReceive(data);
+              if (isCurrentStream(epoch)) onReceive(data);
             },
           });
         } catch (eventSourceError) {
           console.error(eventSourceError);
+          return undefined;
         }
       }
+    };
+
+    const start = () => {
+      if (browserIsOffline()) return;
+
+      const epoch = ++streamEpoch;
+
+      subscription = createSubscription(epoch);
+
+      if (!subscription) {
+        connection.disconnect();
+      }
+    };
+
+    const stopCurrentSubscription = () => {
+      const oldSubscription = subscription;
+
+      subscription = undefined;
+      streamEpoch += 1;
+      closeSubscription(oldSubscription);
+    };
+
+    const restart = () => {
+      reconnectTimeout = undefined;
+
+      if (closed || browserIsOffline()) return;
+
+      stopCurrentSubscription();
+      start();
+    };
+
+    const scheduleRestart = (delay: number) => {
+      if (closed || browserIsOffline()) return;
+
+      clearScheduledReconnect();
+      reconnectTimeout = setTimeout(restart, reconnectDelayWithJitter(delay));
+    };
+
+    const handleOnline = () => {
+      scheduleRestart(STREAM_ONLINE_RECONNECT_DELAY);
+    };
+
+    const handleOffline = () => {
+      clearScheduledReconnect();
+      stopCurrentSubscription();
+      connection.disconnect();
+    };
+
+    const handleVisibilityChange = () => {
+      if (typeof document === 'undefined') return;
+
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now();
+        return;
+      }
+
+      if (document.visibilityState === 'visible') {
+        if (shouldReconnectAfterVisibilityChange(hiddenAt, Date.now())) {
+          scheduleRestart(STREAM_VISIBLE_RECONNECT_DELAY);
+        }
+
+        hiddenAt = undefined;
+      }
+    };
+
+    const handlePageHide = () => {
+      hiddenAt = Date.now();
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (shouldReconnectAfterPageShow(hiddenAt, Date.now(), event.persisted)) {
+        scheduleRestart(STREAM_VISIBLE_RECONNECT_DELAY);
+      }
+
+      hiddenAt = undefined;
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      window.addEventListener('pagehide', handlePageHide);
+      window.addEventListener('pageshow', handlePageShow);
     }
 
-    const disconnect = () => {
-      if (subscription) {
-        subscription.close();
+    if (typeof document !== 'undefined') {
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now();
       }
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    start();
+
+    const disconnect = () => {
+      closed = true;
+      clearScheduledReconnect();
+
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+        window.removeEventListener('pagehide', handlePageHide);
+        window.removeEventListener('pageshow', handlePageShow);
+      }
+
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+
+      stopCurrentSubscription();
+      connection.disconnect();
     };
 
     return disconnect;
@@ -257,7 +399,8 @@ function buildMastodonPath(stream: string, params: URLSearchParams): string | nu
       params.delete('source');
 
       return `${STREAMING_PATH}/source/${encodeURIComponent(source)}`;
-    }    default:
+    }
+    default:
       return null;
   }
 }
@@ -286,6 +429,69 @@ function eventSourceUrlFromWebsocketUrl(websocketUrl: string, accessToken: strin
 
 function streamingBaseUrl(streamingAPIBaseURL: string): string {
   return streamingAPIBaseURL.replace(/\/+$/, '');
+}
+
+function browserIsOffline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+function closeSubscription(subscription: StreamSubscription | undefined) {
+  if (!subscription) return;
+
+  try {
+    subscription.close();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export function createStreamConnectionNotifier(
+  onConnect: () => void,
+  onDisconnect: () => void,
+): StreamConnectionNotifier {
+  let connected = false;
+
+  return {
+    connect() {
+      if (connected) return;
+
+      connected = true;
+      onConnect();
+    },
+
+    disconnect() {
+      if (!connected) return;
+
+      connected = false;
+      onDisconnect();
+    },
+  };
+}
+
+export function reconnectDelayWithJitter(
+  delay: number,
+  randomValue = Math.random(),
+  jitterWindow = STREAM_RECONNECT_JITTER,
+): number {
+  const normalizedDelay = Math.max(0, delay);
+  const normalizedJitterWindow = Math.max(0, jitterWindow);
+  const normalizedRandomValue = Number.isFinite(randomValue) ? Math.min(Math.max(randomValue, 0), 1) : 0;
+
+  return normalizedDelay + Math.floor(normalizedJitterWindow * normalizedRandomValue);
+}
+
+export function shouldReconnectAfterVisibilityChange(hiddenAt: number | undefined, now: number): boolean {
+  if (typeof hiddenAt !== 'number') return false;
+
+  return now - hiddenAt >= STREAM_HIDDEN_RECONNECT_AFTER;
+}
+
+export function shouldReconnectAfterPageShow(
+  hiddenAt: number | undefined,
+  now: number,
+  persisted: boolean,
+): boolean {
+  return persisted || shouldReconnectAfterVisibilityChange(hiddenAt, now);
 }
 
 export function normalizeStreamingAPIBaseURL(streamingAPIBaseURL: string | undefined): string | undefined {

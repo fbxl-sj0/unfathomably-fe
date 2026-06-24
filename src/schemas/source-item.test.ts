@@ -54,6 +54,7 @@ test('sourceItemsEnvelopeSchema with a Funkwhale audio item', () => {
   expect(envelope.items[0].type).toEqual('Audio');
   expect(envelope.items[0].media_type).toEqual('audio/ogg');
   expect(envelope.items[0].platform_family).toEqual('audio');
+  expect(envelope.items[0].comments_count).toBeNull();
   expect(envelope.items[0].source_kind).toEqual('funkwhale_library');
   expect(envelope.items[0].capabilities).toEqual(['follow library', 'preview tracks', 'owner inbox']);
   expect(envelope.items[0].render_hint?.primary_action).toEqual('play');

@@ -127,6 +127,8 @@ import {
   GroupGallery,
   Groups,
   Sources,
+  SourcesFeed,
+  GroupsFeed,
   GroupsDiscover,
   GroupsPopular,
   GroupsSuggested,
@@ -328,6 +330,8 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
 
         {features.groups && <WrappedRoute path='/groups' exact page={GroupsPage} component={Groups} content={children} />}
         <WrappedRoute path='/sources' exact page={DefaultPage} component={Sources} content={children} />
+        <WrappedRoute path='/sources/feed' exact page={DefaultPage} component={SourcesFeed} content={children} />
+        {features.groups && <WrappedRoute path='/groups/feed' exact page={GroupsPage} component={GroupsFeed} content={children} />}
         {features.groupsDiscovery && <WrappedRoute path='/groups/discover' exact page={GroupsPage} component={GroupsDiscover} content={children} />}
         {features.groupsRecommendations && <WrappedRoute path='/groups/popular' exact page={GroupsPendingPage} component={GroupsPopular} content={children} />}
         {features.groupsRecommendations && <WrappedRoute path='/groups/suggested' exact page={GroupsPendingPage} component={GroupsSuggested} content={children} />}

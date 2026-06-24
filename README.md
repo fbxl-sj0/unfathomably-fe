@@ -6,6 +6,21 @@
 
 This fork is being maintained for the Unfathomably/Rebased family of deployments, including FBXL Social, while preserving compatibility with Pleroma, Akkoma, Mastodon-style, and Rebased-style backends where the API surface allows it.
 
+## What Makes It Different
+
+Soapbox was built around a Mastodon-compatible social UI with strong instance branding. Unfathomably FE keeps that inheritance, but the fork is aimed at a wider Fediverse shape.
+
+The largest difference is that the UI treats remote things that are not ordinary user profiles as first-class browsing targets:
+
+- **Groups** collect group-like actors such as Lemmy communities, PieFed communities, Mbin magazines, Lotide groups, and PeerTube channels where the backend can expose them.
+- **Sources** collect source-like actors such as publishing, media, music, image, and other feed-style accounts that do not fit neatly into a normal profile timeline.
+- Group and source previews are designed to show remote posts as actionable status items when the backend has enough information to support replies, comments, likes, shares, and navigation.
+- The frontend has dedicated federation tests for native group/source item cards, source item schemas, source previews, and websocket stream behavior.
+- Composer draft persistence is kept for crash recovery, but sent posts clear the saved draft and users can discard stale drafts.
+- The public brand can be Unfathomably FE, but ordinary sites should be able to use their own configured logo, theme, accent colors, and footer links.
+
+Compared with a plain Pleroma or Rebased frontend deployment, Unfathomably FE expects more of the backend: group/source APIs, richer status metadata, translation capability discovery, websocket streams, and compatibility hints. When those capabilities are absent, the UI should degrade instead of pretending unsupported actions are available.
+
 ## Compatibility Notes
 
 Unfathomably FE is the frontend: it owns the browser UI, themes, configuration screens, client-side routes, service worker, and static assets.
@@ -13,6 +28,14 @@ Unfathomably FE is the frontend: it owns the browser UI, themes, configuration s
 The backend owns accounts, timelines, posts, media, federation, moderation APIs, OAuth, ActivityPub endpoints, and server-side policy. Different backends expose different features, so the frontend detects capabilities and only shows supported controls.
 
 Some internal paths and identifiers still use `soapbox` names for compatibility. Examples include `soapbox.json`, `/soapbox/config`, and `useSoapboxConfig`. These names are implementation details, not public branding.
+
+## Relationship To Soapbox, Rebased, And Pleroma
+
+Unfathomably FE is closest to Soapbox in code structure and user-interface ancestry. It is intended to pair especially well with unfathomably-be, which descends from Rebased and Pleroma.
+
+That means some names remain intentionally historical. Keeping stable config paths and API expectations matters more than renaming every internal symbol. Public-facing names, repository links, default metadata, and operator documentation should refer to Unfathomably FE.
+
+The project is not trying to replace every Fediverse client. It is trying to be a practical web frontend for servers that want Mastodon-style usability plus better day-to-day interaction with group, source, and Threadiverse-style software.
 
 ## Development
 

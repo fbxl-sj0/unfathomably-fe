@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { debounce } from 'es-toolkit';
 import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
 import { createSelector } from 'reselect';
 
@@ -9,6 +9,7 @@ import {
   expandNotifications,
   scrollTopNotifications,
   dequeueNotifications,
+  setGroupedNotifications,
 } from '@/actions/notifications.ts';
 import { getSettings } from '@/actions/settings.ts';
 import PullToRefresh from '@/components/pull-to-refresh.tsx';
@@ -36,45 +37,6 @@ const messages = defineMessages({
   groupedOff: { id: 'notifications.grouped.off', defaultMessage: 'Ungrouped' },
 });
 
-const GROUPABLE_NOTIFICATION_TYPES = ['favourite', 'reblog', 'follow'];
-
-const getNotificationValue = (notification: NotificationEntity, key: string) => {
-  const item = notification as any;
-  return typeof item.get === 'function' ? item.get(key) : item[key];
-};
-
-const getNotificationGroupKey = (notification: NotificationEntity) => {
-  const type = getNotificationValue(notification, 'type');
-
-  if (!GROUPABLE_NOTIFICATION_TYPES.includes(type)) {
-    return getNotificationValue(notification, 'id');
-  }
-
-  const status = getNotificationValue(notification, 'status');
-  const account = getNotificationValue(notification, 'account');
-
-  return `${type}:${status || account || getNotificationValue(notification, 'id')}`;
-};
-
-const groupNotifications = (notifications: ImmutableList<NotificationEntity>) => {
-  const groups = new Map<string, NotificationEntity[]>();
-
-  notifications.forEach((notification) => {
-    if (!notification) return;
-
-    const key = getNotificationGroupKey(notification);
-    const items = groups.get(key) || [];
-    items.push(notification);
-    groups.set(key, items);
-  });
-
-  return [...groups.entries()].map(([key, items]) => ({
-    key,
-    items,
-    representative: items[0]!,
-  }));
-};
-
 const getNotifications = createSelector([
   state => getSettings(state).getIn(['notifications', 'quickFilter', 'show']),
   state => getSettings(state).getIn(['notifications', 'quickFilter', 'active']),
@@ -98,7 +60,7 @@ const Notifications = () => {
 
   const showFilterBar = settings.notifications.quickFilter.show;
   const activeFilter = settings.notifications.quickFilter.active;
-  const [grouped, setGrouped] = useState(features.groupedNotifications);
+  const grouped = features.groupedNotifications && settings.notifications.grouped;
   const notifications = useAppSelector(state => getNotifications(state));
   const isLoading = useAppSelector(state => state.notifications.isLoading);
   // const isUnread = useAppSelector(state => state.notifications.unread > 0);
@@ -108,7 +70,6 @@ const Notifications = () => {
   const node = useRef<VirtuosoHandle>(null);
   const column = useRef<HTMLDivElement>(null);
   const scrollableContentRef = useRef<ImmutableList<JSX.Element> | null>(null);
-  const groupedNotifications = useMemo(() => groupNotifications(notifications), [notifications]);
 
   // const handleLoadGap = (maxId) => {
   //   dispatch(expandNotifications({ maxId }));
@@ -116,8 +77,8 @@ const Notifications = () => {
 
   const handleLoadOlder = useCallback(debounce(() => {
     const last = notifications.last();
-    dispatch(expandNotifications({ maxId: last && last.get('id') }));
-  }, 300, { edges: ['leading'] }), [notifications]);
+    dispatch(expandNotifications({ maxId: last && last.get('id'), grouped }));
+  }, 300, { edges: ['leading'] }), [notifications, grouped]);
 
   const handleScrollToTop = useCallback(debounce(() => {
     dispatch(scrollTopNotifications(true));
@@ -157,8 +118,12 @@ const Notifications = () => {
   }, []);
 
   const handleRefresh = useCallback(() => {
-    return dispatch(expandNotifications());
-  }, []);
+    return dispatch(expandNotifications({ grouped }));
+  }, [grouped]);
+
+  const handleGroupedToggle = useCallback(() => {
+    dispatch(setGroupedNotifications(!grouped));
+  }, [grouped]);
 
   useEffect(() => {
     handleDequeueNotifications();
@@ -185,36 +150,14 @@ const Notifications = () => {
   if (isLoading && scrollableContentRef.current) {
     scrollableContent = scrollableContentRef.current;
   } else if (notifications.size > 0 || hasMore) {
-    if (grouped && features.groupedNotifications) {
-      scrollableContent = ImmutableList(groupedNotifications.map((group) => (
-        <div key={group.key} className='divide-y divide-solid divide-gray-200 dark:divide-gray-800'>
-          {group.items.length > 1 && (
-            <div className='px-4 py-2 text-xs font-medium uppercase text-gray-600 dark:text-gray-400'>
-              <FormattedMessage
-                id='notifications.grouped.summary'
-                defaultMessage='{count} similar notifications'
-                values={{ count: group.items.length }}
-              />
-            </div>
-          )}
-
-          <Notification
-            notification={group.representative}
-            onMoveUp={handleMoveUp}
-            onMoveDown={handleMoveDown}
-          />
-        </div>
-      )));
-    } else {
-      scrollableContent = notifications.map((item) => (
-        <Notification
-          key={item.id}
-          notification={item}
-          onMoveUp={handleMoveUp}
-          onMoveDown={handleMoveDown}
-        />
-      ));
-    }
+    scrollableContent = notifications.map((item) => (
+      <Notification
+        key={item.id}
+        notification={item}
+        onMoveUp={handleMoveUp}
+        onMoveDown={handleMoveDown}
+      />
+    ));
   } else {
     scrollableContent = null;
   }
@@ -257,7 +200,7 @@ const Notifications = () => {
           <button
             type='button'
             className='rounded-full border border-solid border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
-            onClick={() => setGrouped(value => !value)}
+            onClick={handleGroupedToggle}
           >
             {intl.formatMessage(grouped ? messages.groupedOn : messages.groupedOff)}
           </button>

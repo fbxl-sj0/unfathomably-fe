@@ -68,6 +68,7 @@ const settingsSchema = z.object({
     }),
   }),
   notifications: coerceObject({
+    grouped: z.boolean().catch(true),
     quickFilter: coerceObject({
       active: z.string().catch('all'),
       advanced: z.boolean().catch(false),

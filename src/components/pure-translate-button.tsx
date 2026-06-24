@@ -30,9 +30,12 @@ const PureTranslateButton: React.FC<IPureTranslateButton> = ({ status }) => {
     target_languages: targetLanguages,
   } = instance.pleroma.metadata.translation;
 
-  const renderTranslate = (me || allowUnauthenticated) && (allowRemote || status.account.local) && ['public', 'unlisted'].includes(status.visibility) && status.content.length > 0 && status.language !== null && intl.locale !== status.language;
+  const sourceLanguage = status.language;
+  const targetLanguage = getTargetLanguage(intl.locale, targetLanguages);
+  const hasTranslatableSource = sourceLanguage ? targetLanguage !== sourceLanguage : !status.account.local;
+  const renderTranslate = (me || allowUnauthenticated) && (allowRemote || status.account.local) && ['public', 'unlisted'].includes(status.visibility) && status.content.length > 0 && hasTranslatableSource;
 
-  const supportsLanguages = (!sourceLanguages || sourceLanguages.includes(status.language!)) && (!targetLanguages || targetLanguages.includes(intl.locale));
+  const supportsLanguages = (!sourceLanguage || !sourceLanguages || sourceLanguages.includes(sourceLanguage)) && !!targetLanguage;
 
   const handleTranslate: React.MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
@@ -40,7 +43,7 @@ const PureTranslateButton: React.FC<IPureTranslateButton> = ({ status }) => {
     if (status.translation) {
       dispatch(undoStatusTranslation(status.id));
     } else {
-      dispatch(translateStatus(status.id, intl.locale));
+      dispatch(translateStatus(status.id, targetLanguage));
     }
   };
 
@@ -48,7 +51,8 @@ const PureTranslateButton: React.FC<IPureTranslateButton> = ({ status }) => {
 
   if (status.translation) {
     const languageNames = new Intl.DisplayNames([intl.locale], { type: 'language' });
-    const languageName = languageNames.of(status.language!);
+    const detectedSourceLanguage = status.translation.detected_source_language || sourceLanguage;
+    const languageName = getLanguageName(languageNames, detectedSourceLanguage);
     const provider     = status.translation.provider;
 
     return (
@@ -77,6 +81,26 @@ const PureTranslateButton: React.FC<IPureTranslateButton> = ({ status }) => {
     </div>
 
   );
+};
+
+const getLanguageName = (languageNames: Intl.DisplayNames, language?: string | null): string => {
+  if (!language || language === 'auto') return 'unknown language';
+
+  try {
+    return languageNames.of(language) || language;
+  } catch (_e) {
+    return language;
+  }
+};
+
+const getTargetLanguage = (locale: string, targetLanguages?: string[] | null): string | undefined => {
+  if (!targetLanguages) return locale;
+  if (targetLanguages.includes(locale)) return locale;
+
+  const baseLocale = locale.split('-')[0];
+  if (targetLanguages.includes(baseLocale)) return baseLocale;
+
+  return undefined;
 };
 
 export default PureTranslateButton;

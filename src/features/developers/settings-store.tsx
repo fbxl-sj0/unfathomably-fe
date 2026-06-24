@@ -104,7 +104,7 @@ const SettingsStore: React.FC = () => {
       <List>
         <ListItem
           label={<FormattedMessage id='preferences.fields.demo_label' defaultMessage='Demo mode' />}
-          hint={<FormattedMessage id='preferences.fields.demo_hint' defaultMessage='Use the default Unfathomably FE logo and color scheme. Useful for taking screenshots.' />}
+          hint={<FormattedMessage id='preferences.fields.demo_hint' defaultMessage='Use the built-in site logo and color scheme. Useful for taking screenshots.' />}
         >
           <SettingToggle settings={settings} settingPath={['demo']} onChange={onToggleChange} />
         </ListItem>

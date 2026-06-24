@@ -9,6 +9,7 @@ import toast from '@/toast.tsx';
 export type IAccount = {
   acct: string;
   avatar: string;
+  avatar_description: string;
   avatar_static: string;
   bot: boolean;
   created_at: string;
@@ -18,6 +19,7 @@ export type IAccount = {
   following_count: number;
   group: boolean;
   header: string;
+  header_description: string;
   header_static: string;
   id: string;
   last_status_at: string;

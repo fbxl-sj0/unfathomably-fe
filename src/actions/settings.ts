@@ -69,6 +69,8 @@ const defaultSettings = ImmutableMap({
   }),
 
   notifications: ImmutableMap({
+    grouped: true,
+
     alerts: ImmutableMap({
       follow: true,
       follow_request: false,

@@ -53,8 +53,10 @@ const messages = defineMessages({
   metaFieldContent: { id: 'edit_profile.fields.meta_fields.content_placeholder', defaultMessage: 'Content' },
   success: { id: 'edit_profile.success', defaultMessage: 'Your profile has been successfully saved!' },
   error: { id: 'edit_profile.error', defaultMessage: 'Profile update failed' },
+  avatarDescriptionPlaceholder: { id: 'edit_profile.fields.avatar_description_placeholder', defaultMessage: 'Describe your avatar.' },
   bioPlaceholder: { id: 'edit_profile.fields.bio_placeholder', defaultMessage: 'Tell us about yourself.' },
   displayNamePlaceholder: { id: 'edit_profile.fields.display_name_placeholder', defaultMessage: 'Name' },
+  headerDescriptionPlaceholder: { id: 'edit_profile.fields.header_description_placeholder', defaultMessage: 'Describe your header image.' },
   websitePlaceholder: { id: 'edit_profile.fields.website_placeholder', defaultMessage: 'Display a Link' },
   locationPlaceholder: { id: 'edit_profile.fields.location_placeholder', defaultMessage: 'Location' },
   nip05Placeholder: { id: 'edit_profile.fields.nip05_placeholder', defaultMessage: 'user@{domain}' },
@@ -96,8 +98,12 @@ interface AccountCredentials {
   note?: string;
   /** Avatar image encoded using multipart/form-data */
   avatar?: File | '';
+  /** Plain-language description for the avatar image. */
+  avatar_description?: string;
   /** Header image encoded using multipart/form-data */
   header?: File | '';
+  /** Plain-language description for the header image. */
+  header_description?: string;
   /** Whether manual approval of follow requests is required. */
   locked?: boolean;
   /** Private information (settings) about the account. */
@@ -141,6 +147,8 @@ const accountToCredentials = (account: Account): AccountCredentials => {
     discoverable: account.discoverable,
     bot: account.bot,
     display_name: account.display_name,
+    avatar_description: account.avatar_description,
+    header_description: account.header_description,
     note: account.source?.note ?? '',
     locked: account.locked,
     fields_attributes: [...account.source?.fields ?? []],
@@ -196,6 +204,8 @@ const EditProfile: React.FC = () => {
   const { account } = useOwnAccount();
   const features = useFeatures();
   const maxFields = instance.pleroma.metadata.fields_limits.max_fields;
+  const avatarDescriptionLimit = instance.configuration.accounts.max_avatar_description_length;
+  const headerDescriptionLimit = instance.configuration.accounts.max_header_description_length;
 
   const attachmentTypes = (useAppSelector(
     state => state.instance.configuration.media_attachments.supported_mime_types) as string[] | undefined)
@@ -337,6 +347,30 @@ const EditProfile: React.FC = () => {
           <HeaderPicker accept={attachmentTypes} disabled={isLoading} {...header} />
           <AvatarPicker className='!sm:left-6 !left-4 !translate-x-0' accept={attachmentTypes} disabled={isLoading} {...avatar} />
         </div>
+
+        <FormGroup
+          labelText={<FormattedMessage id='edit_profile.fields.avatar_description_label' defaultMessage='Avatar description' />}
+        >
+          <Input
+            type='text'
+            value={data.avatar_description}
+            onChange={handleTextChange('avatar_description')}
+            maxLength={Number.isFinite(avatarDescriptionLimit) ? avatarDescriptionLimit : undefined}
+            placeholder={intl.formatMessage(messages.avatarDescriptionPlaceholder)}
+          />
+        </FormGroup>
+
+        <FormGroup
+          labelText={<FormattedMessage id='edit_profile.fields.header_description_label' defaultMessage='Header description' />}
+        >
+          <Input
+            type='text'
+            value={data.header_description}
+            onChange={handleTextChange('header_description')}
+            maxLength={Number.isFinite(headerDescriptionLimit) ? headerDescriptionLimit : undefined}
+            placeholder={intl.formatMessage(messages.headerDescriptionPlaceholder)}
+          />
+        </FormGroup>
 
         <FormGroup
           labelText={<FormattedMessage id='edit_profile.fields.display_name_label' defaultMessage='Display name' />}

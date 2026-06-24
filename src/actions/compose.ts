@@ -337,7 +337,7 @@ const submitCompose = (composeId: string, opts: SubmitComposeOpts = {}) =>
 
     if (compose.privacy === 'group') {
       params.group_id = compose.group_id;
-      params.group_timeline_visible = compose.group_timeline_visible; // Truth Social
+      params.group_timeline_visible = compose.group_timeline_visible;
     }
 
     return dispatch(createStatus(params, idempotencyKey, statusId)).then(function(data) {

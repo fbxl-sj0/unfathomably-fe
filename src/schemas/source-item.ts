@@ -37,6 +37,7 @@ const sourceItemSchema = z.object({
   duration: z.string().nullable().catch(null),
   event_start: z.string().nullable().catch(null),
   location: z.string().nullable().catch(null),
+  comments_count: z.number().nullable().catch(null),
   source_kind: z.string().catch('actor_feed'),
   source_kind_label: z.string().catch('Actor feed'),
   capabilities: z.array(z.string()).catch([]),

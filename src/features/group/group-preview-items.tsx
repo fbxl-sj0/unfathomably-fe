@@ -16,15 +16,33 @@
 import React from 'react';
 import { FormattedMessage } from 'react-intl';
 
+import { importFetchedStatuses } from '@/actions/importer/index.ts';
 import { useGroupPreview } from '@/api/hooks/groups/useGroupPreview.ts';
+import StatusContainer from '@/containers/status-container.tsx';
 import NativeSourceItemCard from '@/features/federation/native-source-item-card.tsx';
+import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
+
+import type { SourceItem } from '@/schemas/source-item.ts';
+import type { APIEntity } from '@/types/entities.ts';
 
 interface IGroupPreviewItems {
   groupId: string;
 }
 
 const GroupPreviewItems: React.FC<IGroupPreviewItems> = ({ groupId }) => {
+  const dispatch = useAppDispatch();
   const { data, isError, isFetching } = useGroupPreview(groupId, { limit: 4 });
+  const statuses = React.useMemo(() => (
+    data?.items
+      .map(groupItemStatus)
+      .filter((status): status is APIEntity => Boolean(status)) || []
+  ), [data?.items]);
+
+  React.useEffect(() => {
+    if (statuses.length) {
+      dispatch(importFetchedStatuses(statuses));
+    }
+  }, [dispatch, statuses]);
 
   if (isFetching && !data?.items.length) {
     return (
@@ -59,12 +77,34 @@ const GroupPreviewItems: React.FC<IGroupPreviewItems> = ({ groupId }) => {
         )}
       </div>
 
-      {data.items.map((item) => (
-        <NativeSourceItemCard key={item.id} item={item} />
-      ))}
+      {data.items.map((item) => renderGroupItem(item))}
     </div>
   );
 };
+
+function renderGroupItem(item: SourceItem) {
+  const status = groupItemStatus(item);
+
+  if (status) {
+    return (
+      <div key={item.id} className='group-preview-items__status'>
+        <StatusContainer id={status.id} showGroup={false} />
+      </div>
+    );
+  }
+
+  return <NativeSourceItemCard key={item.id} item={item} />;
+}
+
+function groupItemStatus(item: SourceItem): APIEntity | null {
+  const status = item.status;
+
+  if (status && typeof status === 'object' && typeof status.id === 'string') {
+    return status as APIEntity;
+  }
+
+  return null;
+}
 
 export default GroupPreviewItems;
 

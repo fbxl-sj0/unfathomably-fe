@@ -113,14 +113,42 @@ function fetchReports(params: Record<string, any> = {}) {
       const response = await api(getState).get('/api/v1/admin/reports', { searchParams: params });
       const reports  = await response.json();
       reports.forEach((report: APIEntity) => {
-        dispatch(importFetchedAccount(report.account?.account));
-        dispatch(importFetchedAccount(report.target_account?.account));
+        importReportAccount(dispatch, report.account);
+        importReportAccount(dispatch, report.target_account);
+        importReportAccount(dispatch, report.assigned_account);
+        importReportAccount(dispatch, report.action_taken_by_account);
         dispatch(importFetchedStatuses(report.statuses));
       });
       dispatch({ type: ADMIN_REPORTS_FETCH_SUCCESS, reports, params });
     } catch (error) {
       dispatch({ type: ADMIN_REPORTS_FETCH_FAIL, error, params });
     }
+  };
+}
+
+function importReportAccount(dispatch: AppDispatch, adminAccount?: APIEntity | null) {
+  const account = adminAccount?.account;
+  const role = adminAccount?.role;
+
+  if (!account?.id) {
+    return;
+  }
+
+  dispatch(importFetchedAccount(applyAdminRole(account, role)));
+}
+
+function applyAdminRole(account: APIEntity, role?: string | null): APIEntity {
+  if (role !== 'admin' && role !== 'moderator') {
+    return account;
+  }
+
+  return {
+    ...account,
+    pleroma: {
+      ...account.pleroma,
+      is_admin: role === 'admin',
+      is_moderator: role === 'moderator',
+    },
   };
 }
 

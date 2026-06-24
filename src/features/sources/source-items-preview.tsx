@@ -35,6 +35,7 @@ const previewableProfiles = new Set([
   'blog_publisher',
   'collection_channel',
   'library',
+  'rss_feed',
 ]);
 
 const SourceItemsPreview: React.FC<ISourceItemsPreview> = ({ source }) => {

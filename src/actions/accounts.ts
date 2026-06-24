@@ -4,7 +4,7 @@ import { Entities } from '@/entity-store/entities.ts';
 import { relationshipSchema } from '@/schemas/relationship.ts';
 import { selectAccount } from '@/selectors/index.ts';
 import { getAccessToken, isLoggedIn } from '@/utils/auth.ts';
-import { getFeatures, parseVersion, PLEROMA } from '@/utils/features.ts';
+import { getFeatures, isPleromaApiFamily, parseVersion } from '@/utils/features.ts';
 
 import api from '../api/index.ts';
 
@@ -311,7 +311,7 @@ const muteAccount = (id: string, notifications?: boolean, duration = 0) =>
       const instance = state.instance;
       const v = parseVersion(instance.version);
 
-      if (v.software === PLEROMA) {
+      if (isPleromaApiFamily(v)) {
         params.expires_in = duration;
       } else {
         params.duration = duration;

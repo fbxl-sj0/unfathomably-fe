@@ -208,21 +208,70 @@ describe('getFeatures', () => {
         version: '2.7.2 (compatible; unfathomably-be 2.6.50+unfathomably-be.dev)',
         pleroma: {
           metadata: {
-            features: ['bookmark_folders', 'groups', 'groups_discovery', 'notifications_v2', 'sources', 'v2_suggestions'],
+            features: ['bookmark_folders', 'groups', 'groups_discovery', 'notifications_v2', 'pleroma_explicit_addressing', 'sources', 'v2_suggestions'],
           },
         },
       });
       const features = getFeatures(instance);
 
+      expect(features.accountAliases).toBe(true);
+      expect(features.accountByUsername).toBe(true);
+      expect(features.accountEndorsements).toBe(true);
+      expect(features.accountLookup).toBe(true);
+      expect(features.accountMoving).toBe(true);
+      expect(features.accountNotifies).toBe(true);
+      expect(features.accountSubscriptions).toBe(true);
+      expect(features.adminAnnouncements).toBe(true);
+      expect(features.adminFE).toBe(true);
+      expect(features.announcements).toBe(true);
+      expect(features.backups).toBe(true);
       expect(features.bookmarkFolders).toBe(true);
       expect(features.bookmarks).toBe(true);
+      expect(features.bots).toBe(true);
+      expect(features.chatsV2).toBe(true);
+      expect(features.conversations).toBe(true);
+      expect(features.customEmojiReacts).toBe(true);
+      expect(features.directTimeline).toBe(true);
+      expect(features.domainBlocks).toBe(true);
+      expect(features.editProfile).toBe(true);
+      expect(features.emojiReacts).toBe(true);
+      expect(features.explicitAddressing).toBe(true);
+      expect(features.familiarFollowers).toBe(true);
+      expect(features.filters).toBe(true);
+      expect(features.filtersExpiration).toBe(true);
+      expect(features.followRequests).toBe(true);
+      expect(features.frontendConfigurations).toBe(true);
       expect(features.groups).toBe(true);
       expect(features.groupsDiscovery).toBe(true);
       expect(features.groupsSearch).toBe(true);
       expect(features.groupedNotifications).toBe(true);
+      expect(features.hideNetwork).toBe(true);
+      expect(features.import).toBe(true);
+      expect(features.importData).toBe(true);
+      expect(features.lists).toBe(true);
+      expect(features.logInWithUsername).toBe(true);
+      expect(features.muteStrangers).toBe(true);
+      expect(features.mutesDuration).toBe(true);
+      expect(features.notes).toBe(true);
+      expect(features.notificationsIncludeTypes).toBe(true);
+      expect(features.pleromaRemoteFollow).toBe(true);
+      expect(features.polls).toBe(true);
+      expect(features.profileFields).toBe(true);
+      expect(features.publicTimeline).toBe(true);
+      expect(features.quotePosts).toBe(true);
+      expect(features.remoteInteractions).toBe(true);
+      expect(features.resetPassword).toBe(true);
+      expect(features.richText).toBe(true);
+      expect(features.rssFeeds).toBe(true);
+      expect(features.scheduledStatuses).toBe(true);
+      expect(features.searchFromAccount).toBe(true);
+      expect(features.security).toBe(true);
+      expect(features.sessions).toBe(true);
+      expect(features.settingsStore).toBe(true);
       expect(features.suggestions).toBe(false);
       expect(features.suggestionsV2).toBe(false);
       expect(features.sources).toBe(true);
+      expect(features.unrestrictedLists).toBe(true);
     });
   });
 

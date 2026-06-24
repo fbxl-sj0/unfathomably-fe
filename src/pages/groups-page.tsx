@@ -23,8 +23,9 @@ const GroupsPage: React.FC<IGroupsPage> = ({ children }) => (
     <Layout.Aside>
       <NewGroupPanel />
       <Switch>
-        <Route path='/groups' element={<SuggestedGroupsPanel />} />
         <Route path='/groups/discover' element={<MyGroupsPanel />} />
+        <Route path='/groups/feed' element={<SuggestedGroupsPanel />} />
+        <Route path='/groups' element={<SuggestedGroupsPanel />} />
       </Switch>
 
       <LinkFooter />

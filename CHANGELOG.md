@@ -9,6 +9,17 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 ## [Unreleased]
 
 ### Added
+- Unfathomably FE branding, package metadata, GitHub repository links, and release documentation.
+- Frontend installation notes that point operators to the complete source install guide in Unfathomably BE.
+- Frontend upgrade notes that point operators to the rehearsed backend-owned upgrade guide.
+- Dedicated Groups and Sources navigation for remote actors that are not ordinary profile timelines.
+- Group Feed tab showing root posts from followed groups.
+- Source Feed tab showing root posts from followed sources.
+- Native group/source preview components with schema coverage and interaction-aware rendering.
+- Grouped notification handling for Unfathomably/Rebased-compatible notification APIs, including importer and reducer coverage.
+- Translation controls that use backend capability metadata and can fall back to provider-side source-language detection.
+- Websocket stream reconnection coverage and stream behavior tests.
+- Importer regression tests for settings and account-data import paths.
 - Hashtags: let users follow hashtags (Mastodon, Akkoma).
 - Posts: Support posts filtering on recent Mastodon versions
 - Reactions: Support custom emoji reactions
@@ -21,6 +32,10 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 - Hotkeys: Added `/` as a hotkey for search field.
 
 ### Changed
+- Updated default logos to use the configured site logo rather than a fixed project mark.
+- Refined source display toward collapsed source listings with expandable previews.
+- Improved group preview item rendering so remote posts can use normal status-card interaction affordances where supported.
+- Improved source preview rendering so source posts can use normal status-card affordances where replies, likes, shares, or navigation are supported by the backend.
 - Posts: truncate Nostr pubkeys in reply mentions.
 - Posts: upgraded emoji picker component.
 - Posts: improved design of threads.
@@ -31,6 +46,16 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 - Chats: Display year for older messages creation date.
 
 ### Fixed
+- Fixed reply composer feature detection so compatible backends keep recipients out of the visible reply text.
+- Fixed frontend backend detection so Unfathomably BE inherits the expected Rebased and Pleroma API-family capabilities.
+- Improved mobile connection recovery by retrying transient browser fetch failures and reconnecting streams after mobile page restores.
+- Fixed deep frontend routes that could fail on refresh instead of falling back to the SPA entry point.
+- Fixed source preview card behavior and tests for remote source items.
+- Fixed group preview item behavior and tests for remote group posts.
+- Fixed translation button visibility and failed-translation behavior for posts where backend language metadata or provider source-language selection is incomplete.
+- Fixed stale composer drafts so sent posts clear saved text while unsent drafts can still be discarded.
+- Fixed browser-console issues around duplicate form IDs and unlabeled fields where the frontend owned the markup.
+- Fixed dashboard report navigation losing admin affordances after a forbidden response.
 - Posts: fixed emojis being cut off in reactions modal.
 - Posts: fix audio player progress bar visibility.
 - Posts: fix audio player avatar aspect ratio for non-square avatars.

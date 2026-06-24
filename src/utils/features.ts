@@ -110,6 +110,11 @@ const isRebasedFamily = (backend: Backend): boolean =>
   backend.software === UNFATHOMABLY_BE ||
   backend.build?.startsWith(UNFATHOMABLY_BE) === true;
 
+/** True when a backend exposes the Pleroma API family under any product name. */
+export const isPleromaApiFamily = (backend: Backend): boolean =>
+  backend.software === PLEROMA ||
+  isRebasedFamily(backend);
+
 /** Parse features for the given instance */
 const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
   const v = parseVersion(instance.version);
@@ -121,13 +126,13 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see GET /api/pleroma/aliases
      * @see PATCH /api/v1/accounts/update_credentials
      */
-    accountAliases: v.software === PLEROMA,
+    accountAliases: isPleromaApiFamily(v),
 
     /**
      * The accounts API allows an acct instead of an ID.
      * @see GET /api/v1/accounts/:acct_or_id
      */
-    accountByUsername: v.software === PLEROMA,
+    accountByUsername: isPleromaApiFamily(v),
 
     /**
      * Ability to create accounts.
@@ -141,7 +146,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see POST /api/v1/accounts/:id/unpin
      * @see GET /api/v1/pleroma/accounts/:id/endorsements
      */
-    accountEndorsements: v.software === PLEROMA && gte(v.version, parse('2.4.50')),
+    accountEndorsements: isPleromaApiFamily(v) && gte(v.version, parse('2.4.50')),
 
     /**
      * Ability to set one's location on their profile.
@@ -160,7 +165,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
       v.software === FIREFISH,
       v.software === ICESHRIMP,
       v.software === MASTODON && gte(v.compatVersion, parse('3.4.0')),
-      v.software === PLEROMA && gte(v.version, parse('2.4.50')),
+      isPleromaApiFamily(v) && gte(v.version, parse('2.4.50')),
       v.software === TAKAHE && gte(v.version, parse('0.6.1')),
       v.software === TRUTHSOCIAL,
       v.software === DITTO,
@@ -170,7 +175,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Move followers to a different ActivityPub account.
      * @see POST /api/pleroma/move_account
      */
-    accountMoving: v.software === PLEROMA && gte(v.version, parse('2.4.50')),
+    accountMoving: isPleromaApiFamily(v) && gte(v.version, parse('2.4.50')),
 
     /**
      * Ability to subscribe to notifications every time an account posts.
@@ -178,7 +183,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     accountNotifies: any([
       v.software === MASTODON && gte(v.compatVersion, parse('3.3.0')),
-      v.software === PLEROMA && gte(v.version, parse('2.4.50')),
+      isPleromaApiFamily(v) && gte(v.version, parse('2.4.50')),
       v.software === TRUTHSOCIAL,
     ]),
 
@@ -187,7 +192,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see POST /api/v1/pleroma/accounts/:id/subscribe
      * @see POST /api/v1/pleroma/accounts/:id/unsubscribe
      */
-    accountSubscriptions: v.software === PLEROMA && gte(v.version, parse('1.0.0')),
+    accountSubscriptions: isPleromaApiFamily(v) && gte(v.version, parse('1.0.0')),
 
     /**
      * Ability to set one's website on their profile.
@@ -204,13 +209,13 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see DELETE /api/v1/pleroma/admin/announcements/:id
      * @see {@link https://docs.pleroma.social/backend/development/API/admin_api/#get-apiv1pleromaadminannouncements}
      */
-    adminAnnouncements: v.software === PLEROMA && gte(v.version, parse('2.2.49')),
+    adminAnnouncements: isPleromaApiFamily(v) && gte(v.version, parse('2.2.49')),
 
     /**
      * An additional moderator interface is available on the domain.
      * @see /pleroma/admin
      */
-    adminFE: v.software === PLEROMA,
+    adminFE: isPleromaApiFamily(v),
 
     /**
      * Ability to manage instance rules by admins.
@@ -230,7 +235,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
     announcements: any([
       v.software === ICESHRIMP,
       v.software === MASTODON && gte(v.compatVersion, parse('3.1.0')),
-      v.software === PLEROMA && gte(v.version, parse('2.2.49')),
+      isPleromaApiFamily(v) && gte(v.version, parse('2.2.49')),
       v.software === TAKAHE && gte(v.version, parse('0.7.0')),
     ]),
 
@@ -247,7 +252,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see GET /api/v1/pleroma/backups
      * @see POST /api/v1/pleroma/backups
      */
-    backups: v.software === PLEROMA,
+    backups: isPleromaApiFamily(v),
 
     /**
      * Set your birthday and view upcoming birthdays.
@@ -291,7 +296,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
       v.software === FRIENDICA,
       isRebasedFamily(v),
       v.software === MASTODON && gte(v.compatVersion, parse('3.1.0')),
-      v.software === PLEROMA && gte(v.version, parse('0.9.9')),
+      isPleromaApiFamily(v) && gte(v.version, parse('0.9.9')),
       v.software === PIXELFED,
       v.software === TAKAHE && gte(v.version, parse('0.9.0')),
       v.software === DITTO,
@@ -303,7 +308,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     bots: any([
       v.software === MASTODON,
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
     ]),
 
     /**
@@ -374,7 +379,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     chatsV2: any([
       v.software === TRUTHSOCIAL,
-      v.software === PLEROMA && gte(v.version, parse('2.3.0')),
+      isPleromaApiFamily(v) && gte(v.version, parse('2.3.0')),
     ]),
 
     /**
@@ -391,7 +396,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
       v.software === ICESHRIMP,
       v.software === FRIENDICA,
       v.software === MASTODON && gte(v.compatVersion, parse('2.6.0')),
-      v.software === PLEROMA && gte(v.version, parse('0.9.9')),
+      isPleromaApiFamily(v) && gte(v.version, parse('0.9.9')),
       v.software === PIXELFED,
       v.software === TAKAHE,
     ]),
@@ -402,7 +407,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
     customEmojiReacts: any([
       features.includes('pleroma_custom_emoji_reactions'),
       features.includes('custom_emoji_reactions'),
-      v.software === PLEROMA && gte(v.version, parse('2.5.50')),
+      isPleromaApiFamily(v) && gte(v.version, parse('2.5.50')),
     ]),
 
     /**
@@ -412,7 +417,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
     directTimeline: any([
       v.software === FRIENDICA,
       v.software === MASTODON && lt(v.compatVersion, parse('3.0.0')),
-      v.software === PLEROMA && gte(v.version, parse('0.9.9')),
+      isPleromaApiFamily(v) && gte(v.version, parse('0.9.9')),
     ]),
 
     /**
@@ -437,7 +442,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     domainBlocks: federation.enabled && any([
       v.software === MASTODON && gte(v.compatVersion, parse('1.4.0')),
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
     ]),
 
     /**
@@ -460,7 +465,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
       v.software === MASTODON,
       v.software === MITRA,
       v.software === PIXELFED,
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
       v.software === TAKAHE && gte(v.version, parse('0.7.0')),
       v.software === TRUTHSOCIAL,
       v.software === WILDEBEEST,
@@ -504,7 +509,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see DELETE /api/v1/pleroma/statuses/:id/reactions/:emoji
      */
     emojiReacts: any([
-      v.software === PLEROMA && gte(v.version, parse('2.0.0')),
+      isPleromaApiFamily(v) && gte(v.version, parse('2.0.0')),
       features.includes('pleroma_emoji_reactions'),
     ]),
 
@@ -519,7 +524,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * The backend allows only non-RGI ("Recommended for General Interchange") emoji reactions.
      * @see PUT /api/v1/pleroma/statuses/:id/reactions/:emoji
      */
-    emojiReactsNonRGI: v.software === PLEROMA && lt(v.version, parse('2.2.49')),
+    emojiReactsNonRGI: isPleromaApiFamily(v) && lt(v.version, parse('2.2.49')),
 
     /**
      * Ability to create and perform actions on events.
@@ -542,7 +547,8 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see POST /api/v1/statuses
      */
     explicitAddressing: any([
-      v.software === PLEROMA && gte(v.version, parse('1.0.0')),
+      features.includes('pleroma_explicit_addressing'),
+      isPleromaApiFamily(v) && gte(v.version, parse('1.0.0')),
       v.software === TRUTHSOCIAL,
       v.software === DITTO,
     ]),
@@ -567,7 +573,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     familiarFollowers: any([
       v.software === MASTODON && gte(v.version, parse('3.5.0')),
-      v.software === PLEROMA && gte(v.version, parse('2.5.51')) && isRebasedFamily(v),
+      isRebasedFamily(v) && gte(v.version, parse('2.5.51')),
       v.software === TAKAHE,
       v.software === DITTO,
     ]),
@@ -581,13 +587,13 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     filters: any([
       v.software === MASTODON && lt(v.compatVersion, parse('3.6.0')),
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
     ]),
 
     /** Whether filters can automatically expires. */
     filtersExpiration: any([
       v.software === MASTODON,
-      v.software === PLEROMA && gte(v.version, parse('2.3.0')),
+      isPleromaApiFamily(v) && gte(v.version, parse('2.3.0')),
     ]),
 
     /**
@@ -619,7 +625,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     followRequests: any([
       v.software === MASTODON,
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
     ]),
 
     /**
@@ -633,7 +639,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see GET /api/pleroma/frontend_configurations
      */
     frontendConfigurations: any([
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
       v.software === DITTO,
     ]),
 
@@ -738,7 +744,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Can hide follows/followers lists and counts.
      * @see PATCH /api/v1/accounts/update_credentials
      */
-    hideNetwork: v.software === PLEROMA,
+    hideNetwork: isPleromaApiFamily(v),
 
     /**
      * Pleroma import API.
@@ -746,7 +752,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see POST /api/pleroma/blocks_import
      * @see POST /api/pleroma/mutes_import
      */
-    import: v.software === PLEROMA,
+    import: isPleromaApiFamily(v),
 
     /**
      * Pleroma import endpoints.
@@ -754,7 +760,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see POST /api/pleroma/blocks_import
      * @see POST /api/pleroma/mutes_import
      */
-    importData: v.software === PLEROMA && gte(v.version, parse('2.2.0')),
+    importData: isPleromaApiFamily(v) && gte(v.version, parse('2.2.0')),
 
     /**
      * Mastodon server information API v2.
@@ -783,14 +789,14 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
       v.software === FRIENDICA,
       v.software === ICESHRIMP,
       v.software === MASTODON && gte(v.compatVersion, parse('2.1.0')),
-      v.software === PLEROMA && gte(v.version, parse('0.9.9')),
+      isPleromaApiFamily(v) && gte(v.version, parse('0.9.9')),
     ]),
 
     /**
      * Can sign in using username instead of e-mail address.
      */
     logInWithUsername: any([
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
       v.software === TRUTHSOCIAL,
     ]),
 
@@ -831,7 +837,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Ability to hide notifications from people you don't follow.
      * @see PUT /api/pleroma/notification_settings
      */
-    muteStrangers: v.software === PLEROMA,
+    muteStrangers: isPleromaApiFamily(v),
 
     /**
      * Ability to specify how long the account mute should last.
@@ -839,7 +845,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     mutesDuration: any([
       v.software === ICESHRIMP,
-      v.software === PLEROMA && gte(v.version, parse('2.3.0')),
+      isPleromaApiFamily(v) && gte(v.version, parse('2.3.0')),
       v.software === MASTODON && gte(v.compatVersion, parse('3.3.0')),
       v.software === TAKAHE,
     ]),
@@ -872,7 +878,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     notes: any([
       v.software === MASTODON && gte(v.compatVersion, parse('3.2.0')),
-      v.software === PLEROMA && gte(v.version, parse('2.4.50')),
+      isPleromaApiFamily(v) && gte(v.version, parse('2.4.50')),
     ]),
 
     /**
@@ -883,7 +889,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
       v.software === DITTO,
       v.software === ICESHRIMP,
       v.software === MASTODON && gte(v.compatVersion, parse('3.5.0')),
-      v.software === PLEROMA && gte(v.version, parse('2.4.50')),
+      isPleromaApiFamily(v) && gte(v.version, parse('2.4.50')),
       v.software === TAKAHE && gte(v.version, parse('0.6.2')),
     ]),
 
@@ -904,7 +910,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Displays a form to follow a user when logged out.
      * @see POST /main/ostatus
      */
-    pleromaRemoteFollow: v.software === PLEROMA,
+    pleromaRemoteFollow: isPleromaApiFamily(v),
 
     /**
      * Can add polls to statuses.
@@ -914,7 +920,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
       v.software === FIREFISH,
       v.software === ICESHRIMP,
       v.software === MASTODON && gte(v.version, parse('2.8.0')),
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
       v.software === TAKAHE && gte(v.version, parse('0.8.0')),
       v.software === TRUTHSOCIAL,
     ]),
@@ -941,7 +947,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     profileFields: any([
       v.software === MASTODON,
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
       v.software === TAKAHE && gte(v.version, parse('0.7.0')),
       v.software === DITTO,
     ]),
@@ -956,7 +962,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
       v.software === FRIENDICA,
       v.software === ICESHRIMP,
       v.software === MASTODON,
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
       v.software === TAKAHE,
       v.software === WILDEBEEST,
       v.software === DITTO,
@@ -971,7 +977,8 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     quotePosts: any([
       v.software === FRIENDICA && gte(v.version, parse('2023.3.0')),
-      v.software === PLEROMA && [REBASED, UNFATHOMABLY_BE, AKKOMA].includes(v.build!) && gte(v.version, parse('2.4.50')),
+      isRebasedFamily(v) && gte(v.version, parse('2.4.50')),
+      v.software === PLEROMA && v.build === AKKOMA && gte(v.version, parse('2.4.50')),
       features.includes('quote_posting'),
       'feature_quote' in instance && instance.feature_quote === true,
     ]),
@@ -980,7 +987,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Interact with statuses from another instance while logged-out.
      * @see POST /api/v1/pleroma/remote_interaction
      */
-    remoteInteractions: v.software === PLEROMA && gte(v.version, parse('2.4.50')),
+    remoteInteractions: isPleromaApiFamily(v) && gte(v.version, parse('2.4.50')),
 
     /**
      * Ability to remove an account from your followers.
@@ -1007,7 +1014,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Can request a password reset email through the API.
      * @see POST /auth/password
      */
-    resetPassword: v.software === PLEROMA,
+    resetPassword: isPleromaApiFamily(v),
 
     /** Admin can revoke the user's identity (without deleting their account). */
     revokeName: v.software === DITTO,
@@ -1018,7 +1025,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     richText: any([
       v.software === MASTODON && v.build === GLITCH,
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
     ]),
 
     /**
@@ -1026,7 +1033,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     rssFeeds: any([
       v.software === MASTODON,
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
     ]),
 
     /**
@@ -1037,7 +1044,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
     scheduledStatuses: any([
       v.software === FRIENDICA,
       v.software === MASTODON && gte(v.version, parse('2.7.0')),
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
     ]),
 
     /**
@@ -1048,7 +1055,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
     searchFromAccount: any([
       v.software === ICESHRIMP,
       v.software === MASTODON && gte(v.version, parse('2.8.0')),
-      v.software === PLEROMA && gte(v.version, parse('1.0.0')),
+      isPleromaApiFamily(v) && gte(v.version, parse('1.0.0')),
       v.software === DITTO,
     ]),
 
@@ -1059,7 +1066,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see POST /api/pleroma/delete_account
      */
     security: any([
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
       v.software === TRUTHSOCIAL,
     ]),
 
@@ -1068,14 +1075,14 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see GET /api/oauth_tokens.json
      * @see DELETE /api/oauth_tokens/:id
      */
-    sessions: v.software === PLEROMA,
+    sessions: isPleromaApiFamily(v),
 
     /**
      * Can store client settings in the database.
      * @see PATCH /api/v1/accounts/update_credentials
      */
     settingsStore: any([
-      v.software === PLEROMA,
+      isPleromaApiFamily(v),
       v.software === TRUTHSOCIAL,
     ]),
 
@@ -1162,7 +1169,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Whether the backend allows adding users you don't follow to lists.
      * @see POST /api/v1/lists/:id/accounts
      */
-    unrestrictedLists: v.software === PLEROMA,
+    unrestrictedLists: isPleromaApiFamily(v),
   };
 };
 
@@ -1178,7 +1185,7 @@ export const getFeatures = createSelector([
 });
 
 /** Fediverse backend */
-interface Backend {
+export interface Backend {
   /** Build name, if this software is a fork */
   build?: string;
   /** Name of the software */

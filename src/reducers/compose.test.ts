@@ -163,6 +163,46 @@ describe('compose reducer', () => {
     expect(reducer(state, action as any).toJS()['compose-modal']).toMatchObject({ privacy: 'unlisted' });
   });
 
+  it('keeps reply mentions out of the text when explicit addressing is supported', () => {
+    const action = {
+      type: actions.COMPOSE_REPLY,
+      id: 'compose-modal',
+      status: ImmutableRecord({
+        id: 'status-1',
+        visibility: 'public',
+        account: ImmutableRecord({ acct: 'alice@example.org' })(),
+        mentions: ImmutableList([{ acct: 'bob@example.org' }, { acct: 'me@example.org' }]),
+      })(),
+      account: ImmutableRecord({ acct: 'me@example.org' })(),
+      explicitAddressing: true,
+    };
+
+    const result = reducer(undefined, action as any).get('compose-modal')!;
+
+    expect(result.text).toEqual('');
+    expect(result.to.toArray()).toEqual(['alice@example.org', 'bob@example.org']);
+  });
+
+  it('keeps legacy visible reply mentions when explicit addressing is not supported', () => {
+    const action = {
+      type: actions.COMPOSE_REPLY,
+      id: 'compose-modal',
+      status: ImmutableRecord({
+        id: 'status-1',
+        visibility: 'public',
+        account: ImmutableRecord({ acct: 'alice@example.org' })(),
+        mentions: ImmutableList([{ acct: 'bob@example.org' }, { acct: 'me@example.org' }]),
+      })(),
+      account: ImmutableRecord({ acct: 'me@example.org' })(),
+      explicitAddressing: false,
+    };
+
+    const result = reducer(undefined, action as any).get('compose-modal')!;
+
+    expect(result.text).toEqual('@alice@example.org @bob@example.org ');
+    expect(result.to.toArray()).toEqual([]);
+  });
+
   it('sets preferred scope on user login', () => {
     const state = initialState.set('default', ReducerCompose({ privacy: 'public' }));
     const action = {

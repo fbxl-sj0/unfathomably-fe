@@ -243,9 +243,20 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
 
   if (family === 'groups') {
     return (
-      <p className='mt-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
-        <FormattedMessage id='federation.source_item.community_hint' defaultMessage='Follow the community to bring its discussions into your timelines.' />
-      </p>
+      <div className='mt-2 space-y-1 text-sm font-medium text-gray-700 dark:text-gray-300'>
+        <p>
+          <FormattedMessage id='federation.source_item.community_hint' defaultMessage='Follow the community to bring its discussions into your timelines.' />
+        </p>
+        {typeof item.comments_count === 'number' ? (
+          <p>
+            <FormattedMessage
+              id='federation.source_item.comments_count'
+              defaultMessage='{count, plural, one {# comment} other {# comments}}'
+              values={{ count: item.comments_count }}
+            />
+          </p>
+        ) : null}
+      </div>
     );
   }
 

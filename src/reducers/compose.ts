@@ -3,7 +3,7 @@ import { Map as ImmutableMap, List as ImmutableList, OrderedSet as ImmutableOrde
 import { isNativeEmoji } from '@/features/emoji/index.ts';
 import { Account } from '@/schemas/index.ts';
 import { tagHistory } from '@/settings.ts';
-import { PLEROMA } from '@/utils/features.ts';
+import { isPleromaApiFamily } from '@/utils/features.ts';
 import { hasIntegerMediaIds } from '@/utils/status.ts';
 
 import { COMPOSE_SET_STATUS } from '../actions/compose-status.ts';
@@ -108,7 +108,7 @@ export const ReducerCompose = ImmutableRecord({
   tagHistory: ImmutableList<string>(),
   text: '',
   to: ImmutableOrderedSet<string>(),
-  group_timeline_visible: false, // TruthSocial
+  group_timeline_visible: false,
 });
 
 type State = ImmutableMap<string, Compose>;
@@ -516,7 +516,7 @@ export default function compose(state = initialState, action: ComposeAction | Ev
         map.set('quote', action.status.getIn(['quote', 'id']) as string);
         map.set('group_id', action.status.getIn(['group', 'id']) as string);
 
-        if (action.v?.software === PLEROMA && action.withRedraft && hasIntegerMediaIds(action.status.toJS() as any)) {
+        if (action.v && isPleromaApiFamily(action.v) && action.withRedraft && hasIntegerMediaIds(action.status.toJS() as any)) {
           map.set('media_attachments', ImmutableList());
         } else {
           map.set('media_attachments', action.status.media_attachments);

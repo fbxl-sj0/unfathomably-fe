@@ -8,14 +8,14 @@ import Icon from '../icon.tsx';
 
 const AVATAR_SIZE = 42;
 
-interface IAvatar extends Pick<IStillImage, 'src' | 'onError' | 'className'> {
+interface IAvatar extends Pick<IStillImage, 'src' | 'onError' | 'className' | 'alt'> {
   /** Width and height of the avatar in pixels. */
   size?: number;
 }
 
 /** Round profile avatar for accounts. */
 const Avatar = (props: IAvatar) => {
-  const { src, size = AVATAR_SIZE, className } = props;
+  const { alt = 'Avatar', src, size = AVATAR_SIZE, className } = props;
 
   const [isAvatarMissing, setIsAvatarMissing] = useState<boolean>(false);
 
@@ -48,7 +48,7 @@ const Avatar = (props: IAvatar) => {
       className={clsx('rounded-full', className)}
       style={style}
       src={src}
-      alt='Avatar'
+      alt={alt}
       onError={handleLoadFailure}
     />
   );

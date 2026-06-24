@@ -1,6 +1,7 @@
 import { importEntities } from '@/entity-store/actions.ts';
 import { Entities } from '@/entity-store/entities.ts';
 import { Group, accountSchema, groupSchema } from '@/schemas/index.ts';
+import { selectAccount } from '@/selectors/index.ts';
 import { filteredArray } from '@/schemas/utils.ts';
 
 import { getSettings } from '../settings.ts';
@@ -18,10 +19,12 @@ const POLLS_IMPORT    = 'POLLS_IMPORT';
 const ACCOUNT_FETCH_FAIL_FOR_USERNAME_LOOKUP = 'ACCOUNT_FETCH_FAIL_FOR_USERNAME_LOOKUP';
 
 const importAccount = (data: APIEntity) =>
-  (dispatch: AppDispatch, _getState: () => RootState) => {
-    dispatch({ type: ACCOUNT_IMPORT, account: data });
+  (dispatch: AppDispatch, getState: () => RootState) => {
+    const accountData = preserveKnownStaffFields(data, getState());
+
+    dispatch({ type: ACCOUNT_IMPORT, account: accountData });
     try {
-      const account = accountSchema.parse(data);
+      const account = accountSchema.parse(accountData);
       dispatch(importEntities([account], Entities.ACCOUNTS));
     } catch (e) {
       //
@@ -29,10 +32,12 @@ const importAccount = (data: APIEntity) =>
   };
 
 const importAccounts = (data: APIEntity[]) =>
-  (dispatch: AppDispatch, _getState: () => RootState) => {
-    dispatch({ type: ACCOUNTS_IMPORT, accounts: data });
+  (dispatch: AppDispatch, getState: () => RootState) => {
+    const accountsData = data.map(account => preserveKnownStaffFields(account, getState()));
+
+    dispatch({ type: ACCOUNTS_IMPORT, accounts: accountsData });
     try {
-      const accounts = filteredArray(accountSchema).parse(data);
+      const accounts = filteredArray(accountSchema).parse(accountsData);
       dispatch(importEntities(accounts, Entities.ACCOUNTS));
     } catch (e) {
       //
@@ -62,6 +67,41 @@ const importPolls = (polls: APIEntity[]) =>
 
 const importFetchedAccount = (account: APIEntity) =>
   importFetchedAccounts([account]);
+
+const preserveKnownStaffFields = (account: APIEntity, state: RootState): APIEntity => {
+  if (!account?.id || !account.pleroma || typeof account.pleroma !== 'object') {
+    return account;
+  }
+
+  const knownAccount = selectAccount(state, account.id);
+
+  if (!knownAccount?.staff) {
+    return account;
+  }
+
+  const pleroma = account.pleroma;
+  const staffFields: { is_admin?: boolean; is_moderator?: boolean } = {};
+
+  if (!Object.hasOwn(pleroma, 'is_admin')) {
+    staffFields.is_admin = knownAccount.admin;
+  }
+
+  if (!Object.hasOwn(pleroma, 'is_moderator')) {
+    staffFields.is_moderator = knownAccount.moderator;
+  }
+
+  if (!Object.keys(staffFields).length) {
+    return account;
+  }
+
+  return {
+    ...account,
+    pleroma: {
+      ...pleroma,
+      ...staffFields,
+    },
+  };
+};
 
 const importFetchedAccounts = (accounts: APIEntity[], args = { should_refetch: false }) => {
   const { should_refetch } = args;

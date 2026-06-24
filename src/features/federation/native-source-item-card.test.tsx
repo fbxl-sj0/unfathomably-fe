@@ -85,9 +85,10 @@ describe('NativeSourceItemCard', () => {
   });
 
   it('renders community copy for group families', () => {
-    renderCard(buildItem('groups'));
+    renderCard(buildItem('groups', { comments_count: 3 }));
 
     expect(screen.getByText(/bring its discussions into your timelines/i)).toBeInTheDocument();
+    expect(screen.getByText('3 comments')).toBeInTheDocument();
   });
 
   it('renders source kind and capability chips', () => {
@@ -131,6 +132,7 @@ function buildItem(family: FederationFamily, overrides: Partial<SourceItem> = {}
     duration: null,
     event_start: null,
     location: null,
+    comments_count: null,
     source_kind: 'actor_feed',
     source_kind_label: 'Actor feed',
     capabilities: ['follow', 'preview'],

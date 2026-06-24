@@ -122,7 +122,7 @@ const ComposeFormGroupToggle: React.FC<IComposeFormGroupToggle> = ({ composeId, 
     <HStack alignItems='center' space={4}>
       <label className='ml-auto cursor-pointer' htmlFor={labelId}>
         <Text theme='muted'>
-          <FormattedMessage id='compose_group.share_to_followers' defaultMessage='Share with my followers' />
+          <FormattedMessage id='compose_group.post_to_public_timelines' defaultMessage='Post to public timelines' />
         </Text>
       </label>
       <Toggle

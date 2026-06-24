@@ -28,8 +28,15 @@ const versionSchema = z.string().catch('0.0.0').transform((version) => {
 
 const configurationSchema = coerceObject({
   accounts: coerceObject({
+    max_avatar_description_length: z.number().catch(Infinity),
+    max_display_name_length: z.number().catch(Infinity),
     max_featured_tags: z.number().catch(Infinity),
+    max_header_description_length: z.number().catch(Infinity),
+    max_note_length: z.number().catch(Infinity),
     max_pinned_statuses: z.number().catch(Infinity),
+    max_profile_fields: z.number().catch(Infinity),
+    profile_field_name_limit: z.number().catch(Infinity),
+    profile_field_value_limit: z.number().catch(Infinity),
   }),
   chats: coerceObject({
     max_characters: z.number().catch(Infinity),

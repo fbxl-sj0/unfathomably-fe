@@ -21,10 +21,12 @@ import { useDebounce } from '@/hooks/useDebounce.ts';
 
 import type { Source } from '@/schemas/index.ts';
 
+import TabBar, { TabItems } from './components/tab-bar.tsx';
+
 const messages = defineMessages({
   collapseSource: { id: 'sources.actions.collapse', defaultMessage: 'Collapse source' },
   expandSource: { id: 'sources.actions.expand', defaultMessage: 'Expand source' },
-  placeholder: { id: 'sources.search.placeholder', defaultMessage: 'Search sources or paste an actor URL' },
+  placeholder: { id: 'sources.search.placeholder', defaultMessage: 'Search sources or paste an actor/feed URL' },
 });
 
 const profileLabel = (source: Source) => {
@@ -37,6 +39,8 @@ const profileLabel = (source: Source) => {
       return <FormattedMessage id='sources.profile.collection_channel' defaultMessage='Collection channel' />;
     case 'library':
       return <FormattedMessage id='sources.profile.library' defaultMessage='Library' />;
+    case 'rss_feed':
+      return <FormattedMessage id='sources.profile.rss_feed' defaultMessage='RSS feed' />;
     default:
       return <FormattedMessage id='sources.profile.activitypub_profile' defaultMessage='ActivityPub profile' />;
   }
@@ -50,6 +54,8 @@ const sourceNativeHint = (source: Source) => {
       return <FormattedMessage id='sources.native.collection_channel' defaultMessage='Channel, collection, or event updates' />;
     case 'library':
       return <FormattedMessage id='sources.native.library' defaultMessage='Library collection items' />;
+    case 'rss_feed':
+      return <FormattedMessage id='sources.native.rss_feed' defaultMessage='Read-only feed items' />;
     case 'application_source':
       return <FormattedMessage id='sources.native.application_source' defaultMessage='Application-published activity' />;
     default:
@@ -214,7 +220,7 @@ const Sources: React.FC = () => {
         <Text size='sm' theme='muted' align='center'>
           <FormattedMessage
             id='sources.empty.subtitle'
-            defaultMessage='Search for a blog, channel, profile, or ActivityPub actor URL to follow it as a source.'
+            defaultMessage='Search for a blog, channel, profile, feed URL, or ActivityPub actor URL to follow it as a source.'
           />
         </Text>
       </Stack>
@@ -223,6 +229,8 @@ const Sources: React.FC = () => {
 
   return (
     <Stack space={4}>
+      <TabBar activeTab={TabItems.MY_SOURCES} />
+
       <Stack space={1}>
         <Text size='2xl' weight='bold' tag='h1'>
           <FormattedMessage id='sources.heading' defaultMessage='Sources' />
@@ -231,7 +239,7 @@ const Sources: React.FC = () => {
         <Text theme='muted'>
           <FormattedMessage
             id='sources.subtitle'
-            defaultMessage='Follow ActivityPub blogs, channels, profiles, and collection publishers without pretending they are all the same kind of group.'
+            defaultMessage='Follow ActivityPub blogs, channels, profiles, collection publishers, and RSS feeds without pretending they are all the same kind of group.'
           />
         </Text>
       </Stack>
