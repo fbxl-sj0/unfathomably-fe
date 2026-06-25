@@ -926,6 +926,12 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
     ]),
 
     /**
+     * Can import posts from an ActivityPub account archive.
+     * @see POST /api/pleroma/post_archive_import
+     */
+    postArchiveImport: isPleromaApiFamily(v) && features.includes('post_archive_import'),
+
+    /**
      * Can set privacy scopes on statuses.
      * @see POST /api/v1/statuses
      */
@@ -1112,7 +1118,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
     suggestions: any([
       v.software === MASTODON && gte(v.compatVersion, parse('2.4.3')),
       v.software === TRUTHSOCIAL,
-      features.includes('v2_suggestions') && v.software !== UNFATHOMABLY_BE,
+      features.includes('v2_suggestions'),
     ]),
 
     suggestionsLocal: v.software === DITTO,
@@ -1126,7 +1132,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
       v.software === ICESHRIMP,
       v.software === MASTODON && gte(v.compatVersion, parse('3.4.0')),
       v.software === TRUTHSOCIAL,
-      features.includes('v2_suggestions') && v.software !== UNFATHOMABLY_BE,
+      features.includes('v2_suggestions'),
     ]),
 
     /**
@@ -1220,4 +1226,3 @@ export const parseVersion = (version: string): Backend => {
     };
   }
 };
-

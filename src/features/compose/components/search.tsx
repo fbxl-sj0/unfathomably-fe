@@ -2,7 +2,7 @@ import searchIcon from '@tabler/icons/outline/search.svg';
 import xIcon from '@tabler/icons/outline/x.svg';
 import clsx from 'clsx';
 import { debounce } from 'es-toolkit';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import { useHistory } from 'react-router-dom';
 
@@ -56,6 +56,7 @@ const Search = (props: ISearch) => {
   const dispatch = useAppDispatch();
   const history = useHistory();
   const intl = useIntl();
+  const inputId = `search-${useId()}`;
   const [inputValue, setInputValue] = useState('');
   const [lastSearchToken, setLastSearchToken] = useState('');
   const { addToken, removeToken } = useSearchTokens();
@@ -146,7 +147,7 @@ const Search = (props: ISearch) => {
   const hasValue = value.length > 0 || submitted;
   const componentProps: any = {
     type: 'text',
-    id: 'search',
+    id: inputId,
     placeholder: intl.formatMessage(messages.placeholder),
     value: inputValue,
     onChange: handleChange,
@@ -177,7 +178,7 @@ const Search = (props: ISearch) => {
 
   return (
     <div className='w-full'>
-      <label htmlFor='search' className='sr-only'>{intl.formatMessage(messages.placeholder)}</label>
+      <label htmlFor={inputId} className='sr-only'>{intl.formatMessage(messages.placeholder)}</label>
 
       <div className='relative'>
         {autosuggest ? (

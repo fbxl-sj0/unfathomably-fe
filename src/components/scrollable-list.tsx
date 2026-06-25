@@ -1,5 +1,5 @@
 import { debounce } from 'es-toolkit';
-import { useEffect, useRef, useMemo, useCallback, forwardRef } from 'react';
+import { Children, useEffect, useRef, useMemo, useCallback, forwardRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Virtuoso, Components, VirtuosoProps, VirtuosoHandle, ListRange, IndexLocationWithAlign } from 'react-virtuoso';
 
@@ -25,8 +25,8 @@ type SavedScrollPosition = {
 // NOTE: It's crucial to space lists with **padding** instead of margin!
 // Pass an `itemClassName` like `pb-3`, NOT a `space-y-3` className
 // https://virtuoso.dev/troubleshooting#list-does-not-scroll-to-the-bottom--items-jump-around
-const Item: Components<JSX.Element, Context>['Item'] = ({ context, ...rest }) => (
-  <div className={context?.itemClassName} {...rest} />
+const Item: Components<JSX.Element, Context>['Item'] = ({ context, style, ...rest }) => (
+  <div className={context?.itemClassName} style={{ minHeight: 1, ...style }} {...rest} />
 );
 
 /** Custom Virtuoso List component for the outer container. */
@@ -56,7 +56,7 @@ interface IScrollableList extends VirtuosoProps<any, any> {
   /** Should the empty message be displayed in a Card */
   emptyMessageCard?: boolean;
   /** Scrollable content. */
-  children: Iterable<React.ReactNode>;
+  children: React.ReactNode;
   /** Callback when the list is scrolled to the top. */
   onScrollToTop?: () => void;
   /** Callback when the list is scrolled. */
@@ -119,7 +119,7 @@ const ScrollableList = forwardRef<VirtuosoHandle, IScrollableList>(({
   const topOffset = useRef<number>(scrollData ? scrollData.offset : 0);
 
   /** Normalized children. */
-  const elements = Array.from(children || []);
+  const elements = Children.toArray(children);
 
   const showPlaceholder = showLoading && Placeholder && placeholderCount > 0;
 

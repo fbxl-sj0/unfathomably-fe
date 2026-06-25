@@ -21,7 +21,7 @@ const TabBar = ({ activeTab }: ITabBar) => {
   const tabItems: Item[] = useMemo(() => ([
     {
       text: 'My Groups',
-      action: () => history.push('/groups'),
+      action: () => history.push('/groups/my'),
       name: TabItems.MY_GROUPS,
     },
     {

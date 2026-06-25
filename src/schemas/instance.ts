@@ -91,6 +91,11 @@ const nostrSchema = coerceObject({
   relay: z.string().url(),
 });
 
+const postArchiveImportSchema = coerceObject({
+  max_file_size: z.number().catch(0),
+  policy: z.enum(['disabled', 'moderated', 'open']).catch('disabled'),
+});
+
 const pleromaSchema = coerceObject({
   metadata: coerceObject({
     account_activation_required: z.boolean().catch(false),
@@ -121,6 +126,7 @@ const pleromaSchema = coerceObject({
         .optional(),
       enabled: z.boolean().catch(false),
     }),
+    post_archive_import: postArchiveImportSchema,
     restrict_unauthenticated: coerceObject({
       activities: coerceObject({
         local: z.boolean().catch(false),

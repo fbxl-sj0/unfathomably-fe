@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { normalizeStatus } from '@/normalizers/index.ts';
 import { emojiReactionSchema } from '@/schemas/index.ts';
 
+import type { EmojiReaction } from '@/schemas/index.ts';
+
 import {
   sortEmoji,
   mergeEmojiFavourites,
@@ -189,6 +191,12 @@ describe('simulateEmojiReact', () => {
       { 'count': 2, 'me': false,  'name': '❤', 'url': undefined },
       { 'count': 1, 'me': true,  'name': 'soapbox', 'url': 'https://gleasonator.com/emoji/Gleasonator/soapbox.png' },
     ]);
+  });
+
+  it('ignores invalid optimistic reactions instead of throwing', () => {
+    const emojiReacts = ImmutableList<EmojiReaction>();
+
+    expect(simulateEmojiReact(emojiReacts, 'not-an-emoji').toJS()).toEqual([]);
   });
 });
 

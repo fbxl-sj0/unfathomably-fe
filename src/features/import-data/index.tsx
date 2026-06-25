@@ -6,7 +6,10 @@ import {
   importMutes,
 } from '@/actions/import-data.ts';
 import { Column } from '@/components/ui/column.tsx';
+import { useFeatures } from '@/hooks/useFeatures.ts';
+import { useInstance } from '@/hooks/useInstance.ts';
 
+import ArchiveImporter from './components/archive-importer.tsx';
 import CSVImporter from './components/csv-importer.tsx';
 
 const messages = defineMessages({
@@ -33,11 +36,22 @@ const muteMessages = defineMessages({
 });
 
 const ImportData = () => {
+  const features = useFeatures();
+  const { instance } = useInstance();
   const intl = useIntl();
+  const postArchiveImport = instance.pleroma.metadata.post_archive_import;
+  const postArchiveImportPolicy = postArchiveImport.policy === 'moderated' ? 'moderated' : 'open';
+  const postArchiveImportEnabled = features.postArchiveImport && postArchiveImport.policy !== 'disabled';
 
   return (
     <Column label={intl.formatMessage(messages.heading)}>
       <CSVImporter action={importFollows} messages={followMessages} />
+      {postArchiveImportEnabled && (
+        <ArchiveImporter
+          maxFileSize={postArchiveImport.max_file_size}
+          policy={postArchiveImportPolicy}
+        />
+      )}
       <CSVImporter action={importBlocks} messages={blockMessages} />
       <CSVImporter action={importMutes} messages={muteMessages} />
     </Column>

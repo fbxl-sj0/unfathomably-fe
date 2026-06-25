@@ -87,6 +87,8 @@ const messages = defineMessages({
   privacy_followers_only: { id: 'preferences.options.privacy_followers_only', defaultMessage: 'Followers-only' },
   content_type_plaintext: { id: 'preferences.options.content_type_plaintext', defaultMessage: 'Plain text' },
   content_type_markdown: { id: 'preferences.options.content_type_markdown', defaultMessage: 'Markdown' },
+  groupsDefaultMyGroups: { id: 'preferences.options.groups_default_tab_my_groups', defaultMessage: 'My Groups' },
+  groupsDefaultFeed: { id: 'preferences.options.groups_default_tab_group_feed', defaultMessage: 'Group Feed' },
 });
 
 const Preferences = () => {
@@ -120,6 +122,11 @@ const Preferences = () => {
     'text/markdown': intl.formatMessage(messages.content_type_markdown),
   }), []);
 
+  const groupsDefaultTabOptions = useMemo(() => ({
+    my_groups: intl.formatMessage(messages.groupsDefaultMyGroups),
+    group_feed: intl.formatMessage(messages.groupsDefaultFeed),
+  }), []);
+
   return (
     <Form>
       <List>
@@ -143,6 +150,15 @@ const Preferences = () => {
             items={languages}
             defaultValue={settings.locale}
             onChange={(event: React.ChangeEvent<HTMLSelectElement>) => onSelectChange(event, ['locale'])}
+          />
+        </ListItem>
+
+        <ListItem label={<FormattedMessage id='preferences.fields.groups_default_tab_label' defaultMessage='Default groups view' />}>
+          <SelectDropdown
+            className='max-w-[200px]'
+            items={groupsDefaultTabOptions}
+            defaultValue={settings.groups.defaultTab}
+            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => onSelectChange(event, ['groups', 'defaultTab'])}
           />
         </ListItem>
 

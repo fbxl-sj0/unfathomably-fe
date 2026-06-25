@@ -8,6 +8,12 @@ export { chatMessageSchema, type ChatMessage } from './chat-message.ts';
 export { customEmojiSchema, type CustomEmoji } from './custom-emoji.ts';
 export { domainSchema, type Domain } from './domain.ts';
 export { emojiReactionSchema, type EmojiReaction } from './emoji-reaction.ts';
+export {
+  federationHealthSchema,
+  type FederationHealth,
+  type FederationHealthQueue,
+  type FederationHealthRemoteInstance,
+} from './federation-health.ts';
 export { groupSchema, type Group } from './group.ts';
 export { groupMemberSchema, type GroupMember } from './group-member.ts';
 export { groupRelationshipSchema, type GroupRelationship } from './group-relationship.ts';

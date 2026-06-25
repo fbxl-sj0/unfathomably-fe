@@ -18,6 +18,10 @@ export const IMPORT_MUTES_REQUEST = 'IMPORT_MUTES_REQUEST';
 export const IMPORT_MUTES_SUCCESS = 'IMPORT_MUTES_SUCCESS';
 export const IMPORT_MUTES_FAIL    = 'IMPORT_MUTES_FAIL';
 
+export const IMPORT_POST_ARCHIVE_REQUEST = 'IMPORT_POST_ARCHIVE_REQUEST';
+export const IMPORT_POST_ARCHIVE_SUCCESS = 'IMPORT_POST_ARCHIVE_SUCCESS';
+export const IMPORT_POST_ARCHIVE_FAIL    = 'IMPORT_POST_ARCHIVE_FAIL';
+
 type ImportDataActions = {
   type: typeof IMPORT_FOLLOWS_REQUEST
   | typeof IMPORT_FOLLOWS_SUCCESS
@@ -27,15 +31,20 @@ type ImportDataActions = {
   | typeof IMPORT_BLOCKS_FAIL
   | typeof IMPORT_MUTES_REQUEST
   | typeof IMPORT_MUTES_SUCCESS
-  | typeof IMPORT_MUTES_FAIL;
+  | typeof IMPORT_MUTES_FAIL
+  | typeof IMPORT_POST_ARCHIVE_REQUEST
+  | typeof IMPORT_POST_ARCHIVE_SUCCESS
+  | typeof IMPORT_POST_ARCHIVE_FAIL;
   error?: any;
-  config?: string;
+  config?: any;
 }
 
 const messages = defineMessages({
   blocksSuccess: { id: 'import_data.success.blocks', defaultMessage: 'Blocks imported successfully' },
   followersSuccess: { id: 'import_data.success.followers', defaultMessage: 'Followers imported successfully' },
   mutesSuccess: { id: 'import_data.success.mutes', defaultMessage: 'Mutes imported successfully' },
+  postArchiveModerated: { id: 'import_data.success.post_archive_moderated', defaultMessage: 'Post archive uploaded for review' },
+  postArchiveQueued: { id: 'import_data.success.post_archive_queued', defaultMessage: 'Post archive import queued' },
 });
 
 export const importFollows = (params: FormData) =>
@@ -74,5 +83,25 @@ export const importMutes = (params: FormData) =>
         dispatch({ type: IMPORT_MUTES_SUCCESS, config: data });
       }).catch(error => {
         dispatch({ type: IMPORT_MUTES_FAIL, error });
+      });
+  };
+
+export const importPostArchive = (params: FormData) =>
+  (dispatch: React.Dispatch<ImportDataActions>, getState: () => RootState) => {
+    dispatch({ type: IMPORT_POST_ARCHIVE_REQUEST });
+
+    return api(getState)
+      .post('/api/pleroma/post_archive_import', params)
+      .then((response) => response.json()).then((data) => {
+        if (data?.state === 'awaiting_review') {
+          toast.success(messages.postArchiveModerated);
+        } else {
+          toast.success(messages.postArchiveQueued);
+        }
+
+        dispatch({ type: IMPORT_POST_ARCHIVE_SUCCESS, config: data });
+      }).catch(error => {
+        dispatch({ type: IMPORT_POST_ARCHIVE_FAIL, error });
+        toast.showAlertForError(error);
       });
   };

@@ -1,7 +1,7 @@
 import xIcon from '@tabler/icons/outline/x.svg';
 import clsx from 'clsx';
 import { debounce } from 'es-toolkit';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useId } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import { useHistory } from 'react-router-dom';
 
@@ -45,6 +45,7 @@ const SearchZapSplit = (props: ISearchZapSplit) => {
   const dispatch = useAppDispatch();
   const history = useHistory();
   const intl = useIntl();
+  const inputId = `search-${useId()}`;
 
   const value = useAppSelector((state) => state.search.value);
   const submitted = useAppSelector((state) => state.search.submitted);
@@ -108,7 +109,7 @@ const SearchZapSplit = (props: ISearchZapSplit) => {
   const hasValue = value.length > 0 || submitted;
   const componentProps: any = {
     type: 'text',
-    id: 'search',
+    id: inputId,
     placeholder: intl.formatMessage(messages.placeholder),
     value,
     onChange: handleChange,
@@ -138,7 +139,7 @@ const SearchZapSplit = (props: ISearchZapSplit) => {
 
   return (
     <div className='w-full'>
-      <label htmlFor='search' className='sr-only'>{intl.formatMessage(messages.placeholder)}</label>
+      <label htmlFor={inputId} className='sr-only'>{intl.formatMessage(messages.placeholder)}</label>
 
       <div className='relative'>
         {autosuggest ? (

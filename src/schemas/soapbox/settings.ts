@@ -49,6 +49,9 @@ const settingsSchema = z.object({
       pinned: z.boolean().catch(true),
     }),
   }),
+  groups: coerceObject({
+    defaultTab: z.enum(['my_groups', 'group_feed']).catch('my_groups'),
+  }),
   remote_timeline: coerceObject({
     pinnedHosts: z.string().array().catch([]),
   }),

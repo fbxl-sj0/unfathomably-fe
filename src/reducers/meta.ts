@@ -7,7 +7,7 @@ import { SW_UPDATING } from '@/actions/sw.ts';
 import type { AnyAction } from 'redux';
 
 const ReducerRecord = ImmutableRecord({
-  /** Whether /api/v1/instance 404'd (and we should display the external auth form). */
+  /** Whether instance discovery 404'd, and we should display the external auth form. */
   instance_fetch_failed: false,
   /** Whether the ServiceWorker is currently updating (and we should display a loading screen). */
   swUpdating: false,

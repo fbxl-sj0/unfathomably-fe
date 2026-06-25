@@ -132,6 +132,7 @@ const messages = defineMessages({
   redraftHeading: { id: 'confirmations.redraft.heading', defaultMessage: 'Delete & redraft' },
   redraftMessage: { id: 'confirmations.redraft.message', defaultMessage: 'Are you sure you want to delete this post and re-draft it? Favorites and reposts will be lost, and replies to the original post will be orphaned.' },
   replies_disabled_group: { id: 'status.disabled_replies.group_membership', defaultMessage: 'Only group members can reply' },
+  replies_disabled_locked: { id: 'status.disabled_replies.locked', defaultMessage: 'Replies are closed' },
   reply: { id: 'status.reply', defaultMessage: 'Reply' },
   replyAll: { id: 'status.reply_all', defaultMessage: 'Reply to thread' },
   replyConfirm: { id: 'confirmations.reply.confirm', defaultMessage: 'Reply' },
@@ -712,7 +713,8 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
 
   const menu = _makeMenu(publicStatus);
   let reblogIcon = repeatIcon;
-  let replyTitle;
+  let replyTitle = status.in_reply_to_id ? intl.formatMessage(messages.replyAll) : intl.formatMessage(messages.reply);
+  let replyMembershipDisabled = false;
   let replyDisabled = false;
 
   if (status.visibility === 'direct') {
@@ -722,8 +724,15 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
   }
 
   if ((status.group as Group)?.membership_required && !groupRelationship?.member) {
+    replyMembershipDisabled = true;
     replyDisabled = true;
     replyTitle = intl.formatMessage(messages.replies_disabled_group);
+  }
+
+  if (status.pleroma?.get?.('comments_enabled') === false) {
+    replyMembershipDisabled = false;
+    replyDisabled = true;
+    replyTitle = intl.formatMessage(messages.replies_disabled_locked);
   }
 
   const reblogMenu = [{
@@ -749,12 +758,6 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
     />
   );
 
-  if (!status.in_reply_to_id) {
-    replyTitle = intl.formatMessage(messages.reply);
-  } else {
-    replyTitle = intl.formatMessage(messages.replyAll);
-  }
-
   const canShare = ('share' in navigator) && (status.visibility === 'public' || status.visibility === 'group');
   const acceptsZaps = status.account.ditto.accepts_zaps === true;
   const acceptsZapsCashu = status.account.ditto.accepts_zaps_cashu === true;
@@ -778,7 +781,7 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
       >
         <GroupPopover
           group={status.group as any}
-          isEnabled={replyDisabled}
+          isEnabled={replyMembershipDisabled}
         >
           <StatusActionButton
             title={replyTitle}

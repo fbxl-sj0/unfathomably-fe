@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 
 import * as BuildConfig from '@/build-config.ts';
 import Soapbox from '@/init/soapbox.tsx';
-import { printConsoleWarning } from '@/utils/console.ts';
 
 import '@fontsource/inter/200.css';
 import '@fontsource/inter/300.css';
@@ -27,7 +26,6 @@ import { registerSW, lockSW } from './utils/sw.ts';
 enableMapSet();
 
 if (BuildConfig.NODE_ENV === 'production') {
-  printConsoleWarning();
   registerSW('/sw.js');
   lockSW();
 }
@@ -38,4 +36,3 @@ ready(() => {
 
   root.render(<Soapbox />);
 });
-

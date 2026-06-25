@@ -1,9 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
-import { instanceV1Schema, instanceV2Schema } from '@/schemas/instance.ts';
+import { instanceV1Schema, instanceV2Schema, upgradeInstance } from '@/schemas/instance.ts';
 import { RootState } from '@/store.ts';
 import { getAuthUserUrl, getMeUrl } from '@/utils/auth.ts';
-import { getFeatures } from '@/utils/features.ts';
 
 import api from '../api/index.ts';
 
@@ -25,18 +24,19 @@ interface InstanceData {
 
 export const fetchInstance = createAsyncThunk<InstanceData, InstanceData['host'], { state: RootState }>(
   'instance/fetch',
-  async(host, { dispatch, getState, rejectWithValue }) => {
+  async(host, { getState, rejectWithValue }) => {
     try {
-      const response = await api(getState).get('/api/v1/instance');
-      const data = await response.json();
-      const instance = instanceV1Schema.parse(data);
-      const features = getFeatures(instance);
-
-      if (features.instanceV2) {
-        dispatch(fetchInstanceV2(host));
+      try {
+        const response = await api(getState).get('/api/v2/instance');
+        const data = await response.json();
+        const instance = instanceV2Schema.parse(data);
+        return { instance, host };
+      } catch {
+        const response = await api(getState).get('/api/v1/instance');
+        const data = await response.json();
+        const instance = upgradeInstance(instanceV1Schema.parse(data));
+        return { instance, host };
       }
-
-      return { instance, host };
     } catch (e) {
       return rejectWithValue(e);
     }

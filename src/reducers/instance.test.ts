@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { ADMIN_CONFIG_UPDATE_REQUEST } from '@/actions/admin.ts';
+import { fetchInstance } from '@/actions/instance.ts';
+import { instanceV2Schema } from '@/schemas/instance.ts';
 
 import reducer from './instance.ts';
 
@@ -33,6 +35,21 @@ describe('instance reducer', () => {
     };
 
     expect(result).toMatchObject(expected);
+  });
+
+  it('imports an instance from the primary instance fetch action', () => {
+    const instance = instanceV2Schema.parse({
+      title: 'Unfathomably Test',
+      version: '2.7.2 (compatible; unfathomably-be 2.6.50+unfathomably-be.dev)',
+    });
+
+    const result = reducer(undefined, {
+      type: fetchInstance.fulfilled.type,
+      payload: { instance },
+    } as any);
+
+    expect(result.title).toBe('Unfathomably Test');
+    expect(result.version).toBe('2.7.2 (compatible; unfathomably-be 2.6.50+unfathomably-be.dev)');
   });
 
   describe('ADMIN_CONFIG_UPDATE_REQUEST', async () => {

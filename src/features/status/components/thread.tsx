@@ -367,7 +367,7 @@ const Thread = (props: IThread) => {
   };
 
   const focusedStatus = (
-    <div className={clsx({ 'pb-4': hasDescendants })} key={status.id}>
+    <div className={clsx('relative', { 'pb-4': hasDescendants })} key={status.id}>
       <HotKeys handlers={handlers}>
         <div
           ref={statusRef}
@@ -398,6 +398,14 @@ const Thread = (props: IThread) => {
           ) : null}
         </div>
       </HotKeys>
+
+      {hasDescendants ? (
+        <span
+          aria-hidden='true'
+          className='pointer-events-none absolute bottom-0 left-5 z-[1] h-4 w-0.5 rounded-full bg-primary-200 black:bg-gray-800 dark:bg-primary-700 rtl:left-auto rtl:right-5'
+          data-testid='thread-focused-connector'
+        />
+      ) : null}
 
       <hr className='-mx-4 mt-2 max-w-[100vw] border-t-2 black:border-t dark:border-gray-800' />
     </div>

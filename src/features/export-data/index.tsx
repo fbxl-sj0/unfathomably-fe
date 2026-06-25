@@ -7,6 +7,7 @@ import {
 } from '@/actions/export-data.ts';
 import { Column } from '@/components/ui/column.tsx';
 
+import ArchiveExporter from './components/archive-exporter.tsx';
 import CSVExporter from './components/csv-exporter.tsx';
 
 const messages = defineMessages({
@@ -38,6 +39,7 @@ const ExportData = () => {
   return (
     <Column label={intl.formatMessage(messages.heading)}>
       <CSVExporter action={exportFollows} messages={followMessages} />
+      <ArchiveExporter />
       <CSVExporter action={exportBlocks} messages={blockMessages} />
       <CSVExporter action={exportMutes} messages={muteMessages} />
     </Column>

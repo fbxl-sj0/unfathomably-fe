@@ -83,6 +83,7 @@ export const ChatWidget = lazy(() => import('@/features/chats/components/chat-wi
 export const ServerInfo = lazy(() => import('@/features/server-info/index.tsx'));
 export const Dashboard = lazy(() => import('@/features/admin/index.tsx'));
 export const DatabaseCleanup = lazy(() => import('@/features/admin/database-cleanup.tsx'));
+export const FederationHealth = lazy(() => import('@/features/admin/federation-health.tsx'));
 export const ModerationLog = lazy(() => import('@/features/admin/moderation-log.tsx'));
 export const ThemeEditor = lazy(() => import('@/features/theme-editor/index.tsx'));
 export const PromoPanel = lazy(() => import('@/features/ui/components/promo-panel.tsx'));
@@ -137,6 +138,7 @@ export const EventDiscussion = lazy(() => import('@/features/event/event-discuss
 export const EventMapModal = lazy(() => import('@/features/ui/components/modals/event-map-modal.tsx'));
 export const EventParticipantsModal = lazy(() => import('@/features/ui/components/modals/event-participants-modal.tsx'));
 export const Events = lazy(() => import('@/features/events/index.tsx'));
+export const GroupsDefault = lazy(() => import('@/features/groups/default.tsx'));
 export const Groups = lazy(() => import('@/features/groups/index.tsx'));
 export const Sources = lazy(() => import('@/features/sources/index.tsx'));
 export const SourcesFeed = lazy(() => import('@/features/sources/feed.tsx'));

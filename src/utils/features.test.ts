@@ -208,7 +208,7 @@ describe('getFeatures', () => {
         version: '2.7.2 (compatible; unfathomably-be 2.6.50+unfathomably-be.dev)',
         pleroma: {
           metadata: {
-            features: ['bookmark_folders', 'groups', 'groups_discovery', 'notifications_v2', 'pleroma_explicit_addressing', 'sources', 'v2_suggestions'],
+            features: ['bookmark_folders', 'groups', 'groups_discovery', 'notifications_v2', 'pleroma_explicit_addressing', 'post_archive_import', 'sources', 'v2_suggestions'],
           },
         },
       });
@@ -256,6 +256,7 @@ describe('getFeatures', () => {
       expect(features.notificationsIncludeTypes).toBe(true);
       expect(features.pleromaRemoteFollow).toBe(true);
       expect(features.polls).toBe(true);
+      expect(features.postArchiveImport).toBe(true);
       expect(features.profileFields).toBe(true);
       expect(features.publicTimeline).toBe(true);
       expect(features.quotePosts).toBe(true);
@@ -268,8 +269,8 @@ describe('getFeatures', () => {
       expect(features.security).toBe(true);
       expect(features.sessions).toBe(true);
       expect(features.settingsStore).toBe(true);
-      expect(features.suggestions).toBe(false);
-      expect(features.suggestionsV2).toBe(false);
+      expect(features.suggestions).toBe(true);
+      expect(features.suggestionsV2).toBe(true);
       expect(features.sources).toBe(true);
       expect(features.unrestrictedLists).toBe(true);
     });

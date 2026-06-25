@@ -1,7 +1,7 @@
 {
   "name": "unfathomably-fe",
   "displayName": "Unfathomably FE",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "type": "module",
   "description": "Unfathomably frontend for the Fediverse.",
   "homepage": "https://github.com/fbxl-sj0/unfathomably-fe",
@@ -28,7 +28,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:migration": "vitest run src/components/scrollable-list.behavior.test.tsx src/components/status-list.behavior.test.tsx",
-    "test:federation": "vitest run src/features/federation/platform.test.ts src/features/federation/native-source-item-card.test.tsx src/features/sources/source-items-preview.test.tsx src/schemas/source-item.test.ts src/schemas/group.test.ts",
+    "test:federation": "vitest run src/features/federation/platform.test.ts src/features/federation/floating-media-player.test.tsx src/features/federation/native-source-item-card.test.tsx src/features/sources/source-items-preview.test.tsx src/schemas/source-item.test.ts src/schemas/group.test.ts",
     "strict": "npm run lint && npm run i18n:check && tsc --noEmit && vitest run && vite build --emptyOutDir",
     "baseline": "npm run strict",
     "lint": "npm run lint:js && npm run lint:styles",

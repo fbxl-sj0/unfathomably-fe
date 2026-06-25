@@ -8,6 +8,14 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 
 ## [Unreleased]
 
+### Changed
+- Expanded the desktop layout so the post column has more room on 1080p and wider displays.
+- Improved thread connector lines so replies show clearer parent/child continuity in post and threadiverse discussions.
+- Added a persistent floating media dock for playable source cards, while keeping Funkwhale and PeerTube media visible in each card by default.
+- Improved Funkwhale and audio source cards with album, artist, license, MusicBrainz, bitrate, and file-size metadata when the backend provides it.
+
+## [3.2.1] - 2026-06-25
+
 ### Added
 - Unfathomably FE branding, package metadata, GitHub repository links, and release documentation.
 - Frontend installation notes that point operators to the complete source install guide in Unfathomably BE.
@@ -18,7 +26,9 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 - Native group/source preview components with schema coverage and interaction-aware rendering.
 - Grouped notification handling for Unfathomably/Rebased-compatible notification APIs, including importer and reducer coverage.
 - Translation controls that use backend capability metadata and can fall back to provider-side source-language detection.
+- Admin federation health page showing remote instance reachability, outgoing federation queue state, and unreachable host samples.
 - Websocket stream reconnection coverage and stream behavior tests.
+- Post archive export and import controls in data settings, using ActivityPub archive ZIPs and backend review policy metadata.
 - Importer regression tests for settings and account-data import paths.
 - Hashtags: let users follow hashtags (Mastodon, Akkoma).
 - Posts: Support posts filtering on recent Mastodon versions
@@ -53,8 +63,10 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 - Fixed source preview card behavior and tests for remote source items.
 - Fixed group preview item behavior and tests for remote group posts.
 - Fixed translation button visibility and failed-translation behavior for posts where backend language metadata or provider source-language selection is incomplete.
+- Fixed remote group/source posts with closed comments so the reply button is disabled instead of opening a compose box that cannot succeed.
 - Fixed stale composer drafts so sent posts clear saved text while unsent drafts can still be discarded.
 - Fixed browser-console issues around duplicate form IDs and unlabeled fields where the frontend owned the markup.
+- Fixed virtualized lists so empty conditional rows do not trigger React Virtuoso zero-sized element warnings.
 - Fixed dashboard report navigation losing admin affordances after a forbidden response.
 - Posts: fixed emojis being cut off in reactions modal.
 - Posts: fix audio player progress bar visibility.
@@ -436,7 +448,8 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 ### Added
 - Initial beta release.
 
-[Unreleased]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.0...HEAD
-[Unreleased patch]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.0...HEAD
+[Unreleased]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.1...HEAD
+[Unreleased patch]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.1...HEAD
+[3.2.1]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.0...v3.2.1
 [1.0.0]: https://github.com/fbxl-sj0/unfathomably-fe/releases/tag/v1.0.0
 [0.9.0]: https://github.com/fbxl-sj0/unfathomably-fe/releases/tag/v0.9.0

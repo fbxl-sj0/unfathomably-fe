@@ -48,8 +48,9 @@ const CSVImporter: React.FC<ICSVImporter> = ({ messages, action }) => {
 
   return (
     <Form onSubmit={handleSubmit}>
-      <Text size='xl' weight='bold' tag='label'>{intl.formatMessage(messages.input_label)}</Text>
+      <Text size='xl' weight='bold'>{intl.formatMessage(messages.input_label)}</Text>
       <FormGroup
+        labelText={<span className='sr-only'>{intl.formatMessage(messages.input_label)}</span>}
         hintText={<Text theme='muted'>{intl.formatMessage(messages.input_hint)}</Text>}
       >
         <FileInput

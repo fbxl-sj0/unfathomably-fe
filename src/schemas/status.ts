@@ -19,6 +19,7 @@ import type { Resolve } from '@/utils/types.ts';
 
 const statusPleromaSchema = z.object({
   bookmark_folder: z.string().nullable().catch(null),
+  comments_enabled: z.boolean().catch(true),
   event: eventSchema.nullish().catch(undefined),
   quote: z.literal(null).catch(null),
   quote_visible: z.boolean().catch(true),

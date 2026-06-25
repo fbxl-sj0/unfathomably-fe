@@ -127,6 +127,22 @@ describe('<ScrollableList /> migration behavior', () => {
     expect(handleLoadMore).toHaveBeenCalledTimes(1);
   });
 
+  it('does not send empty conditional rows to Virtuoso', () => {
+    render(
+      <ScrollableList scrollKey='migration-empty-rows'>
+        {[
+          null,
+          false,
+          <div key='one'>only measured row</div>,
+          undefined,
+        ]}
+      </ScrollableList>,
+    );
+
+    expect(screen.getAllByTestId('virtuoso-item')).toHaveLength(1);
+    expect(screen.getByTestId('virtuoso-item')).toHaveStyle({ minHeight: '1px' });
+  });
+
   it('saves and restores the top item for browser back navigation', () => {
     const scrollKey = 'migration-scroll-restore';
     const storageKey = `soapbox:scrollData:${scrollKey}`;

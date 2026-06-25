@@ -21,12 +21,15 @@
     * source discovery behavior
 */
 
-import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { render, screen, within } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { describe, expect, it } from 'vitest';
 
+import { FloatingMediaPlayerProvider } from '@/contexts/floating-media-player-context.tsx';
 import type { SourceItem } from '@/schemas/source-item.ts';
 
+import FloatingMediaPlayer from './floating-media-player.tsx';
 import NativeSourceItemCard from './native-source-item-card.tsx';
 import { FEDERATION_RENDER_HINTS, type FederationFamily } from './platform.ts';
 
@@ -63,6 +66,29 @@ describe('NativeSourceItemCard', () => {
     }));
 
     expect(screen.getByTestId('native-source-item-card').querySelector('audio')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play docked' })).toBeInTheDocument();
+  });
+
+  it('renders music metadata for audio source items', () => {
+    renderCard(buildItem('audio', {
+      artists: ['Los Jaivas'],
+      album: 'Alturas',
+      album_url: 'https://audio.example.test/albums/1',
+      duration: 'PT3M27S',
+      media_bitrate: 192000,
+      media_size: 3456789,
+      license: 'https://creativecommons.org/licenses/by-sa/4.0/',
+      musicbrainz_id: '11111111-1111-1111-1111-111111111111',
+      musicbrainz_url: 'https://musicbrainz.org/recording/11111111-1111-1111-1111-111111111111',
+    }));
+
+    expect(screen.getByText('Los Jaivas')).toBeInTheDocument();
+    expect(screen.getByText('Alturas')).toHaveAttribute('href', 'https://audio.example.test/albums/1');
+    expect(screen.getByText('PT3M27S')).toBeInTheDocument();
+    expect(screen.getByText('192 kbps')).toBeInTheDocument();
+    expect(screen.getByText('3.3 MB')).toBeInTheDocument();
+    expect(screen.getByText('creativecommons.org/licenses/by-sa/4.0')).toHaveAttribute('href', 'https://creativecommons.org/licenses/by-sa/4.0/');
+    expect(screen.getByText('11111111-1111-1111-1111-111111111111')).toHaveAttribute('href', 'https://musicbrainz.org/recording/11111111-1111-1111-1111-111111111111');
   });
 
   it('renders video controls for video families', () => {
@@ -72,6 +98,33 @@ describe('NativeSourceItemCard', () => {
     }));
 
     expect(screen.getByTestId('native-source-item-card').querySelector('video')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play docked' })).toBeInTheDocument();
+  });
+
+  it('opens playable source items in the dock without removing the card player', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <IntlProvider locale='en'>
+        <FloatingMediaPlayerProvider>
+          <NativeSourceItemCard item={buildItem('audio', {
+            media_url: 'https://audio.example.test/listen/track.ogg',
+            media_type: 'audio/ogg',
+          })}
+          />
+          <FloatingMediaPlayer />
+        </FloatingMediaPlayerProvider>
+      </IntlProvider>,
+    );
+
+    expect(screen.getByTestId('native-source-item-card').querySelector('audio')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Play docked' }));
+
+    const dock = screen.getByTestId('floating-media-player');
+
+    expect(within(dock).getByText('audio title')).toBeInTheDocument();
+    expect(dock.querySelector('audio')).toHaveAttribute('src', 'https://audio.example.test/listen/track.ogg');
   });
 
   it('renders event details for event families', () => {
@@ -108,7 +161,9 @@ describe('NativeSourceItemCard', () => {
 function renderCard(item: SourceItem) {
   return render(
     <IntlProvider locale='en'>
-      <NativeSourceItemCard item={item} />
+      <FloatingMediaPlayerProvider>
+        <NativeSourceItemCard item={item} />
+      </FloatingMediaPlayerProvider>
     </IntlProvider>,
   );
 }
@@ -130,6 +185,17 @@ function buildItem(family: FederationFamily, overrides: Partial<SourceItem> = {}
     platform_confidence: 'software',
     thumbnail_url: family === 'photo' ? `https://${family}.example.test/photo.jpg` : null,
     duration: null,
+    media_bitrate: null,
+    media_size: null,
+    album: null,
+    album_url: null,
+    artists: [],
+    license: null,
+    copyright: null,
+    disc: null,
+    position: null,
+    musicbrainz_id: null,
+    musicbrainz_url: null,
     event_start: null,
     location: null,
     comments_count: null,

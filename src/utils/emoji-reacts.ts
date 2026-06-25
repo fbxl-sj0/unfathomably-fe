@@ -54,24 +54,33 @@ export const getReactForStatus = (status: any, allowedEmoji = ALLOWED_EMOJI): Em
   return typeof result?.name === 'string' ? result : undefined;
 };
 
+const safeEmojiReaction = (reaction: unknown): EmojiReaction | undefined => {
+  const result = emojiReactionSchema.safeParse(reaction);
+  return result.success ? result.data : undefined;
+};
+
 export const simulateEmojiReact = (emojiReacts: ImmutableList<EmojiReaction>, emoji: string, url?: string) => {
   const idx = emojiReacts.findIndex(e => e.name === emoji);
   const emojiReact = emojiReacts.get(idx);
 
   if (idx > -1 && emojiReact) {
-    return emojiReacts.set(idx, emojiReactionSchema.parse({
+    const reaction = safeEmojiReaction({
       ...emojiReact,
       count: (emojiReact.count || 0) + 1,
       me: true,
-      url,
-    }));
+      url: url ?? emojiReact.url,
+    });
+
+    return reaction ? emojiReacts.set(idx, reaction) : emojiReacts;
   } else {
-    return emojiReacts.push(emojiReactionSchema.parse({
+    const reaction = safeEmojiReaction({
       count: 1,
       me: true,
       name: emoji,
       url,
-    }));
+    });
+
+    return reaction ? emojiReacts.push(reaction) : emojiReacts;
   }
 };
 
@@ -84,11 +93,13 @@ export const simulateUnEmojiReact = (emojiReacts: ImmutableList<EmojiReaction>, 
   if (emojiReact) {
     const newCount = (emojiReact.count || 1) - 1;
     if (newCount < 1) return emojiReacts.delete(idx);
-    return emojiReacts.set(idx, emojiReactionSchema.parse({
+    const reaction = safeEmojiReaction({
       ...emojiReact,
       count: (emojiReact.count || 1) - 1,
       me: false,
-    }));
+    });
+
+    return reaction ? emojiReacts.set(idx, reaction) : emojiReacts;
   } else {
     return emojiReacts;
   }

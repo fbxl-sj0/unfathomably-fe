@@ -5,7 +5,7 @@ import { ADMIN_CONFIG_UPDATE_REQUEST, ADMIN_CONFIG_UPDATE_SUCCESS } from '@/acti
 import { InstanceV2, instanceV2Schema } from '@/schemas/instance.ts';
 import { ConfigDB } from '@/utils/config-db.ts';
 
-import { fetchInstanceV2 } from '../actions/instance.ts';
+import { fetchInstance, fetchInstanceV2 } from '../actions/instance.ts';
 
 import type { AnyAction } from 'redux';
 
@@ -45,6 +45,7 @@ const importConfigs = (state: InstanceV2, configs: ImmutableList<any>) => {
 
 export default function instance(state = initialState, action: AnyAction): InstanceV2 {
   switch (action.type) {
+    case fetchInstance.fulfilled.type:
     case fetchInstanceV2.fulfilled.type:
       return action.payload.instance;
     case ADMIN_CONFIG_UPDATE_REQUEST:

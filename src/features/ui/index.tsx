@@ -18,6 +18,8 @@ import withGroupLookup from '@/components/hoc/group-lookup-hoc.tsx';
 import SidebarNavigation from '@/components/sidebar-navigation.tsx';
 import ThumbNavigation from '@/components/thumb-navigation.tsx';
 import Layout from '@/components/ui/layout.tsx';
+import { FloatingMediaPlayerProvider } from '@/contexts/floating-media-player-context.tsx';
+import FloatingMediaPlayer from '@/features/federation/floating-media-player.tsx';
 import { useApi } from '@/hooks/useApi.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
@@ -97,6 +99,7 @@ import {
   ServerInfo,
   Dashboard,
   DatabaseCleanup,
+  FederationHealth,
   ModerationLog,
   CryptoDonate,
   ScheduledStatuses,
@@ -124,6 +127,7 @@ import {
   EventInformation,
   EventDiscussion,
   Events,
+  GroupsDefault,
   GroupGallery,
   Groups,
   Sources,
@@ -182,6 +186,14 @@ const ManageGroupSlug = withGroupLookup(ManageGroup);
 const EditGroupSlug = withGroupLookup(EditGroup);
 const GroupBlockedMembersSlug = withGroupLookup(GroupBlockedMembers);
 const GroupMembershipRequestsSlug = withGroupLookup(GroupMembershipRequests);
+
+const shouldIgnorePushRegistrationError = (error: unknown): boolean => {
+  if (error instanceof DOMException) {
+    return ['AbortError', 'NotAllowedError', 'NotSupportedError'].includes(error.name);
+  }
+
+  return error instanceof Error && /push service error|registration failed/i.test(error.message);
+};
 
 interface ISwitchingColumnsArea {
   children: React.ReactNode;
@@ -328,7 +340,8 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         <Redirect from='/@:username/:statusId' to='/@:username/posts/:statusId' />
         <WrappedRoute path='/posts/:statusId' publicRoute exact page={DefaultPage} component={Status} content={children} />
 
-        {features.groups && <WrappedRoute path='/groups' exact page={GroupsPage} component={Groups} content={children} />}
+        {features.groups && <WrappedRoute path='/groups' exact page={GroupsPage} component={GroupsDefault} content={children} />}
+        {features.groups && <WrappedRoute path='/groups/my' exact page={GroupsPage} component={Groups} content={children} />}
         <WrappedRoute path='/sources' exact page={DefaultPage} component={Sources} content={children} />
         <WrappedRoute path='/sources/feed' exact page={DefaultPage} component={SourcesFeed} content={children} />
         {features.groups && <WrappedRoute path='/groups/feed' exact page={GroupsPage} component={GroupsFeed} content={children} />}
@@ -390,6 +403,7 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         <WrappedRoute path='/soapbox/admin/reports' staffOnly page={AdminPage} component={Dashboard} content={children} exact />
         <WrappedRoute path='/soapbox/admin/log' staffOnly page={AdminPage} component={ModerationLog} content={children} exact />
         <WrappedRoute path='/soapbox/admin/database-cleanup' adminOnly page={AdminPage} component={DatabaseCleanup} content={children} exact />
+        <WrappedRoute path='/soapbox/admin/federation-health' adminOnly page={AdminPage} component={FederationHealth} content={children} exact />
         {features.ditto && <WrappedRoute path='/soapbox/admin/zap-split' staffOnly page={WidePage} component={ManageZapSplit} content={children} exact />}
         <WrappedRoute path='/soapbox/admin/users' staffOnly page={AdminPage} component={UserIndex} content={children} exact />
         <WrappedRoute path='/soapbox/admin/theme' staffOnly page={AdminPage} component={ThemeEditor} content={children} exact />
@@ -532,7 +546,11 @@ const UI: React.FC<IUI> = ({ children }) => {
 
   useEffect(() => {
     if (vapidKey) {
-      registerPushNotifications(api, vapidKey).catch(console.warn);
+      registerPushNotifications(api, vapidKey).catch(error => {
+        if (!shouldIgnorePushRegistrationError(error)) {
+          console.warn(error);
+        }
+      });
     }
   }, [vapidKey]);
 
@@ -560,61 +578,65 @@ const UI: React.FC<IUI> = ({ children }) => {
   };
 
   return (
-    <GlobalHotkeys node={node}>
-      <div ref={node} style={style}>
-        <div
-          className={clsx('pointer-events-none fixed z-[90] h-screen w-screen transition', {
-            'backdrop-blur': isDragging,
-          })}
-        />
+    <FloatingMediaPlayerProvider>
+      <GlobalHotkeys node={node}>
+        <div ref={node} style={style}>
+          <div
+            className={clsx('pointer-events-none fixed z-[90] h-screen w-screen transition', {
+              'backdrop-blur': isDragging,
+            })}
+          />
 
-        <div className='z-10 flex min-h-screen flex-col'>
-          <div className='sticky top-0 z-50 lg:hidden'>
-            <Navbar />
-          </div>
-
-          <Layout>
-            <Layout.Sidebar>
-              {instance.isSuccess && <SidebarNavigation />}
-            </Layout.Sidebar>
-
-            <SwitchingColumnsArea>
-              {children}
-            </SwitchingColumnsArea>
-          </Layout>
-
-          {(me && !shouldHideFAB()) && (
-            <div className='fixed bottom-24 right-4 z-40 transition-all lg:hidden rtl:left-4 rtl:right-auto'>
-              <FloatingActionButton />
+          <div className='z-10 flex min-h-screen flex-col'>
+            <div className='sticky top-0 z-50 lg:hidden'>
+              <Navbar />
             </div>
-          )}
 
-          {me && (
-            <Suspense>
-              <SidebarMenu />
-            </Suspense>
-          )}
+            <Layout>
+              <Layout.Sidebar>
+                {instance.isSuccess && <SidebarNavigation />}
+              </Layout.Sidebar>
 
-          {me && features.chats && (
-            <div className='hidden xl:block'>
-              <Suspense fallback={<div className='fixed bottom-0 z-[99] flex h-16 w-96 animate-pulse flex-col rounded-t-lg bg-white shadow-3xl dark:bg-gray-900 ltr:right-5 rtl:left-5' />}>
-                <ChatWidget />
+              <SwitchingColumnsArea>
+                {children}
+              </SwitchingColumnsArea>
+            </Layout>
+
+            {(me && !shouldHideFAB()) && (
+              <div className='fixed bottom-24 right-4 z-40 transition-all lg:hidden rtl:left-4 rtl:right-auto'>
+                <FloatingActionButton />
+              </div>
+            )}
+
+            {me && (
+              <Suspense>
+                <SidebarMenu />
               </Suspense>
-            </div>
-          )}
+            )}
 
-          <ThumbNavigation />
+            {me && features.chats && (
+              <div className='hidden xl:block'>
+                <Suspense fallback={<div className='fixed bottom-0 z-[99] flex h-16 w-96 animate-pulse flex-col rounded-t-lg bg-white shadow-3xl dark:bg-gray-900 ltr:right-5 rtl:left-5' />}>
+                  <ChatWidget />
+                </Suspense>
+              </div>
+            )}
 
-          <Suspense>
-            <ProfileHoverCard />
-          </Suspense>
+            <FloatingMediaPlayer />
 
-          <Suspense>
-            <StatusHoverCard />
-          </Suspense>
+            <ThumbNavigation />
+
+            <Suspense>
+              <ProfileHoverCard />
+            </Suspense>
+
+            <Suspense>
+              <StatusHoverCard />
+            </Suspense>
+          </div>
         </div>
-      </div>
-    </GlobalHotkeys>
+      </GlobalHotkeys>
+    </FloatingMediaPlayerProvider>
   );
 };
 

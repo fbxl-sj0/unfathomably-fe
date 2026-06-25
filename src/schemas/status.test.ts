@@ -12,4 +12,14 @@ describe('statusSchema', () => {
 
     expect(status.pleroma?.bookmark_folder).toBe('folder-1');
   });
+
+  it('preserves remote comments-enabled metadata', () => {
+    const status = buildStatus({
+      pleroma: {
+        comments_enabled: false,
+      },
+    });
+
+    expect(status.pleroma?.comments_enabled).toBe(false);
+  });
 });

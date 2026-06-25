@@ -2,6 +2,8 @@
 
 # Unfathomably FE
 
+> Your corner of the Fediverse is the whole thing
+
 **Unfathomably FE** is a modern Fediverse frontend derived from Soapbox. It keeps the practical parts that made Soapbox useful for real communities: instance branding, custom navigation, moderation tools, chats, quote posts where the backend supports them, mobile-friendly layouts, and a PWA build that can sit in front of Mastodon-compatible APIs.
 
 This fork is being maintained for the Unfathomably/Rebased family of deployments, including FBXL Social, while preserving compatibility with Pleroma, Akkoma, Mastodon-style, and Rebased-style backends where the API surface allows it.
@@ -20,6 +22,19 @@ The largest difference is that the UI treats remote things that are not ordinary
 - The public brand can be Unfathomably FE, but ordinary sites should be able to use their own configured logo, theme, accent colors, and footer links.
 
 Compared with a plain Pleroma or Rebased frontend deployment, Unfathomably FE expects more of the backend: group/source APIs, richer status metadata, translation capability discovery, websocket streams, and compatibility hints. When those capabilities are absent, the UI should degrade instead of pretending unsupported actions are available.
+
+## Recent Highlights
+
+Recent work has focused on making the wider Fediverse feel native from the web UI instead of bolted on.
+
+- Group browsing now includes a group feed for root posts from followed groups, group attribution on statuses, remote group previews, and per-account defaults for whether the groups page opens to the feed or the user's group list.
+- Source browsing has been moved closer to normal status rendering, so RSS items, publishing feeds, media sources, and other source-like actors can be shown as ordinary actionable posts when the backend can expose them that way.
+- RSS feed subscriptions can appear in normal feeds through the backend source APIs, with source entries treated as posts that can be boosted, quoted, bookmarked, or otherwise used locally where supported.
+- Thread views now have clearer reply guide rails, including multiple nesting lines for deeper discussions so Threadiverse-style conversations are easier to follow.
+- PeerTube and Funkwhale media can keep their normal in-card presentation while also offering a docked player mode for listening or watching while browsing.
+- Desktop layouts have been widened so 1080p screens leave more room for the central post column without losing the familiar Soapbox navigation shape.
+- The admin UI has started gaining first-class federation health surfaces, including remote-site health data and queue visibility exposed by unfathomably-be.
+- Account portability work has begun with UI surfaces for post archive export and import, including backend policies for disabled, review-required, and automatic imports.
 
 ## Compatibility Notes
 

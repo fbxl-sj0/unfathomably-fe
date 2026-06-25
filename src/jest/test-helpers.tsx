@@ -12,6 +12,7 @@ import { thunk, type ThunkMiddleware } from 'redux-thunk';
 import { afterAll, beforeAll } from 'vitest';
 
 import { ChatProvider } from '@/contexts/chat-context.tsx';
+import { FloatingMediaPlayerProvider } from '@/contexts/floating-media-player-context.tsx';
 import { StatProvider } from '@/contexts/stat-context.tsx';
 import { queryClient } from '@/queries/client.ts';
 import { instanceV1Schema, instanceV2Schema, upgradeInstance } from '@/schemas/instance.ts';
@@ -101,11 +102,13 @@ const TestApp: FC<any> = ({ children, storeProps, routerProps = {} }) => {
             <StatProvider>
               <QueryClientProvider client={queryClient}>
                 <ChatProvider>
-                  <IntlProvider locale={props.locale}>
-                    {children}
+                  <FloatingMediaPlayerProvider>
+                    <IntlProvider locale={props.locale}>
+                      {children}
 
-                    <Toaster />
-                  </IntlProvider>
+                      <Toaster />
+                    </IntlProvider>
+                  </FloatingMediaPlayerProvider>
                 </ChatProvider>
               </QueryClientProvider>
             </StatProvider>

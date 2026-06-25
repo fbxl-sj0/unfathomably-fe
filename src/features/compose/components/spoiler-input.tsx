@@ -16,6 +16,9 @@ const messages = defineMessages({
   remove: { id: 'compose_form.spoiler_remove', defaultMessage: 'Remove sensitive' },
 });
 
+const fieldIdForCompose = (prefix: string, composeId: string): string =>
+  `${prefix}-${composeId.replace(/[^A-Za-z0-9_-]/g, '-')}`;
+
 interface ISpoilerInput extends Pick<IAutosuggestInput, 'onSuggestionsFetchRequested' | 'onSuggestionsClearRequested' | 'onSuggestionSelected'> {
   composeId: string extends 'default' ? never : string;
 }
@@ -30,6 +33,7 @@ const SpoilerInput = forwardRef<AutosuggestInput, ISpoilerInput>(({
   const intl = useIntl();
   const dispatch = useAppDispatch();
   const compose = useCompose(composeId);
+  const fieldId = fieldIdForCompose('cw-spoiler-input', composeId);
 
   const handleChangeSpoilerText: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     dispatch(changeComposeSpoilerText(composeId, e.target.value));
@@ -64,7 +68,7 @@ const SpoilerInput = forwardRef<AutosuggestInput, ISpoilerInput>(({
           onSuggestionsClearRequested={onSuggestionsClearRequested}
           onSuggestionSelected={onSuggestionSelected}
           searchTokens={[':']}
-          id='cw-spoiler-input'
+          id={fieldId}
           className='rounded-md !bg-transparent dark:!bg-transparent'
           ref={ref}
           autoFocus

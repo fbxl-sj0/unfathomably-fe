@@ -157,7 +157,9 @@ const defaultSettings = ImmutableMap({
     }),
   }),
 
-  groups: ImmutableMap({}),
+  groups: ImmutableMap({
+    defaultTab: 'my_groups',
+  }),
 
   trends: ImmutableMap({
     show: true,

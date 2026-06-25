@@ -17,6 +17,41 @@ interface ISiteErrorBoundary {
   children: React.ReactNode;
 }
 
+const CHUNK_RECOVERY_KEY = 'soapbox:chunk-load-recovery';
+const CHUNK_RECOVERY_COOLDOWN_MS = 5 * 60 * 1000;
+
+const DYNAMIC_IMPORT_ERROR_PATTERNS = [
+  /Failed to fetch dynamically imported module/i,
+  /error loading dynamically imported module/i,
+  /Importing a module script failed/i,
+  /ChunkLoadError/i,
+  /Loading chunk \d+ failed/i,
+];
+
+const isDynamicImportError = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return DYNAMIC_IMPORT_ERROR_PATTERNS.some(pattern => pattern.test(message));
+};
+
+const canRecoverFromDynamicImportError = (): boolean => {
+  try {
+    const lastRecovery = Number(window.sessionStorage.getItem(CHUNK_RECOVERY_KEY) || 0);
+
+    return !lastRecovery || Date.now() - lastRecovery > CHUNK_RECOVERY_COOLDOWN_MS;
+  } catch {
+    return false;
+  }
+};
+
+const rememberDynamicImportRecovery = (): void => {
+  try {
+    window.sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(Date.now()));
+  } catch {
+    // If session storage is unavailable, the reload is still useful.
+  }
+};
+
 /** Application-level error boundary. Fills the whole screen. */
 const SiteErrorBoundary: React.FC<ISiteErrorBoundary> = ({ children }) => {
   const { links } = useSoapboxConfig();
@@ -48,6 +83,12 @@ const SiteErrorBoundary: React.FC<ISiteErrorBoundary> = ({ children }) => {
   };
 
   function handleError(error: unknown, info: ErrorInfo) {
+    if (isDynamicImportError(error) && canRecoverFromDynamicImportError()) {
+      rememberDynamicImportRecovery();
+      unregisterSW().then(() => location.reload()).catch(() => location.reload());
+      return;
+    }
+
     setError(error);
     setComponentStack(info.componentStack);
 
@@ -188,3 +229,4 @@ function SiteErrorBoundaryLink({ href, children }: ISiteErrorBoundaryLink) {
 }
 
 export default SiteErrorBoundary;
+export { isDynamicImportError };

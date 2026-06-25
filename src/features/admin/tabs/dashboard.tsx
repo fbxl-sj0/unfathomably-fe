@@ -115,6 +115,13 @@ const Dashboard: React.FC = () => {
           />
         )}
 
+        {account.admin && (
+          <ListItem
+            to='/soapbox/admin/federation-health'
+            label={<FormattedMessage id='column.admin.federation_health' defaultMessage='Federation health' />}
+          />
+        )}
+
         {features.ditto && (
           <ListItem
             to='/soapbox/admin/zap-split'
