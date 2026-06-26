@@ -14,6 +14,7 @@ import externalLinkIcon from '@tabler/icons/outline/external-link.svg';
 import flagIcon from '@tabler/icons/outline/flag.svg';
 import gavelIcon from '@tabler/icons/outline/gavel.svg';
 import heartIcon from '@tabler/icons/outline/heart.svg';
+import languageIcon from '@tabler/icons/outline/language.svg';
 import lockIcon from '@tabler/icons/outline/lock.svg';
 import mailIcon from '@tabler/icons/outline/mail.svg';
 import messageCircleIcon from '@tabler/icons/outline/message-circle.svg';
@@ -41,7 +42,7 @@ import { openModal } from '@/actions/modals.ts';
 import { deleteStatusModal, toggleStatusSensitivityModal } from '@/actions/moderation.tsx';
 import { initMuteModal } from '@/actions/mutes.ts';
 import { initReport, ReportableEntities } from '@/actions/reports.ts';
-import { deleteStatus, editStatus, toggleMuteStatus } from '@/actions/statuses.ts';
+import { deleteStatus, editStatus, toggleMuteStatus, translateStatus, undoStatusTranslation } from '@/actions/statuses.ts';
 import { deleteFromTimelines } from '@/actions/timelines.ts';
 import { useDeleteGroupStatus } from '@/api/hooks/groups/useDeleteGroupStatus.ts';
 import { useBlockGroupMember, useBookmark, useGroup, useGroupRelationship, useMuteGroup, useUnmuteGroup } from '@/api/hooks/index.ts';
@@ -52,6 +53,7 @@ import HStack from '@/components/ui/hstack.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useFeatures } from '@/hooks/useFeatures.ts';
+import { useInstance } from '@/hooks/useInstance.ts';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
 import { useReblog } from '@/hooks/useReblog.ts';
 import { useSettings } from '@/hooks/useSettings.ts';
@@ -59,6 +61,7 @@ import { GroupRoles } from '@/schemas/group-member.ts';
 import { Status as StatusEntity } from '@/schemas/index.ts';
 import toast from '@/toast.tsx';
 import copy from '@/utils/copy.ts';
+import { getStatusTranslationAvailability } from '@/utils/status-translation.ts';
 
 import GroupPopover from './groups/popover/group-popover.tsx';
 
@@ -139,6 +142,8 @@ const messages = defineMessages({
   replyMessage: { id: 'confirmations.reply.message', defaultMessage: 'Replying now will overwrite the message you are currently composing. Are you sure you want to proceed?' },
   report: { id: 'status.report', defaultMessage: 'Report @{name}' },
   share: { id: 'status.share', defaultMessage: 'Share' },
+  showOriginal: { id: 'status.show_original', defaultMessage: 'Show original' },
+  translate: { id: 'status.translate', defaultMessage: 'Translate' },
   unbookmark: { id: 'status.unbookmark', defaultMessage: 'Remove bookmark' },
   unmuteConversation: { id: 'status.unmute_conversation', defaultMessage: 'Unmute Conversation' },
   unmuteGroup: { id: 'group.unmute.long_label', defaultMessage: 'Unmute Group' },
@@ -177,6 +182,7 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
   const me = useAppSelector(state => state.me);
   const { groupRelationship } = useGroupRelationship(status.group?.id);
   const features = useFeatures();
+  const { instance } = useInstance();
   const { boostModal, deleteModal } = useSettings();
 
   const { account } = useOwnAccount();
@@ -185,6 +191,13 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
 
   const { toggleReblog } = useReblog();
   const { bookmark, unbookmark } = useBookmark();
+
+  const {
+    allow_remote: allowRemoteTranslation,
+    allow_unauthenticated: allowUnauthenticatedTranslation,
+    source_languages: sourceLanguages,
+    target_languages: targetLanguages,
+  } = instance.pleroma.metadata.translation;
 
   if (!status) {
     return null;
@@ -398,6 +411,14 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
     copy(uri);
   };
 
+  const handleTranslateClick: React.EventHandler<React.MouseEvent> = () => {
+    if (status.translation) {
+      dispatch(undoStatusTranslation(status.id));
+    } else {
+      dispatch(translateStatus(status.id, manualTranslation.targetLanguage));
+    }
+  };
+
   const onModerate: React.MouseEventHandler = (e) => {
     const account = status.account;
     dispatch(openModal('ACCOUNT_MODERATION', { accountId: account.id }));
@@ -484,6 +505,14 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
         icon: externalLinkIcon,
         href: externalNostrUrl || status.uri,
         target: '_blank',
+      });
+    }
+
+    if (manualTranslation.canTranslate) {
+      menu.push({
+        text: intl.formatMessage(status.translation ? messages.showOriginal : messages.translate),
+        action: handleTranslateClick,
+        icon: languageIcon,
       });
     }
 
@@ -685,6 +714,17 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
   const favouriteCount = status.favourites_count;
 
   const emojiReactCount = status.reactions?.reduce((acc, reaction) => acc + (reaction.count ?? 0), 0) ?? 0; // allow all emojis
+  const manualTranslation = getStatusTranslationAvailability({
+    allowRemote: allowRemoteTranslation,
+    allowUnauthenticated: allowUnauthenticatedTranslation,
+    featuresEnabled: features.translations,
+    locale: intl.locale,
+    manual: true,
+    me,
+    sourceLanguages,
+    status,
+    targetLanguages,
+  });
 
   const meEmojiReact = status.reactions?.find((emojiReact) => emojiReact.me) // allow all emojis
   ?? (

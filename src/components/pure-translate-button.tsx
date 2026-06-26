@@ -10,6 +10,7 @@ import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useFeatures } from '@/hooks/useFeatures.ts';
 import { useInstance } from '@/hooks/useInstance.ts';
 import { Status as StatusEntity } from '@/schemas/index.ts';
+import { getStatusTranslationAvailability } from '@/utils/status-translation.ts';
 
 interface IPureTranslateButton {
   status: StatusEntity;
@@ -26,16 +27,21 @@ const PureTranslateButton: React.FC<IPureTranslateButton> = ({ status }) => {
   const {
     allow_remote: allowRemote,
     allow_unauthenticated: allowUnauthenticated,
-    source_languages: sourceLanguages,
     target_languages: targetLanguages,
+    source_languages: sourceLanguages,
   } = instance.pleroma.metadata.translation;
 
   const sourceLanguage = status.language;
-  const targetLanguage = getTargetLanguage(intl.locale, targetLanguages);
-  const hasTranslatableSource = sourceLanguage ? targetLanguage !== sourceLanguage : !status.account.local;
-  const renderTranslate = (me || allowUnauthenticated) && (allowRemote || status.account.local) && ['public', 'unlisted'].includes(status.visibility) && status.content.length > 0 && hasTranslatableSource;
-
-  const supportsLanguages = (!sourceLanguage || !sourceLanguages || sourceLanguages.includes(sourceLanguage)) && !!targetLanguage;
+  const { canTranslate, targetLanguage } = getStatusTranslationAvailability({
+    allowRemote,
+    allowUnauthenticated,
+    featuresEnabled: features.translations,
+    locale: intl.locale,
+    me,
+    sourceLanguages,
+    status,
+    targetLanguages,
+  });
 
   const handleTranslate: React.MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
@@ -47,7 +53,7 @@ const PureTranslateButton: React.FC<IPureTranslateButton> = ({ status }) => {
     }
   };
 
-  if (!features.translations || !renderTranslate || !supportsLanguages) return null;
+  if (!canTranslate) return null;
 
   if (status.translation) {
     const languageNames = new Intl.DisplayNames([intl.locale], { type: 'language' });
@@ -91,16 +97,6 @@ const getLanguageName = (languageNames: Intl.DisplayNames, language?: string | n
   } catch (_e) {
     return language;
   }
-};
-
-const getTargetLanguage = (locale: string, targetLanguages?: string[] | null): string | undefined => {
-  if (!targetLanguages) return locale;
-  if (targetLanguages.includes(locale)) return locale;
-
-  const baseLocale = locale.split('-')[0];
-  if (targetLanguages.includes(baseLocale)) return baseLocale;
-
-  return undefined;
 };
 
 export default PureTranslateButton;
