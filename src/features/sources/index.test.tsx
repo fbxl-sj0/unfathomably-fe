@@ -6,16 +6,16 @@
 
   Purpose:
 
-    Prove source list rows stay collapsed until the user explicitly opens them.
+    Prove feed list rows stay collapsed until the user explicitly opens them.
 
   Responsibilities:
 
-    * keep source previews unmounted by default
+    * keep feed previews unmounted by default
     * expose an accessible expand and collapse control
 
   This file intentionally does NOT contain:
 
-    * source search list pagination tests
+    * feed search list pagination tests
     * backend API mocks
     * native item card layout assertions
 */
@@ -43,6 +43,14 @@ vi.mock('@/components/ui/avatar.tsx', () => ({
   default: () => <div data-testid='source-avatar' />,
 }));
 
+vi.mock('@/components/scrollable-list.tsx', () => ({
+  default: (props: { children?: React.ReactNode }) => (
+    <div data-testid='sources-list'>
+      {props.children}
+    </div>
+  ),
+}));
+
 vi.mock('./source-items-preview.tsx', () => ({
   default: () => <div data-testid='source-preview' />,
 }));
@@ -54,6 +62,10 @@ const sourceMutationMock = {
 };
 
 beforeEach(() => {
+  window.localStorage.clear();
+  sourceMutationMock.invalidate.mockClear();
+  sourceMutationMock.mutate.mockClear();
+
   useSourcesMock.mockReturnValue({
     fetchNextPage: vi.fn(),
     hasNextPage: false,
@@ -64,14 +76,53 @@ beforeEach(() => {
 });
 
 describe('Sources', () => {
-  it('labels the source search field', () => {
+  it('labels the feed search field', () => {
     render(
       <IntlProvider locale='en'>
         <Sources />
       </IntlProvider>,
     );
 
-    expect(screen.getByLabelText('Search sources or paste an actor URL')).toBeInTheDocument();
+    expect(screen.getByLabelText('Search feeds or paste a feed/actor URL')).toBeInTheDocument();
+  });
+
+  it('filters visible feed rows by type and automated actor status', async () => {
+    const user = userEvent.setup();
+
+    useSourcesMock.mockReturnValue({
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      invalidate: vi.fn(),
+      isLoading: false,
+      sources: [
+        rssSourceFixture,
+        applicationSourceFixture,
+        librarySourceFixture,
+      ],
+    } as unknown as ReturnType<typeof useSources>);
+
+    render(
+      <IntlProvider locale='en'>
+        <Sources />
+      </IntlProvider>,
+    );
+
+    expect(screen.getByText('Zero Hedge RSS')).toBeInTheDocument();
+    expect(screen.getByText('Build Bot')).toBeInTheDocument();
+    expect(screen.getByText('Funkwhale Library')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /RSS/ }));
+
+    expect(screen.getByText('Zero Hedge RSS')).toBeInTheDocument();
+    expect(screen.queryByText('Build Bot')).not.toBeInTheDocument();
+    expect(screen.queryByText('Funkwhale Library')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /All/ }));
+    await user.click(screen.getByRole('checkbox', { name: 'Hide bots and services' }));
+
+    expect(screen.getByText('Zero Hedge RSS')).toBeInTheDocument();
+    expect(screen.queryByText('Build Bot')).not.toBeInTheDocument();
+    expect(screen.getByText('Funkwhale Library')).toBeInTheDocument();
   });
 });
 
@@ -85,21 +136,21 @@ describe('SourceListItem', () => {
       </IntlProvider>,
     );
 
-    const expandButton = screen.getByRole('button', { name: 'Expand source' });
+    const expandButton = screen.getByRole('button', { name: 'Expand feed' });
 
     expect(expandButton).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByTestId('source-preview')).not.toBeInTheDocument();
 
     await user.click(expandButton);
 
-    const collapseButton = screen.getByRole('button', { name: 'Collapse source' });
+    const collapseButton = screen.getByRole('button', { name: 'Collapse feed' });
 
     expect(collapseButton).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByTestId('source-preview')).toBeInTheDocument();
 
     await user.click(collapseButton);
 
-    expect(screen.getByRole('button', { name: 'Expand source' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Expand feed' })).toHaveAttribute(
       'aria-expanded',
       'false',
     );
@@ -108,6 +159,7 @@ describe('SourceListItem', () => {
 });
 
 const sourceFixture = {
+  actor_type: 'Person',
   acct: 'library@audio.example',
   avatar: '',
   capabilities: ['follow library', 'preview tracks'],
@@ -122,6 +174,30 @@ const sourceFixture = {
   },
   source_profile: 'library',
   url: 'https://audio.example/library',
+} as Source;
+
+const rssSourceFixture = {
+  ...sourceFixture,
+  acct: 'zerohedge@example.com',
+  display_name: 'Zero Hedge RSS',
+  id: 'source-rss',
+  source_profile: 'rss_feed',
+  url: 'https://cms.zerohedge.com/fullrss2.xml',
+} as Source;
+
+const applicationSourceFixture = {
+  ...sourceFixture,
+  actor_type: 'Service',
+  acct: 'buildbot@example.com',
+  display_name: 'Build Bot',
+  id: 'source-application',
+  source_profile: 'application_source',
+  url: 'https://example.com/buildbot',
+} as Source;
+
+const librarySourceFixture = {
+  ...sourceFixture,
+  id: 'source-library',
 } as Source;
 
 /* end of src/features/sources/index.test.tsx */

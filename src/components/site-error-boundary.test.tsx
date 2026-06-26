@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isDynamicImportError } from './site-error-boundary.tsx';
+import { isDynamicImportError } from '@/utils/errors.ts';
 
 describe('isDynamicImportError', () => {
   it('detects browser chunk loading failures', () => {

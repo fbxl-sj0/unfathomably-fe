@@ -3,13 +3,13 @@
   File: src/features/sources/feed.tsx
 
   Purpose:
-    Show the root posts from followed federated sources as a normal timeline.
+    Show the root posts from followed federated feeds as a normal timeline.
 
   Responsibilities:
-    Load the source feed timeline and render it with the shared status UI.
+    Load the feed timeline and render it with the shared status UI.
 
   This file intentionally does NOT contain:
-    Source discovery, source follow management, or native preview item cards.
+    Feed discovery, follow management, or native preview item cards.
 */
 
 import { useEffect } from 'react';
@@ -56,14 +56,14 @@ const SourcesFeed: React.FC = () => {
               <Text size='xl' weight='medium' align='center'>
                 <FormattedMessage
                   id='empty_column.sources_feed.title'
-                  defaultMessage='No source posts yet'
+                  defaultMessage='No feed posts yet'
                 />
               </Text>
 
               <Text theme='muted' align='center'>
                 <FormattedMessage
                   id='empty_column.sources_feed.subtitle'
-                  defaultMessage='Follow sources to build a feed of root posts.'
+                  defaultMessage='Follow feeds to build this timeline.'
                 />
               </Text>
             </Stack>

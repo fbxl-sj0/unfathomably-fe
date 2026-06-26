@@ -7,7 +7,7 @@ import type { Source, SourceRelationship } from '@/schemas/index.ts';
 function useFollowSource(source: Source) {
   const { createEntity, isSubmitting } = useEntityActions<SourceRelationship>(
     [Entities.SOURCE_RELATIONSHIPS, source.id],
-    { post: `/api/v1/sources/${source.id}/follow` },
+    { post: `/api/v1/feeds/${source.id}/follow` },
     { schema: sourceRelationshipSchema },
   );
 

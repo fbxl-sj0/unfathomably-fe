@@ -47,7 +47,7 @@ const messages = defineMessages({
   bubble: { id: 'column.bubble', defaultMessage: 'Bubble' },
   catchup: { id: 'column.catchup', defaultMessage: 'Catch-up' },
   lists: { id: 'column.lists', defaultMessage: 'Lists' },
-  sources: { id: 'column.sources', defaultMessage: 'Sources' },
+  sources: { id: 'column.sources', defaultMessage: 'Feeds' },
   events: { id: 'column.events', defaultMessage: 'Events' },
   developers: { id: 'navigation.developers', defaultMessage: 'Developers' },
 });
@@ -159,16 +159,18 @@ const SidebarNavigation = () => {
   };
 
   return (
-    <Stack justifyContent='between' className='min-h-screen py-6'>
-      <Stack space={6}>
-        <Link key='logo' to='/' data-preview-title-id='column.home' className='ml-4 flex shrink-0 items-center'>
-          <SiteLogo alt='Logo' className='h-10 w-auto cursor-pointer' />
+    <Stack justifyContent='between' className='sidebar-navigation min-h-screen py-6'>
+      <Stack className='sidebar-navigation__primary gap-6'>
+        <Link key='logo' to='/' data-preview-title-id='column.home' className='sidebar-navigation__logo ml-4 flex shrink-0 items-center'>
+          <SiteLogo alt='Logo' className='sidebar-navigation__logo-image h-10 w-auto cursor-pointer' />
           <span className='hidden'><FormattedMessage id='tabs_bar.home' defaultMessage='Home' /></span>
         </Link>
 
-        <Search openInRoute autosuggest />
+        <div className='sidebar-navigation__search'>
+          <Search openInRoute autosuggest />
+        </div>
 
-        <Stack space={2}>
+        <Stack className='sidebar-navigation__links gap-2'>
           <SidebarNavigationLink
             to='/'
             icon={homeIcon}
@@ -216,9 +218,9 @@ const SidebarNavigation = () => {
 
               {features.sources && (
                 <SidebarNavigationLink
-                  to='/sources'
+                  to='/feeds'
                   icon={rssIcon}
-                  text={<FormattedMessage id='tabs_bar.sources' defaultMessage='Sources' />}
+                  text={<FormattedMessage id='tabs_bar.sources' defaultMessage='Feeds' />}
                 />
               )}
             </>)}
@@ -273,12 +275,14 @@ const SidebarNavigation = () => {
         </Stack>
 
         {account && (
-          <ComposeButton />
+          <div className='sidebar-navigation__compose'>
+            <ComposeButton />
+          </div>
         )}
       </Stack>
 
       {account && (
-        <div className='mt-12'>
+        <div className='sidebar-navigation__profile mt-12'>
           <ProfileDropdown account={account} placement='top'>
             <div className='w-full p-2'>
               <Account account={account} showProfileHoverCard={false} withLinkToProfile={false} hideActions />

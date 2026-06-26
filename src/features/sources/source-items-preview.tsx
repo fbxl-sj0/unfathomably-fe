@@ -3,13 +3,13 @@
   File: source-items-preview.tsx
 
   Purpose:
-    Show native preview items for remote ActivityPub sources.
+    Show native preview items for remote ActivityPub feeds.
 
   Responsibilities:
     Render compact collection items such as Funkwhale audio tracks.
 
   This file intentionally does NOT contain:
-    Source discovery, follow state management, or backend normalization.
+    Feed discovery, follow state management, or backend normalization.
 */
 
 import React from 'react';
@@ -30,7 +30,6 @@ interface ISourceItemsPreview {
 }
 
 const previewableProfiles = new Set([
-  'activitypub_profile',
   'application_source',
   'blog_publisher',
   'collection_channel',
@@ -71,7 +70,7 @@ const SourceItemsPreview: React.FC<ISourceItemsPreview> = ({ source }) => {
       <div className='source-items-preview text-sm text-gray-500 dark:text-gray-400'>
         <FormattedMessage
           id='sources.preview.unavailable'
-          defaultMessage='Native preview is unavailable because the remote source did not return usable ActivityPub data.'
+          defaultMessage='Native preview is unavailable because the remote feed did not return usable ActivityPub data.'
         />
       </div>
     );
@@ -80,7 +79,7 @@ const SourceItemsPreview: React.FC<ISourceItemsPreview> = ({ source }) => {
   if (!data?.items.length) {
     return (
       <div className='source-items-preview text-sm text-gray-500 dark:text-gray-400'>
-        <FormattedMessage id='sources.preview.empty' defaultMessage='No native preview items are available yet.' />
+        <FormattedMessage id='sources.preview.empty' defaultMessage='No native feed items are available yet.' />
       </div>
     );
   }

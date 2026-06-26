@@ -11,6 +11,17 @@ type Errors = {
   [key: string]: string[];
 }
 
+const CHUNK_RECOVERY_KEY = 'soapbox:chunk-load-recovery';
+const CHUNK_RECOVERY_COOLDOWN_MS = 5 * 60 * 1000;
+
+const DYNAMIC_IMPORT_ERROR_PATTERNS = [
+  /Failed to fetch dynamically imported module/i,
+  /error loading dynamically imported module/i,
+  /Importing a module script failed/i,
+  /ChunkLoadError/i,
+  /Loading chunk \d+ failed/i,
+];
+
 const buildErrorMessage = (errors: Errors) => {
   const individualErrors = Object.keys(errors).map(
     (attribute) => `${startCase(camelCase(attribute))} ${toSentence(
@@ -200,10 +211,42 @@ const httpErrorMessages: { code: number; name: string; description: string }[] =
 ];
 
 /** Whether the error is caused by a JS chunk failing to load. */
-function isNetworkError(error: unknown): boolean {
-  return error instanceof Error
-    && error.name === 'TypeError'
-    && error.message.startsWith('Failed to fetch dynamically imported module: ');
+function isDynamicImportError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return DYNAMIC_IMPORT_ERROR_PATTERNS.some(pattern => pattern.test(message));
 }
 
-export { buildErrorMessage, httpErrorMessages, isNetworkError };
+/** Whether the browser should try a one-time automatic chunk load recovery. */
+function canRecoverFromDynamicImportError(): boolean {
+  try {
+    const lastRecovery = Number(window.sessionStorage.getItem(CHUNK_RECOVERY_KEY) || 0);
+
+    return !lastRecovery || Date.now() - lastRecovery > CHUNK_RECOVERY_COOLDOWN_MS;
+  } catch {
+    return false;
+  }
+}
+
+/** Remember that the browser has already tried automatic chunk recovery recently. */
+function rememberDynamicImportRecovery(): void {
+  try {
+    window.sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(Date.now()));
+  } catch {
+    // If session storage is unavailable, skip the guard rather than failing the recovery path.
+  }
+}
+
+/** Whether the route error column can display a retry affordance. */
+function isNetworkError(error: unknown): boolean {
+  return isDynamicImportError(error);
+}
+
+export {
+  buildErrorMessage,
+  canRecoverFromDynamicImportError,
+  httpErrorMessages,
+  isDynamicImportError,
+  isNetworkError,
+  rememberDynamicImportRecovery,
+};

@@ -5,7 +5,10 @@ import { Link, useParams } from 'react-router-dom';
 import { fetchAboutPage } from '@/actions/about.ts';
 import { Navlinks } from '@/components/navlinks.tsx';
 import { Card } from '@/components/ui/card.tsx';
+import Stack from '@/components/ui/stack.tsx';
+import Text from '@/components/ui/text.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
+import { useInstance } from '@/hooks/useInstance.ts';
 import { useSettings } from '@/hooks/useSettings.ts';
 import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
 
@@ -16,6 +19,7 @@ const AboutPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { slug } = useParams<{ slug?: string }>();
 
+  const { instance } = useInstance();
   const settings = useSettings();
   const soapboxConfig = useSoapboxConfig();
 
@@ -27,8 +31,14 @@ const AboutPage: React.FC = () => {
   const page = aboutPages.get(slug || 'about');
   const defaultLocale = page?.get('default') as string | undefined;
   const pageLocales = page?.get('locales', []) as string[];
+  const showDefaultAbout = !page && (!slug || slug === 'about');
 
   useEffect(() => {
+    if (!page) {
+      setPageHtml('');
+      return;
+    }
+
     const fetchLocale = Boolean(page && locale !== defaultLocale && pageLocales.includes(locale));
     dispatch(fetchAboutPage(slug, fetchLocale ? locale : undefined)).then(html => {
       setPageHtml(html);
@@ -36,7 +46,7 @@ const AboutPage: React.FC = () => {
       // TODO: Better error handling. 404 page?
       setPageHtml('<h1>Page not found</h1>');
     });
-  }, [locale, slug]);
+  }, [locale, slug, page, defaultLocale, pageLocales]);
 
   const alsoAvailable = (defaultLocale) && (
     <div>
@@ -71,7 +81,25 @@ const AboutPage: React.FC = () => {
     <div>
       <Card>
         <div className='prose mx-auto py-4 dark:prose-invert sm:p-6'>
-          <div dangerouslySetInnerHTML={{ __html: pageHtml }} />
+          {showDefaultAbout ? (
+            <Stack space={4}>
+              <Text size='xl' weight='semibold'>{instance.title}</Text>
+
+              {instance.description && (
+                <Text theme='muted'>{instance.description}</Text>
+              )}
+
+              <Text theme='muted'>
+                <FormattedMessage
+                  id='about.default_missing'
+                  defaultMessage='This server has not published a custom about page yet.'
+                />
+              </Text>
+            </Stack>
+          ) : (
+            <div dangerouslySetInnerHTML={{ __html: pageHtml || '<h1>Page not found</h1>' }} />
+          )}
+
           {alsoAvailable}
         </div>
       </Card>

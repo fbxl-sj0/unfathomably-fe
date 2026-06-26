@@ -58,7 +58,7 @@ const messages = defineMessages({
   bookmarks: { id: 'column.bookmarks', defaultMessage: 'Bookmarks' },
   lists: { id: 'column.lists', defaultMessage: 'Lists' },
   groups: { id: 'column.groups', defaultMessage: 'Groups' },
-  sources: { id: 'column.sources', defaultMessage: 'Sources' },
+  sources: { id: 'column.sources', defaultMessage: 'Feeds' },
   events: { id: 'column.events', defaultMessage: 'Events' },
   invites: { id: 'navigation_bar.invites', defaultMessage: 'Invites' },
   developers: { id: 'navigation.developers', defaultMessage: 'Developers' },
@@ -255,7 +255,7 @@ const SidebarMenu: React.FC = (): JSX.Element | null => {
 
                   {features.sources && (
                     <SidebarLink
-                      to='/sources'
+                      to='/feeds'
                       icon={rssIcon}
                       text={intl.formatMessage(messages.sources)}
                       onClick={onClose}

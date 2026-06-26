@@ -342,6 +342,8 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
 
         {features.groups && <WrappedRoute path='/groups' exact page={GroupsPage} component={GroupsDefault} content={children} />}
         {features.groups && <WrappedRoute path='/groups/my' exact page={GroupsPage} component={Groups} content={children} />}
+        <WrappedRoute path='/feeds' exact page={DefaultPage} component={Sources} content={children} />
+        <WrappedRoute path='/feeds/feed' exact page={DefaultPage} component={SourcesFeed} content={children} />
         <WrappedRoute path='/sources' exact page={DefaultPage} component={Sources} content={children} />
         <WrappedRoute path='/sources/feed' exact page={DefaultPage} component={SourcesFeed} content={children} />
         {features.groups && <WrappedRoute path='/groups/feed' exact page={GroupsPage} component={GroupsFeed} content={children} />}
@@ -588,7 +590,7 @@ const UI: React.FC<IUI> = ({ children }) => {
           />
 
           <div className='z-10 flex min-h-screen flex-col'>
-            <div className='sticky top-0 z-50 lg:hidden'>
+            <div className='mobile-header sticky top-0 z-50'>
               <Navbar />
             </div>
 
@@ -603,7 +605,7 @@ const UI: React.FC<IUI> = ({ children }) => {
             </Layout>
 
             {(me && !shouldHideFAB()) && (
-              <div className='fixed bottom-24 right-4 z-40 transition-all lg:hidden rtl:left-4 rtl:right-auto'>
+              <div className='mobile-action fixed bottom-24 right-4 z-40 transition-all rtl:left-4 rtl:right-auto'>
                 <FloatingActionButton />
               </div>
             )}
@@ -615,7 +617,7 @@ const UI: React.FC<IUI> = ({ children }) => {
             )}
 
             {me && features.chats && (
-              <div className='hidden xl:block'>
+              <div className='desktop-chat-widget'>
                 <Suspense fallback={<div className='fixed bottom-0 z-[99] flex h-16 w-96 animate-pulse flex-col rounded-t-lg bg-white shadow-3xl dark:bg-gray-900 ltr:right-5 rtl:left-5' />}>
                   <ChatWidget />
                 </Suspense>

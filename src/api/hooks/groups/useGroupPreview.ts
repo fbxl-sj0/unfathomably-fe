@@ -28,6 +28,31 @@ const emptyGroupPreview: SourceItemsEnvelope = {
   total_items: null,
 };
 
+const parseGroupPreviewEnvelope = (data: unknown): SourceItemsEnvelope => {
+  const result = sourceItemsEnvelopeSchema.safeParse(data);
+
+  if (result.success) {
+    return result.data;
+  }
+
+  /*
+    Group previews are produced by unfathomably-be. If a deployed backend adds
+    harmless fields before the frontend schema is updated, keep the preview
+    usable instead of replacing the group page with an unavailable message.
+  */
+  if (data && typeof data === 'object' && Array.isArray((data as SourceItemsEnvelope).items)) {
+    const envelope = data as SourceItemsEnvelope;
+
+    return {
+      items: envelope.items,
+      next: typeof envelope.next === 'string' ? envelope.next : null,
+      total_items: typeof envelope.total_items === 'number' ? envelope.total_items : null,
+    };
+  }
+
+  return emptyGroupPreview;
+};
+
 function useGroupPreview(groupId: string | undefined, opts: UseGroupPreviewOpts = {}) {
   const api = useApi();
   const limit = opts.limit ?? 6;
@@ -40,7 +65,7 @@ function useGroupPreview(groupId: string | undefined, opts: UseGroupPreviewOpts 
     });
 
     const data = await response.json();
-    return sourceItemsEnvelopeSchema.parse(data);
+    return parseGroupPreviewEnvelope(data);
   };
 
   return useQuery<SourceItemsEnvelope>({

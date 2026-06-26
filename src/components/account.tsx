@@ -167,7 +167,7 @@ const Account = ({
         <HStack alignItems={withAccountNote || note ? 'top' : 'center'} space={3} className='overflow-hidden'>
           <ProfilePopper
             condition={showProfileHoverCard}
-            wrapper={(children) => <HoverRefWrapper className='relative' accountId={account.id} inline>{children}</HoverRefWrapper>}
+            wrapper={(children) => <HoverRefWrapper className='relative z-[2]' accountId={account.id} inline>{children}</HoverRefWrapper>}
           >
             <LinkEl className='rounded-full' {...linkProps}>
               <Avatar src={account.avatar} size={avatarSize} />

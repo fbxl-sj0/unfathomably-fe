@@ -1,5 +1,5 @@
 import { List as ImmutableList } from 'immutable';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { FormattedMessage } from 'react-intl';
 
 import { openModal } from '@/actions/modals.ts';
@@ -19,15 +19,18 @@ interface IGroupMediaPanel {
   group?: Group;
 }
 
+const GROUP_MEDIA_PANEL_DELAY = 3500;
+
 const GroupMediaPanel: React.FC<IGroupMediaPanel> = ({ group }) => {
   const dispatch = useAppDispatch();
-
-  const [loading, setLoading] = useState(true);
 
   const isMember = !!group?.relationship?.member;
   const isPrivate = group?.locked;
 
   const attachments: ImmutableList<Attachment> = useAppSelector((state) => group ? getGroupGallery(state, group?.id) : ImmutableList());
+  const timeline = useAppSelector((state) => group ? state.timelines.get(`group:${group.id}:media`) : undefined);
+  const loading = !!timeline?.isLoading && attachments.size === 0;
+  const hasLoaded = attachments.size > 0 || timeline?.hasMore === false || timeline?.loadingFailed;
 
   const handleOpenMedia = (attachment: Attachment): void => {
     if (attachment.type === 'video') {
@@ -41,15 +44,14 @@ const GroupMediaPanel: React.FC<IGroupMediaPanel> = ({ group }) => {
   };
 
   useEffect(() => {
-    setLoading(true);
+    if (group && !group.deleted_at && (isMember || !isPrivate) && !timeline?.isLoading && !hasLoaded) {
+      const timeout = window.setTimeout(() => {
+        dispatch(expandGroupMediaTimeline(group.id));
+      }, GROUP_MEDIA_PANEL_DELAY);
 
-    if (group && !group.deleted_at && (isMember || !isPrivate)) {
-      dispatch(expandGroupMediaTimeline(group.id))
-      // @ts-ignore
-        .then(() => setLoading(false))
-        .catch(() => {});
+      return () => window.clearTimeout(timeout);
     }
-  }, [group?.id, isMember, isPrivate]);
+  }, [group?.id, dispatch, hasLoaded, isMember, isPrivate, timeline?.isLoading]);
 
   const renderAttachments = () => {
     const nineAttachments = attachments.slice(0, 9);

@@ -3,6 +3,7 @@ import deviceDesktopIcon from '@tabler/icons/outline/device-desktop.svg';
 import moonIcon from '@tabler/icons/outline/moon.svg';
 import shadowIcon from '@tabler/icons/outline/shadow.svg';
 import sunIcon from '@tabler/icons/outline/sun.svg';
+import clsx from 'clsx';
 import { useMemo } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 
@@ -16,13 +17,13 @@ const messages = defineMessages({
   system: { id: 'theme_toggle.system', defaultMessage: 'System' },
 });
 
-interface IThemeSelector {
+interface IThemeSelector extends Pick<React.SelectHTMLAttributes<HTMLSelectElement>, 'id' | 'name' | 'className'> {
   value: string;
   onChange: (value: string) => void;
 }
 
 /** Pure theme selector. */
-const ThemeSelector: React.FC<IThemeSelector> = ({ value, onChange }) => {
+const ThemeSelector: React.FC<IThemeSelector> = ({ id, name, className, value, onChange }) => {
   const intl = useIntl();
 
   const themeIconSrc = useMemo(() => {
@@ -52,9 +53,11 @@ const ThemeSelector: React.FC<IThemeSelector> = ({ value, onChange }) => {
         </div>
 
         <Select
+          id={id}
+          name={name}
           onChange={handleChange}
           defaultValue={value}
-          className='!pl-10'
+          className={clsx('!pl-10', className)}
         >
           <option value='system'>{intl.formatMessage(messages.system)}</option>
           <option value='light'>{intl.formatMessage(messages.light)}</option>

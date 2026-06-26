@@ -122,6 +122,7 @@ const GroupPage: React.FC<IGroupPage> = ({ params, children }) => {
   const isBlocked = group?.relationship?.blocked_by;
   const isPrivate = group?.locked;
   const isDeleted = !!group?.deleted_at;
+  const showGroupMediaPanel = !match.path.endsWith('/media');
 
   const tabItems = useMemo(() => {
     const items = [];
@@ -192,7 +193,7 @@ const GroupPage: React.FC<IGroupPage> = ({ params, children }) => {
         {!me && (
           <SignUpPanel />
         )}
-        <GroupMediaPanel group={group} />
+        {showGroupMediaPanel && <GroupMediaPanel group={group} />}
         <SuggestedGroupsPanel />
         <LinkFooter />
       </Layout.Aside>

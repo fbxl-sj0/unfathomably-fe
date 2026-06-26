@@ -7,7 +7,7 @@ import type { Source, SourceRelationship } from '@/schemas/index.ts';
 function useUnfollowSource(source: Source) {
   const { createEntity, isSubmitting } = useEntityActions<SourceRelationship>(
     [Entities.SOURCE_RELATIONSHIPS, source.id],
-    { post: `/api/v1/sources/${source.id}/unfollow` },
+    { post: `/api/v1/feeds/${source.id}/unfollow` },
     { schema: sourceRelationshipSchema },
   );
 

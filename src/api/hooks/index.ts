@@ -44,7 +44,7 @@ export { useUnmuteGroup } from './groups/useUnmuteGroup.ts';
 export { useUpdateGroup } from './groups/useUpdateGroup.ts';
 export { useUpdateGroupTag } from './groups/useUpdateGroupTag.ts';
 
-// Sources
+// Feeds
 export { useFollowSource } from './sources/useFollowSource.ts';
 export { useSources } from './sources/useSources.ts';
 export { useUnfollowSource } from './sources/useUnfollowSource.ts';

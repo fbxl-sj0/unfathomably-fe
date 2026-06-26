@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useId, useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 
 import { useLocale } from '@/hooks/useLocale.ts';
@@ -57,6 +57,8 @@ const Textarea = forwardRef(({
   const length = value?.length || 0;
   const [rows, setRows] = useState<number>(autoGrow ? minRows : initialRows);
   const locale = useLocale();
+  const generatedId = useId();
+  const textareaId = props.id || `textarea-${generatedId}`;
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (autoGrow) {
@@ -87,6 +89,7 @@ const Textarea = forwardRef(({
     <Stack space={1.5}>
       <textarea
         {...props}
+        id={textareaId}
         value={value}
         ref={ref}
         rows={rows}

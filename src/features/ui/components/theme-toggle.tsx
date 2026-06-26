@@ -4,8 +4,10 @@ import { useSettings } from '@/hooks/useSettings.ts';
 
 import ThemeSelector from './theme-selector.tsx';
 
+type IThemeToggle = Pick<React.SelectHTMLAttributes<HTMLSelectElement>, 'id' | 'name' | 'className'>;
+
 /** Stateful theme selector. */
-const ThemeToggle: React.FC = () => {
+const ThemeToggle: React.FC<IThemeToggle> = ({ id, name, className }) => {
   const dispatch = useAppDispatch();
   const { themeMode } = useSettings();
 
@@ -15,6 +17,9 @@ const ThemeToggle: React.FC = () => {
 
   return (
     <ThemeSelector
+      id={id}
+      name={name}
+      className={className}
       value={themeMode}
       onChange={handleChange}
     />

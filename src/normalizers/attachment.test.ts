@@ -19,4 +19,18 @@ describe('normalizeAttachment()', () => {
 
     expect(result.preview_url).toEqual('https://site.fedi/123.png');
   });
+
+  it('infers image type from remote image URLs with generic MIME types', () => {
+    const attachment = {
+      type: 'unknown',
+      url: 'https://social.example/proxy/hash/file.jpeg',
+      remote_url: 'https://lemmy.example/pictrs/image/file.jpeg',
+      pleroma: {
+        mime_type: 'application/octet-stream',
+      },
+    };
+    const result = normalizeAttachment(attachment);
+
+    expect(result.type).toEqual('image');
+  });
 });

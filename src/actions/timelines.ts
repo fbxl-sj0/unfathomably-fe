@@ -250,7 +250,7 @@ const expandGroupsTimeline = ({ url, maxId }: Record<string, any> = {}, done = n
   expandTimeline('groups:feed', url || '/api/v1/timelines/groups', url ? {} : { max_id: maxId }, done);
 
 const expandSourcesTimeline = ({ url, maxId }: Record<string, any> = {}, done = noOp) =>
-  expandTimeline('sources:feed', url || '/api/v1/timelines/sources', url ? {} : { max_id: maxId }, done);
+  expandTimeline('sources:feed', url || '/api/v1/timelines/feeds', url ? {} : { max_id: maxId }, done);
 
 const expandGroupFeaturedTimeline = (id: string) =>
   expandTimeline(`group:${id}:pinned`, `/api/v1/timelines/group/${id}`, { pinned: true });

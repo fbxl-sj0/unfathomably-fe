@@ -216,12 +216,14 @@ const Bookmarks = () => {
 
             <HStack alignItems='center' space={2} className='flex-wrap'>
               <Input
+                name='bookmark-folder-name'
                 value={folderName}
                 onChange={event => setFolderName(event.target.value)}
                 placeholder={intl.formatMessage(messages.folderNamePlaceholder)}
               />
 
               <Input
+                name='bookmark-folder-emoji'
                 value={folderEmoji}
                 onChange={event => setFolderEmoji(event.target.value)}
                 placeholder={intl.formatMessage(messages.folderEmojiPlaceholder)}
@@ -263,6 +265,7 @@ const Bookmarks = () => {
 
               <HStack alignItems='center' space={2} className='flex-wrap'>
                 <Input
+                  name='bookmark-move-status-id'
                   value={moveStatusId}
                   onChange={event => setMoveStatusId(event.target.value)}
                   placeholder={intl.formatMessage(messages.moveStatusPlaceholder)}
@@ -271,6 +274,7 @@ const Bookmarks = () => {
                 <Select
                   className='rounded-md border border-solid border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900'
                   full={false}
+                  name='bookmark-move-target-folder'
                   value={moveTargetFolderId || ''}
                   onChange={event => setMoveTargetFolderId(event.target.value || null)}
                 >

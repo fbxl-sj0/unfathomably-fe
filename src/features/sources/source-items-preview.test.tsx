@@ -6,8 +6,8 @@
 
   Purpose:
 
-    Prove remote source preview failures produce a useful UI state instead of
-    looking like an empty source or escalating into a generic application error.
+    Prove remote feed preview failures produce a useful UI state instead of
+    looking like an empty feed or escalating into a generic application error.
 
   Responsibilities:
 
@@ -17,7 +17,7 @@
   This file intentionally does NOT contain:
 
     * backend API mocks
-    * source follow state
+    * feed follow state
     * native item card layout assertions
 */
 
@@ -143,7 +143,7 @@ describe('SourceItemsPreview', () => {
 
 const sourceFixture = {
   id: 'source-1',
-  source_profile: 'activitypub_profile',
+  source_profile: 'blog_publisher',
 } as Source;
 
 /* end of src/features/sources/source-items-preview.test.tsx */

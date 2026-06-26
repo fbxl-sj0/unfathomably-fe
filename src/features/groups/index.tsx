@@ -97,6 +97,7 @@ const Groups: React.FC = () => {
 
       {features.groupsSearch ? (
         <Input
+          name='groups-search'
           onChange={(event) => setSearchValue(event.target.value)}
           placeholder={intl.formatMessage(messages.placeholder)}
           theme='search'

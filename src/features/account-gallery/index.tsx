@@ -1,7 +1,6 @@
 import { List as ImmutableList } from 'immutable';
 import { useEffect, useRef } from 'react';
 import { FormattedMessage } from 'react-intl';
-import { useParams } from 'react-router-dom';
 
 import { openModal } from '@/actions/modals.ts';
 import { expandAccountMediaTimeline } from '@/actions/timelines.ts';
@@ -18,6 +17,12 @@ import MediaItem from './components/media-item.tsx';
 
 import type { Attachment, Status } from '@/types/entities.ts';
 
+interface IAccountGallery {
+  params?: {
+    username?: string;
+  };
+}
+
 interface ILoadMoreMedia {
   maxId: string | null;
   onLoadMore: (value: string | null) => void;
@@ -33,9 +38,9 @@ const LoadMoreMedia: React.FC<ILoadMoreMedia> = ({ maxId, onLoadMore }) => {
   );
 };
 
-const AccountGallery = () => {
+const AccountGallery: React.FC<IAccountGallery> = ({ params }) => {
   const dispatch = useAppDispatch();
-  const { username } = useParams<{ username: string }>();
+  const username = params?.username || '';
 
   const {
     account,
@@ -47,6 +52,8 @@ const AccountGallery = () => {
   const isLoading = useAppSelector((state) => state.timelines.get(`account:${account?.id}:media`)?.isLoading);
   const hasMore = useAppSelector((state) => state.timelines.get(`account:${account?.id}:media`)?.hasMore);
   const next = useAppSelector(state => state.timelines.get(`account:${account?.id}:media`)?.next);
+  const loadingFailed = useAppSelector(state => state.timelines.get(`account:${account?.id}:media`)?.loadingFailed);
+  const hasLoaded = attachments.size > 0 || hasMore === false || loadingFailed;
 
   const node = useRef<HTMLDivElement>(null);
 
@@ -79,10 +86,10 @@ const AccountGallery = () => {
   };
 
   useEffect(() => {
-    if (account) {
+    if (account && !isLoading && !hasLoaded) {
       dispatch(expandAccountMediaTimeline(account.id));
     }
-  }, [account?.id]);
+  }, [account?.id, dispatch, hasLoaded, isLoading]);
 
   if (accountLoading || (!attachments && isLoading)) {
     return (

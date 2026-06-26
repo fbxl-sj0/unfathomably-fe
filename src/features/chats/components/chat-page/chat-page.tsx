@@ -88,7 +88,7 @@ const ChatPage: React.FC<IChatPage> = ({ chatId }) => {
                 <ChatPageSettings />
               </Route>
               <Route>
-                <ChatPageMain />
+                <ChatPageMain chatId={chatId} />
               </Route>
             </Switch>
           </Stack>

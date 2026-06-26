@@ -30,7 +30,7 @@ const Layout: LayoutComponent = ({ children }) => (
 
 /** Left sidebar container in the UI. */
 const Sidebar: React.FC<ISidebar> = ({ children }) => (
-  <div className='hidden lg:col-span-3 lg:block xl:col-span-2'>
+  <div className='desktop-sidebar lg:col-span-3 xl:col-span-2'>
     <StickyBox>
       {children}
     </StickyBox>
@@ -39,14 +39,14 @@ const Sidebar: React.FC<ISidebar> = ({ children }) => (
 
 /** Center column container in the UI. */
 const Main: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className, ...rest }) => (
-  <main className={clsx('border-gray-200 bg-white pb-36 black:border-gray-800 black:bg-black dark:border-gray-800 dark:bg-primary-900 sm:pb-6 md:col-span-12 lg:col-span-9 lg:border-l xl:col-span-7 xl:border-r', className)} {...rest}>
+  <main className={clsx('layout-main border-gray-200 bg-white pb-36 black:border-gray-800 black:bg-black dark:border-gray-800 dark:bg-primary-900 sm:pb-6 md:col-span-12', className)} {...rest}>
     {children}
   </main>
 );
 
 /** Right sidebar container in the UI. */
 const Aside: React.FC<IAside> = ({ children }) => (
-  <aside className='hidden xl:col-span-3 xl:block'>
+  <aside className='desktop-aside xl:col-span-3'>
     <StickyBox className='space-y-6 py-6 pb-12'>
       <Suspense>
         {children}

@@ -30,6 +30,10 @@ import Chat from '../../chat.tsx';
 import BlankslateEmpty from './blankslate-empty.tsx';
 import BlankslateWithChats from './blankslate-with-chats.tsx';
 
+interface IChatPageMain {
+  chatId?: string;
+}
+
 const messages = defineMessages({
   blockMessage: { id: 'chat_settings.block.message', defaultMessage: 'Blocking will prevent this profile from direct messaging you and viewing your content. You can unblock later.' },
   blockHeading: { id: 'chat_settings.block.heading', defaultMessage: 'Block @{acct}' },
@@ -55,21 +59,23 @@ const messages = defineMessages({
   autoDeleteMessageTooltip: { id: 'chat_window.auto_delete_tooltip', defaultMessage: 'Chat messages are set to auto-delete after {day, plural, one {# day} other {# days}} upon sending.' },
 });
 
-const ChatPageMain = () => {
+const ChatPageMain: React.FC<IChatPageMain> = ({ chatId }) => {
   const dispatch = useAppDispatch();
   const intl = useIntl();
   const features = useFeatures();
   const history = useHistory();
 
-  const { chatId } = useParams<{ chatId: string }>();
+  const { chatId: paramsChatId } = useParams<{ chatId: string }>();
+  const routeChatId = chatId || paramsChatId;
 
-  const { data: chat } = useChat(chatId);
   const { currentChatId } = useChatContext();
+  const selectedChatId = routeChatId || currentChatId || undefined;
+  const { data: chat, isLoading: chatLoading } = useChat(selectedChatId);
   const { chatsQuery: { data: chats, isLoading } } = useChats();
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const { deleteChat, updateChat } = useChatActions(chat?.id as string);
+  const { deleteChat, updateChat } = useChatActions((chat?.id || selectedChatId || '') as string);
 
   const handleUpdateChat = (value: MessageExpirationValues) => updateChat.mutate({ message_expiration: value });
 
@@ -111,15 +117,15 @@ const ChatPageMain = () => {
     }));
   };
 
-  if (isLoading) {
+  if (isLoading || (selectedChatId && chatLoading)) {
     return null;
   }
 
-  if (!currentChatId && chats && chats.length > 0) {
+  if (!selectedChatId && chats && chats.length > 0) {
     return <BlankslateWithChats />;
   }
 
-  if (!currentChatId) {
+  if (!selectedChatId) {
     return <BlankslateEmpty />;
   }
 

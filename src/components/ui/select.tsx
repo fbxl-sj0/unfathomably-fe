@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 
 interface ISelect extends React.SelectHTMLAttributes<HTMLSelectElement> {
   children: Iterable<React.ReactNode>;
@@ -9,6 +9,8 @@ interface ISelect extends React.SelectHTMLAttributes<HTMLSelectElement> {
 /** Multiple-select dropdown. */
 const Select = forwardRef<HTMLSelectElement, ISelect>((props, ref) => {
   const { children, className, full = true, ...filteredProps } = props;
+  const generatedId = useId();
+  const selectId = filteredProps.id || `select-${generatedId}`;
 
   return (
     <select
@@ -21,6 +23,7 @@ const Select = forwardRef<HTMLSelectElement, ISelect>((props, ref) => {
         },
       )}
       {...filteredProps}
+      id={selectId}
     >
       {children}
     </select>

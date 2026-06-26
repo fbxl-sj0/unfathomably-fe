@@ -1,7 +1,7 @@
 import eyeOffIcon from '@tabler/icons/outline/eye-off.svg';
 import eyeIcon from '@tabler/icons/outline/eye.svg';
 import clsx from 'clsx';
-import React, { forwardRef, useCallback, useState } from 'react';
+import React, { forwardRef, useCallback, useId, useState } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 
 import { useLocale } from '@/hooks/useLocale.ts';
@@ -54,6 +54,8 @@ const Input = forwardRef<HTMLInputElement, IInput>(
 
     const { type = 'text', icon, className, outerClassName, append, prepend, theme = 'normal', ...filteredProps } = props;
 
+    const generatedId = useId();
+    const inputId = filteredProps.id || `input-${generatedId}`;
     const [revealed, setRevealed] = useState(false);
 
     const isPassword = type === 'password';
@@ -86,6 +88,7 @@ const Input = forwardRef<HTMLInputElement, IInput>(
 
         <input
           {...filteredProps}
+          id={inputId}
           type={revealed ? 'text' : type}
           ref={ref}
           className={clsx('text-base placeholder:text-gray-600 dark:placeholder:text-gray-600', {

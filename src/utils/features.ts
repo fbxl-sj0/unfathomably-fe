@@ -1093,9 +1093,9 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
     ]),
 
     /**
-     * Can browse followable ActivityPub sources such as blogs, channels, and profiles.
-     * @see GET /api/v1/sources
-     * @see POST /api/v1/sources/:id/follow
+     * Can browse followable feeds such as RSS, blogs, channels, and libraries.
+     * @see GET /api/v1/feeds
+     * @see POST /api/v1/feeds/:id/follow
      */
     sources: features.includes('sources') || isRebasedFamily(v),
 

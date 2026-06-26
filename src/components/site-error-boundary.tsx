@@ -9,6 +9,7 @@ import Textarea from '@/components/ui/textarea.tsx';
 import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
 import { captureSentryException } from '@/sentry.ts';
 import sourceCode from '@/utils/code.ts';
+import { canRecoverFromDynamicImportError, isDynamicImportError, rememberDynamicImportRecovery } from '@/utils/errors.ts';
 import { unregisterSW } from '@/utils/sw.ts';
 
 import SiteLogo from './site-logo.tsx';
@@ -16,41 +17,6 @@ import SiteLogo from './site-logo.tsx';
 interface ISiteErrorBoundary {
   children: React.ReactNode;
 }
-
-const CHUNK_RECOVERY_KEY = 'soapbox:chunk-load-recovery';
-const CHUNK_RECOVERY_COOLDOWN_MS = 5 * 60 * 1000;
-
-const DYNAMIC_IMPORT_ERROR_PATTERNS = [
-  /Failed to fetch dynamically imported module/i,
-  /error loading dynamically imported module/i,
-  /Importing a module script failed/i,
-  /ChunkLoadError/i,
-  /Loading chunk \d+ failed/i,
-];
-
-const isDynamicImportError = (error: unknown): boolean => {
-  const message = error instanceof Error ? error.message : String(error);
-
-  return DYNAMIC_IMPORT_ERROR_PATTERNS.some(pattern => pattern.test(message));
-};
-
-const canRecoverFromDynamicImportError = (): boolean => {
-  try {
-    const lastRecovery = Number(window.sessionStorage.getItem(CHUNK_RECOVERY_KEY) || 0);
-
-    return !lastRecovery || Date.now() - lastRecovery > CHUNK_RECOVERY_COOLDOWN_MS;
-  } catch {
-    return false;
-  }
-};
-
-const rememberDynamicImportRecovery = (): void => {
-  try {
-    window.sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(Date.now()));
-  } catch {
-    // If session storage is unavailable, the reload is still useful.
-  }
-};
 
 /** Application-level error boundary. Fills the whole screen. */
 const SiteErrorBoundary: React.FC<ISiteErrorBoundary> = ({ children }) => {
@@ -229,4 +195,3 @@ function SiteErrorBoundaryLink({ href, children }: ISiteErrorBoundaryLink) {
 }
 
 export default SiteErrorBoundary;
-export { isDynamicImportError };

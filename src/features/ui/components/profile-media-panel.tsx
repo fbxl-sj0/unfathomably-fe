@@ -1,5 +1,5 @@
 import { List as ImmutableList } from 'immutable';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { FormattedMessage } from 'react-intl';
 
 import { openModal } from '@/actions/modals.ts';
@@ -23,9 +23,10 @@ interface IProfileMediaPanel {
 const ProfileMediaPanel: React.FC<IProfileMediaPanel> = ({ account }) => {
   const dispatch = useAppDispatch();
 
-  const [loading, setLoading] = useState(true);
-
   const attachments: ImmutableList<Attachment> = useAppSelector((state) => account ? getAccountGallery(state, account?.id) : ImmutableList());
+  const timeline = useAppSelector((state) => account ? state.timelines.get(`account:${account.id}:media`) : undefined);
+  const loading = !!timeline?.isLoading && attachments.size === 0;
+  const hasLoaded = attachments.size > 0 || timeline?.hasMore === false || timeline?.loadingFailed;
 
   const handleOpenMedia = (attachment: Attachment): void => {
     if (attachment.type === 'video') {
@@ -39,15 +40,10 @@ const ProfileMediaPanel: React.FC<IProfileMediaPanel> = ({ account }) => {
   };
 
   useEffect(() => {
-    setLoading(true);
-
-    if (account) {
-      dispatch(expandAccountMediaTimeline(account.id))
-        // @ts-ignore yes it does
-        .then(() => setLoading(false))
-        .catch(() => {});
+    if (account && !timeline?.isLoading && !hasLoaded) {
+      dispatch(expandAccountMediaTimeline(account.id));
     }
-  }, [account?.id]);
+  }, [account?.id, dispatch, hasLoaded, timeline?.isLoading]);
 
   const renderAttachments = () => {
     const publicAttachments = attachments.filter(attachment => attachment.getIn(['status', 'visibility']) === 'public');

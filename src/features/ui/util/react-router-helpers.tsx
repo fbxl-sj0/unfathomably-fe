@@ -5,6 +5,8 @@ import { Redirect, Route, useHistory, RouteProps, RouteComponentProps, match as 
 import Layout from '@/components/ui/layout.tsx';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
 import { useSettings } from '@/hooks/useSettings.ts';
+import { canRecoverFromDynamicImportError, isDynamicImportError, rememberDynamicImportRecovery } from '@/utils/errors.ts';
+import { unregisterSW } from '@/utils/sw.ts';
 
 import ColumnForbidden from '../components/column-forbidden.tsx';
 import ColumnLoading from '../components/column-loading.tsx';
@@ -127,6 +129,19 @@ const FallbackForbidden: React.FC = () => (
 const FallbackError: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) => {
   const location = useLocation();
   const firstUpdate = useRef(true);
+  const recovering = useRef(false);
+
+  useEffect(() => {
+    if (recovering.current) {
+      return;
+    }
+
+    if (isDynamicImportError(error) && canRecoverFromDynamicImportError()) {
+      recovering.current = true;
+      rememberDynamicImportRecovery();
+      unregisterSW().then(() => window.location.reload()).catch(() => window.location.reload());
+    }
+  }, [error]);
 
   useEffect(() => {
     if (firstUpdate.current) {

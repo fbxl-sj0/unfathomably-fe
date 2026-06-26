@@ -53,7 +53,7 @@ const SidebarNavigationLink = forwardRef((props: ISidebarNavigationLink, ref: Re
       ref={ref}
       onClick={handleClick}
       className={clsx({
-        'flex items-center px-4 py-3.5 text-base font-semibold space-x-4 rtl:space-x-reverse rounded-full group hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-primary-800': true,
+        'sidebar-navigation-link flex items-center px-4 py-3.5 text-base font-semibold space-x-4 rtl:space-x-reverse rounded-full group hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-primary-800': true,
         'text-gray-600 dark:text-gray-500': !isActive,
         'text-gray-900 dark:text-gray-50': isActive,
       })}

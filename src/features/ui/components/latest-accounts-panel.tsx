@@ -6,6 +6,7 @@ import Text from '@/components/ui/text.tsx';
 import Widget from '@/components/ui/widget.tsx';
 import AccountContainer from '@/containers/account-container.tsx';
 import PlaceholderSidebarSuggestions from '@/features/placeholder/components/placeholder-sidebar-suggestions.tsx';
+import { useFeatures } from '@/hooks/useFeatures.ts';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
 import { useDismissSuggestion, useSuggestions } from '@/queries/suggestions.ts';
 
@@ -22,8 +23,10 @@ interface ILatestAccountsPanel {
 const LatestAccountsPanel: React.FC<ILatestAccountsPanel> = ({ limit }) => {
   const intl = useIntl();
 
+  const features = useFeatures();
   const { account } = useOwnAccount();
-  const { data: suggestions, isFetching } = useSuggestions({ local: true });
+  const local = features.suggestionsLocal;
+  const { data: suggestions, isFetching } = useSuggestions({ local });
   const dismissSuggestion = useDismissSuggestion();
 
   const suggestionsToRender = suggestions.slice(0, limit);
@@ -40,7 +43,7 @@ const LatestAccountsPanel: React.FC<ILatestAccountsPanel> = ({ limit }) => {
     <Widget
       title={<FormattedMessage id='latest_accounts.title' defaultMessage='Latest Accounts' />}
       action={
-        <Link className='text-right' to='/suggestions/local'>
+        <Link className='text-right' to={local ? '/suggestions/local' : '/suggestions'}>
           <Text tag='span' theme='primary' size='sm' className='hover:underline'>
             <FormattedMessage id='feed_suggestions.view_all' defaultMessage='View all' />
           </Text>

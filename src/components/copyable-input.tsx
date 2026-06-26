@@ -5,7 +5,7 @@ import Button from '@/components/ui/button.tsx';
 import HStack from '@/components/ui/hstack.tsx';
 import Input from '@/components/ui/input.tsx';
 
-interface ICopyableInput {
+interface ICopyableInput extends Pick<React.InputHTMLAttributes<HTMLInputElement>, 'id' | 'name'> {
   /** Text to be copied. */
   value: string;
   /** Input type. */
@@ -15,7 +15,7 @@ interface ICopyableInput {
 }
 
 /** An input with copy abilities. */
-const CopyableInput: React.FC<ICopyableInput> = ({ value, type = 'text', onCopy }) => {
+const CopyableInput: React.FC<ICopyableInput> = ({ id, name, value, type = 'text', onCopy }) => {
   const input = useRef<HTMLInputElement>(null);
 
   const selectInput = () => {
@@ -34,6 +34,8 @@ const CopyableInput: React.FC<ICopyableInput> = ({ value, type = 'text', onCopy 
     <HStack alignItems='center'>
       <Input
         ref={input}
+        id={id}
+        name={name}
         type={type}
         value={value}
         className='rounded-r-none rtl:rounded-l-none rtl:rounded-r-lg'

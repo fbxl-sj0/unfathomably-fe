@@ -76,7 +76,7 @@ function useSourceItems(sourceId: string | undefined, opts: UseSourceItemsOpts =
       setIsError(false);
 
       try {
-        const response = await api.get(`/api/v1/sources/${sourceId}/items`, {
+        const response = await api.get(`/api/v1/feeds/${sourceId}/items`, {
           searchParams: {
             limit: String(limit),
           },

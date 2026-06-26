@@ -30,7 +30,8 @@ interface IGroupTimeline {
   params: RouteParams;
 }
 
-const getStatusIds = makeGetStatusIds();
+const getTimelineStatusIds = makeGetStatusIds();
+const getFeaturedStatusIds = makeGetStatusIds();
 
 const GroupTimeline: React.FC<IGroupTimeline> = (props) => {
   const intl = useIntl();
@@ -45,7 +46,23 @@ const GroupTimeline: React.FC<IGroupTimeline> = (props) => {
   const composeId = `group:${groupId}`;
   const canComposeGroupStatus = !!account && group?.relationship?.member;
   const groupTimelineVisible = useAppSelector((state) => !!state.compose.get(composeId)?.group_timeline_visible);
-  const featuredStatusIds = useAppSelector((state) => getStatusIds(state, { type: `group:${group?.id}:pinned` }));
+  const timelineStatusIds = useAppSelector((state) => getTimelineStatusIds(state, { type: composeId }));
+  const featuredStatusIds = useAppSelector((state) => getFeaturedStatusIds(state, { type: `group:${group?.id}:pinned` }));
+  const shouldShowRemotePreview = !!group && group.target_kind !== 'local_group' && timelineStatusIds.size === 0;
+  const emptyMessage = shouldShowRemotePreview ? null : (
+    <Stack space={4} className='py-6' justifyContent='center' alignItems='center'>
+      <div className='rounded-full bg-gray-200 p-4 dark:bg-gray-800'>
+        <Icon
+          src={message2Icon}
+          className='size-6 text-gray-600'
+        />
+      </div>
+
+      <Text theme='muted'>
+        <FormattedMessage id='empty_column.group' defaultMessage='There are no posts in this group yet.' />
+      </Text>
+    </Stack>
+  );
 
   const { isDragging, isDraggedOver } = useDraggedFiles(composer, (files) => {
     dispatch(uploadCompose(composeId, files, intl));
@@ -113,27 +130,14 @@ const GroupTimeline: React.FC<IGroupTimeline> = (props) => {
         </div>
       )}
 
+      {shouldShowRemotePreview && <GroupPreviewItems groupId={groupId} />}
+
       <Timeline
         key={composeId}
         scrollKey={composeId}
         timelineId={composeId}
         onLoadMore={handleLoadMore}
-        emptyMessage={
-          <Stack space={4} className='py-6' justifyContent='center' alignItems='center'>
-            <div className='rounded-full bg-gray-200 p-4 dark:bg-gray-800'>
-              <Icon
-                src={message2Icon}
-                className='size-6 text-gray-600'
-              />
-            </div>
-
-            <Text theme='muted'>
-              <FormattedMessage id='empty_column.group' defaultMessage='There are no posts in this group yet.' />
-            </Text>
-
-            <GroupPreviewItems groupId={groupId} />
-          </Stack>
-        }
+        emptyMessage={emptyMessage}
         emptyMessageCard={false}
         showGroup={false}
         featuredStatusIds={featuredStatusIds}
