@@ -14,8 +14,8 @@ import { formatBytes } from '@/utils/media.ts';
 
 const messages = defineMessages({
   fileTooLarge: { id: 'import_data.errors.post_archive_too_large', defaultMessage: 'Archive must be smaller than {limit}' },
-  inputHintModerated: { id: 'import_data.hints.post_archive_moderated', defaultMessage: 'ZIP archive containing actor.json and outbox.json. An admin will review it before import.' },
-  inputHintOpen: { id: 'import_data.hints.post_archive_open', defaultMessage: 'ZIP archive containing actor.json and outbox.json. The import will be queued.' },
+  inputHintModerated: { id: 'import_data.hints.post_archive_moderated', defaultMessage: 'ZIP archive containing actor.json and outbox.json. Imported posts are added to your local post history without being published again, and replies reconnect to their original threads when possible. An admin will review it before import.' },
+  inputHintOpen: { id: 'import_data.hints.post_archive_open', defaultMessage: 'ZIP archive containing actor.json and outbox.json. Imported posts are added to your local post history without being published again, and replies reconnect to their original threads when possible.' },
   inputLabel: { id: 'import_data.post_archive_label', defaultMessage: 'Posts from an archive' },
   submit: { id: 'import_data.actions.import_post_archive', defaultMessage: 'Import posts' },
 });

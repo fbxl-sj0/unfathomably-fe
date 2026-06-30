@@ -34,6 +34,10 @@ const STREAM_HIDDEN_RECONNECT_AFTER = 30 * 1000;
 const STREAM_ONLINE_RECONNECT_DELAY = 500;
 const STREAM_VISIBLE_RECONNECT_DELAY = 1000;
 const STREAM_RECONNECT_JITTER = 750;
+const STREAM_DISCONNECTED_RECONNECT_DELAY = 1500;
+const STREAM_FOCUS_RECONNECT_AFTER = 15 * 1000;
+const STREAM_HEALTH_CHECK_INTERVAL = 30 * 1000;
+const STREAM_VISIBLE_STALE_RECONNECT_AFTER = 5 * 60 * 1000;
 
 const EVENT_SOURCE_EVENTS = [
   'announcement',
@@ -71,11 +75,17 @@ export function connectStream(
 
     let hiddenAt: number | undefined;
     let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+    let healthCheckInterval: ReturnType<typeof setInterval> | undefined;
     let streamEpoch = 0;
     let subscription: StreamSubscription | undefined;
     let closed = false;
+    let lastActivityAt = Date.now();
 
     const isCurrentStream = (epoch: number) => !closed && epoch === streamEpoch;
+
+    const touchActivity = () => {
+      lastActivityAt = Date.now();
+    };
 
     const clearScheduledReconnect = () => {
       if (reconnectTimeout) {
@@ -93,19 +103,31 @@ export function connectStream(
       try {
         return getStream(streamingAPIBaseURL, accessToken, path, {
           connected() {
-            if (isCurrentStream(epoch)) connection.connect();
+            if (isCurrentStream(epoch)) {
+              touchActivity();
+              connection.connect();
+            }
           },
 
           disconnected() {
-            if (isCurrentStream(epoch)) connection.disconnect();
+            if (isCurrentStream(epoch)) {
+              connection.disconnect();
+              scheduleRestart(STREAM_DISCONNECTED_RECONNECT_DELAY);
+            }
           },
 
           received(data) {
-            if (isCurrentStream(epoch)) onReceive(data);
+            if (isCurrentStream(epoch)) {
+              touchActivity();
+              onReceive(data);
+            }
           },
 
           reconnected() {
-            if (isCurrentStream(epoch)) connection.connect();
+            if (isCurrentStream(epoch)) {
+              touchActivity();
+              connection.connect();
+            }
           },
 
         });
@@ -119,15 +141,24 @@ export function connectStream(
         try {
           return getEventSourceStream(streamingAPIBaseURL, accessToken, path, {
             connected() {
-              if (isCurrentStream(epoch)) connection.connect();
+              if (isCurrentStream(epoch)) {
+                touchActivity();
+                connection.connect();
+              }
             },
 
             disconnected() {
-              if (isCurrentStream(epoch)) connection.disconnect();
+              if (isCurrentStream(epoch)) {
+                connection.disconnect();
+                scheduleRestart(STREAM_DISCONNECTED_RECONNECT_DELAY);
+              }
             },
 
             received(data) {
-              if (isCurrentStream(epoch)) onReceive(data);
+              if (isCurrentStream(epoch)) {
+                touchActivity();
+                onReceive(data);
+              }
             },
           });
         } catch (eventSourceError) {
@@ -139,6 +170,8 @@ export function connectStream(
 
     const start = () => {
       if (browserIsOffline()) return;
+
+      touchActivity();
 
       const epoch = ++streamEpoch;
 
@@ -212,11 +245,30 @@ export function connectStream(
       hiddenAt = undefined;
     };
 
+    const handleFocus = () => {
+      if (Date.now() - lastActivityAt >= STREAM_FOCUS_RECONNECT_AFTER) {
+        scheduleRestart(STREAM_VISIBLE_RECONNECT_DELAY);
+      }
+    };
+
+    const handleHealthCheck = () => {
+      if (closed || browserIsOffline()) return;
+
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+      }
+
+      if (Date.now() - lastActivityAt >= STREAM_VISIBLE_STALE_RECONNECT_AFTER) {
+        scheduleRestart(STREAM_VISIBLE_RECONNECT_DELAY);
+      }
+    };
+
     if (typeof window !== 'undefined') {
       window.addEventListener('online', handleOnline);
       window.addEventListener('offline', handleOffline);
       window.addEventListener('pagehide', handlePageHide);
       window.addEventListener('pageshow', handlePageShow);
+      window.addEventListener('focus', handleFocus);
     }
 
     if (typeof document !== 'undefined') {
@@ -227,17 +279,25 @@ export function connectStream(
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
 
+    healthCheckInterval = setInterval(handleHealthCheck, STREAM_HEALTH_CHECK_INTERVAL);
+
     start();
 
     const disconnect = () => {
       closed = true;
       clearScheduledReconnect();
 
+      if (healthCheckInterval) {
+        clearInterval(healthCheckInterval);
+        healthCheckInterval = undefined;
+      }
+
       if (typeof window !== 'undefined') {
         window.removeEventListener('online', handleOnline);
         window.removeEventListener('offline', handleOffline);
         window.removeEventListener('pagehide', handlePageHide);
         window.removeEventListener('pageshow', handlePageShow);
+        window.removeEventListener('focus', handleFocus);
       }
 
       if (typeof document !== 'undefined') {
@@ -378,6 +438,10 @@ function buildMastodonPath(stream: string, params: URLSearchParams): string | nu
       return `${STREAMING_PATH}/user`;
     case 'user:notification':
       return `${STREAMING_PATH}/user/notification`;
+    case 'user:groups':
+      return `${STREAMING_PATH}/user/groups`;
+    case 'user:sources':
+      return `${STREAMING_PATH}/user/sources`;
     case 'group': {
       const group = params.get('group');
 

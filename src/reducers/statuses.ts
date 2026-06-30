@@ -40,7 +40,9 @@ import {
   STATUS_HIDE,
   STATUS_DELETE_REQUEST,
   STATUS_DELETE_FAIL,
+  STATUS_TRANSLATE_REQUEST,
   STATUS_TRANSLATE_SUCCESS,
+  STATUS_TRANSLATE_FAIL,
   STATUS_TRANSLATE_UNDO,
   STATUS_UNFILTER,
 } from '../actions/statuses.ts';
@@ -120,11 +122,14 @@ const isQuote = (status: StatusRecord) => {
 // Preserve translation if an existing status already has it
 const fixTranslation = (status: StatusRecord, oldStatus?: StatusRecord): StatusRecord => {
   if (oldStatus?.translation && !status.translation) {
-    return status
-      .set('translation', oldStatus.translation);
-  } else {
-    return status;
+    status.set('translation', oldStatus.translation);
   }
+
+  if (oldStatus?.translationLoading && !status.translation) {
+    status.set('translationLoading', true);
+  }
+
+  return status;
 };
 
 // Preserve quote if an existing status already has it
@@ -243,12 +248,28 @@ interface Translation {
 const importTranslation = (state: State, statusId: string, translation: Translation) => {
   const map = ImmutableMap(translation);
   const result = map.set('content', stripCompatibilityFeatures(map.get('content', '')));
-  return state.setIn([statusId, 'translation'], result);
+  return state
+    .setIn([statusId, 'translation'], result)
+    .setIn([statusId, 'translationLoading'], false);
+};
+
+const setTranslationLoading = (state: State, statusId: string, loading: boolean) => {
+  if (!state.has(statusId)) {
+    return state;
+  }
+
+  return state.setIn([statusId, 'translationLoading'], loading);
 };
 
 /** Delete translation from the store. */
 const deleteTranslation = (state: State, statusId: string) => {
-  return state.deleteIn([statusId, 'translation']);
+  if (!state.has(statusId)) {
+    return state;
+  }
+
+  return state
+    .deleteIn([statusId, 'translation'])
+    .setIn([statusId, 'translationLoading'], false);
 };
 
 const initialState: State = ImmutableMap();
@@ -323,8 +344,12 @@ export default function statuses(state = initialState, action: AnyAction): State
       return decrementReplyCount(state, action.params);
     case STATUS_DELETE_FAIL:
       return incrementReplyCount(state, action.params);
+    case STATUS_TRANSLATE_REQUEST:
+      return setTranslationLoading(state, action.id, true);
     case STATUS_TRANSLATE_SUCCESS:
       return importTranslation(state, action.id, action.translation);
+    case STATUS_TRANSLATE_FAIL:
+      return setTranslationLoading(state, action.id, false);
     case STATUS_TRANSLATE_UNDO:
       return deleteTranslation(state, action.id);
     case STATUS_UNFILTER:

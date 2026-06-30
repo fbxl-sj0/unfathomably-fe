@@ -64,4 +64,6 @@ export { useHashtagStream } from './streaming/useHashtagStream.ts';
 export { useListStream } from './streaming/useListStream.ts';
 export { useGroupStream } from './streaming/useGroupStream.ts';
 export { useSourceStream } from './streaming/useSourceStream.ts';
+export { useGroupsFeedStream } from './streaming/useGroupsFeedStream.ts';
+export { useSourcesFeedStream } from './streaming/useSourcesFeedStream.ts';
 export { useRemoteStream } from './streaming/useRemoteStream.ts';

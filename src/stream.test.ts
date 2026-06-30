@@ -63,6 +63,23 @@ describe('buildStreamingRequest', () => {
       websocketUrl: 'wss://social.test/api/v1/streaming/group/group-1',
       eventSourceUrl: 'https://social.test/api/v1/streaming/group/group-1?access_token=token-1',
     });
+
+    expect(buildStreamingRequest('wss://social.test', 'source&source=source-1', 'token-1')).toEqual({
+      websocketUrl: 'wss://social.test/api/v1/streaming/source/source-1',
+      eventSourceUrl: 'https://social.test/api/v1/streaming/source/source-1?access_token=token-1',
+    });
+  });
+
+  it('uses path-style URLs for Unfathomably aggregate feed streams', () => {
+    expect(buildStreamingRequest('wss://social.test', 'user:groups', 'token-1')).toEqual({
+      websocketUrl: 'wss://social.test/api/v1/streaming/user/groups',
+      eventSourceUrl: 'https://social.test/api/v1/streaming/user/groups?access_token=token-1',
+    });
+
+    expect(buildStreamingRequest('wss://social.test', 'user:sources', 'token-1')).toEqual({
+      websocketUrl: 'wss://social.test/api/v1/streaming/user/sources',
+      eventSourceUrl: 'https://social.test/api/v1/streaming/user/sources?access_token=token-1',
+    });
   });
 
   it('can prefer the page origin for integrated frontend deployments', () => {

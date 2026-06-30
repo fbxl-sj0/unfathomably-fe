@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { FormattedMessage } from 'react-intl';
 
 import { expandGroupsTimeline } from '@/actions/timelines.ts';
+import { useGroupsFeedStream } from '@/api/hooks/index.ts';
 import PullToRefresh from '@/components/pull-to-refresh.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
@@ -18,11 +19,13 @@ const GroupsFeed: React.FC = () => {
   const dispatch = useAppDispatch();
   const next = useAppSelector(state => state.timelines.get(timelineId)?.next);
 
-  const handleLoadMore = (maxId: string) => {
-    dispatch(expandGroupsTimeline({ url: next, maxId }));
-  };
+  useGroupsFeedStream();
 
-  const handleRefresh = () => dispatch(expandGroupsTimeline());
+  const handleLoadMore = useCallback((maxId: string) => {
+    dispatch(expandGroupsTimeline({ url: next, maxId }));
+  }, [dispatch, next]);
+
+  const handleRefresh = useCallback(() => dispatch(expandGroupsTimeline()), [dispatch]);
 
   useEffect(() => {
     dispatch(expandGroupsTimeline());
@@ -37,6 +40,7 @@ const GroupsFeed: React.FC = () => {
           scrollKey='groups_feed_timeline'
           timelineId={timelineId}
           onLoadMore={handleLoadMore}
+          onRefreshAtTop={handleRefresh}
           emptyMessage={
             <Stack space={1}>
               <Text size='xl' weight='medium' align='center'>

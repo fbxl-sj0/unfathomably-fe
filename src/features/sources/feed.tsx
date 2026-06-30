@@ -12,10 +12,11 @@
     Feed discovery, follow management, or native preview item cards.
 */
 
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { FormattedMessage } from 'react-intl';
 
 import { expandSourcesTimeline } from '@/actions/timelines.ts';
+import { useSourcesFeedStream } from '@/api/hooks/index.ts';
 import PullToRefresh from '@/components/pull-to-refresh.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
@@ -32,11 +33,13 @@ const SourcesFeed: React.FC = () => {
   const dispatch = useAppDispatch();
   const next = useAppSelector(state => state.timelines.get(timelineId)?.next);
 
-  const handleLoadMore = (maxId: string) => {
-    dispatch(expandSourcesTimeline({ url: next, maxId }));
-  };
+  useSourcesFeedStream();
 
-  const handleRefresh = () => dispatch(expandSourcesTimeline());
+  const handleLoadMore = useCallback((maxId: string) => {
+    dispatch(expandSourcesTimeline({ url: next, maxId }));
+  }, [dispatch, next]);
+
+  const handleRefresh = useCallback(() => dispatch(expandSourcesTimeline()), [dispatch]);
 
   useEffect(() => {
     dispatch(expandSourcesTimeline());
@@ -51,6 +54,7 @@ const SourcesFeed: React.FC = () => {
           scrollKey='sources_feed_timeline'
           timelineId={timelineId}
           onLoadMore={handleLoadMore}
+          onRefreshAtTop={handleRefresh}
           emptyMessage={
             <Stack space={1}>
               <Text size='xl' weight='medium' align='center'>

@@ -125,6 +125,7 @@ const transformStatus = <T extends TransformableStatus>({ pleroma, ...status }: 
     search_index: buildSearchIndex(status),
     showFiltered: false, // TODO: this should be removed from the schema and done somewhere else
     translation: undefined as Translation | undefined,
+    translationLoading: false,
   };
 };
 

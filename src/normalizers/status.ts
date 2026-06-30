@@ -95,6 +95,7 @@ export const StatusRecord = ImmutableRecord({
   search_index: '',
   showFiltered: true,
   translation: null as ImmutableMap<string, string> | null,
+  translationLoading: false,
 });
 
 const normalizeAttachments = (status: ImmutableMap<string, any>) => {

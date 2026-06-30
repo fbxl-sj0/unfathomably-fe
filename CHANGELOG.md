@@ -8,14 +8,22 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 
 ## [Unreleased]
 
+### Security
+- Added package resolutions for advisory-sensitive build-time dependencies so the frontend uses current esbuild, glob, and source-map packages while upstream Vite and Workbox tooling catches up.
+
 ### Changed
 - Added responsive feed-type filters with per-browser preferences and a hide-bots/services option on the Feeds page.
 - Expanded the desktop layout so the post column has more room on 1080p and wider displays.
 - Improved thread connector lines so replies show clearer parent/child continuity in post and threadiverse discussions.
+- Clarified post archive import copy so users know imported posts restore local history without being republished and can reconnect replies to their original threads.
 - Added a persistent floating media dock for playable source cards, while keeping Funkwhale and PeerTube media visible in each card by default.
 - Improved Funkwhale and audio source cards with album, artist, license, MusicBrainz, bitrate, and file-size metadata when the backend provides it.
 - Sources now load followed sources in smaller pages instead of waiting on one large all-at-once response.
 - Renamed the Sources navigation surface to Feeds, with new `/feeds` routes and copy focused on RSS/Atom, blogs, libraries, podcasts, and channel-like actors.
+- Documented the current release alignment with Unfathomably BE translation capability metadata and the deployed static frontend build.
+- Improved stream recovery so visible tabs reconnect after unexpected websocket or event-stream disconnects and silent stalls without requiring refresh.
+- Subscribed the Groups Feed and Feeds Feed to Unfathomably BE aggregate websocket streams, keeping HTTP timeline loading as the initial-load and fallback path.
+- Added an in-progress translation spinner and duplicate-click guard while slower OpenTranslate requests complete.
 
 ### Fixed
 - Fixed remote group pages so WordPress-style actor outbox previews render as a normal page section when the local group timeline has not cached posts yet.
@@ -25,6 +33,7 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 - Fixed the settings theme selector so its list label points at the rendered select element.
 - Fixed bookmark and group/source search fields to expose useful form names for browser autofill and diagnostics.
 - Fixed profile media panels to render cached media immediately and avoid forced reload spinners when revisiting an account.
+- Added regression coverage for unknown-language translation flows where the backend advertises provider-side source-language detection.
 
 ## [3.2.1] - 2026-06-25
 

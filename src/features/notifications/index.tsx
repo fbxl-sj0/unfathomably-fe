@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { debounce } from 'es-toolkit';
 import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
 import { createSelector } from 'reselect';
 
@@ -37,6 +37,11 @@ const messages = defineMessages({
   groupedOff: { id: 'notifications.grouped.off', defaultMessage: 'Ungrouped' },
 });
 
+const TOP_REFRESH_INTERVAL = 30 * 1000;
+
+const isDocumentHidden = () => typeof document !== 'undefined' && document.visibilityState === 'hidden';
+const isBrowserOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+
 const getNotifications = createSelector([
   state => getSettings(state).getIn(['notifications', 'quickFilter', 'show']),
   state => getSettings(state).getIn(['notifications', 'quickFilter', 'active']),
@@ -66,6 +71,7 @@ const Notifications = () => {
   // const isUnread = useAppSelector(state => state.notifications.unread > 0);
   const hasMore = useAppSelector(state => state.notifications.hasMore);
   const totalQueuedNotificationsCount = useAppSelector(state => state.notifications.totalQueuedNotificationsCount || 0);
+  const [isInTop, setIsInTop] = useState<boolean>(window.scrollY < 50);
 
   const node = useRef<VirtuosoHandle>(null);
   const column = useRef<HTMLDivElement>(null);
@@ -81,11 +87,15 @@ const Notifications = () => {
   }, 300, { edges: ['leading'] }), [notifications, grouped]);
 
   const handleScrollToTop = useCallback(debounce(() => {
+    setIsInTop(true);
     dispatch(scrollTopNotifications(true));
   }, 100), []);
 
   const handleScroll = useCallback(debounce(() => {
-    dispatch(scrollTopNotifications(false));
+    const top = window.scrollY < 50;
+
+    setIsInTop(top);
+    dispatch(scrollTopNotifications(top));
   }, 100), []);
 
   const handleMoveUp = (id: string) => {
@@ -120,6 +130,30 @@ const Notifications = () => {
   const handleRefresh = useCallback(() => {
     return dispatch(expandNotifications({ grouped }));
   }, [grouped]);
+
+  useEffect(() => {
+    if (isInTop && totalQueuedNotificationsCount > 0) {
+      handleDequeueNotifications();
+    }
+  }, [handleDequeueNotifications, isInTop, totalQueuedNotificationsCount]);
+
+  useEffect(() => {
+    if (!isInTop) {
+      return;
+    }
+
+    const refresh = () => {
+      if (isDocumentHidden() || isBrowserOffline()) {
+        return;
+      }
+
+      handleRefresh();
+    };
+
+    const interval = setInterval(refresh, TOP_REFRESH_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [handleRefresh, isInTop]);
 
   const handleGroupedToggle = useCallback(() => {
     dispatch(setGroupedNotifications(!grouped));

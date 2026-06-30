@@ -144,6 +144,7 @@ const messages = defineMessages({
   share: { id: 'status.share', defaultMessage: 'Share' },
   showOriginal: { id: 'status.show_original', defaultMessage: 'Show original' },
   translate: { id: 'status.translate', defaultMessage: 'Translate' },
+  translating: { id: 'status.translating', defaultMessage: 'Translating...' },
   unbookmark: { id: 'status.unbookmark', defaultMessage: 'Remove bookmark' },
   unmuteConversation: { id: 'status.unmute_conversation', defaultMessage: 'Unmute Conversation' },
   unmuteGroup: { id: 'group.unmute.long_label', defaultMessage: 'Unmute Group' },
@@ -412,6 +413,10 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
   };
 
   const handleTranslateClick: React.EventHandler<React.MouseEvent> = () => {
+    if (status.translationLoading) {
+      return;
+    }
+
     if (status.translation) {
       dispatch(undoStatusTranslation(status.id));
     } else {
@@ -510,8 +515,8 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
 
     if (manualTranslation.canTranslate) {
       menu.push({
-        text: intl.formatMessage(status.translation ? messages.showOriginal : messages.translate),
-        action: handleTranslateClick,
+        text: intl.formatMessage(status.translationLoading ? messages.translating : status.translation ? messages.showOriginal : messages.translate),
+        action: status.translationLoading ? undefined : handleTranslateClick,
         icon: languageIcon,
       });
     }

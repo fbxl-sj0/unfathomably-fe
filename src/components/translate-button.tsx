@@ -4,6 +4,7 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { translateStatus, undoStatusTranslation } from '@/actions/statuses.ts';
 import HStack from '@/components/ui/hstack.tsx';
 import Icon from '@/components/ui/icon.tsx';
+import Spinner from '@/components/ui/spinner.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
@@ -45,8 +46,14 @@ const TranslateButton: React.FC<ITranslateButton> = ({ status }) => {
     targetLanguages,
   });
 
+  const translationLoading = status.translationLoading;
+
   const handleTranslate: React.MouseEventHandler<HTMLDivElement> = (e) => {
     e.stopPropagation();
+
+    if (translationLoading) {
+      return;
+    }
 
     if (status.translation) {
       dispatch(undoStatusTranslation(status.id));
@@ -56,6 +63,19 @@ const TranslateButton: React.FC<ITranslateButton> = ({ status }) => {
   };
 
   if (!canTranslate) return null;
+
+  if (translationLoading) {
+    return (
+      <Stack alignItems='start'>
+        <HStack space={0.5} alignItems='center' justifyContent='start' className='text-primary-500'>
+          <Spinner size={14} withText={false} />
+          <Text className='!text-primary-500'>
+            <FormattedMessage id='status.translating' defaultMessage='Translating...' />
+          </Text>
+        </HStack>
+      </Stack>
+    );
+  }
 
   if (status.translation) {
     const languageNames = new Intl.DisplayNames([intl.locale], { type: 'language' });

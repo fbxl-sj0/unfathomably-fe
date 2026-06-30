@@ -9,11 +9,20 @@ import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { setNotification } from '@/reducers/notificationsSlice.ts';
 import { makeGetStatusIds } from '@/selectors/index.ts';
 
+const TOP_REFRESH_INTERVAL = 30 * 1000;
+
+const isDocumentHidden = () => typeof document !== 'undefined' && document.visibilityState === 'hidden';
+const isBrowserOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+
 interface ITimeline extends Omit<IStatusList, 'statusIds' | 'isLoading' | 'hasMore'> {
   /** ID of the timeline in Redux. */
   timelineId: string;
   /** Settings path to use instead of the timelineId. */
   prefix?: string;
+  /** Optional refresh hook used by timelines that are not backed by a stream. */
+  onRefreshAtTop?: () => void;
+  /** Refresh cadence for non-streamed timelines while the user is already at the top. */
+  refreshAtTopInterval?: number;
 }
 
 /** Scrollable list of statuses from a timeline in the Redux store. */
@@ -21,6 +30,8 @@ const Timeline: React.FC<ITimeline> = ({
   timelineId,
   onLoadMore,
   prefix,
+  onRefreshAtTop,
+  refreshAtTopInterval = TOP_REFRESH_INTERVAL,
   ...rest
 }) => {
   const dispatch = useAppDispatch();
@@ -42,12 +53,15 @@ const Timeline: React.FC<ITimeline> = ({
   }, [dispatch, timelineId, onLoadMore]);
 
   const handleScrollToTop = useCallback(debounce(() => {
+    setIsInTop(true);
     dispatch(scrollTopTimeline(timelineId, true));
   }, 100), [dispatch, timelineId]);
 
   const handleScroll = useCallback(debounce(() => {
-    setIsInTop(window.scrollY < 50);
-    dispatch(scrollTopTimeline(timelineId, false));
+    const top = window.scrollY < 50;
+
+    setIsInTop(top);
+    dispatch(scrollTopTimeline(timelineId, top));
   }, 100), [dispatch, timelineId]);
 
   useEffect(() => {
@@ -78,6 +92,24 @@ const Timeline: React.FC<ITimeline> = ({
       }
     };
   }, [dispatch, handleDequeueTimeline, isInTop, timelineId]);
+
+  useEffect(() => {
+    if (!onRefreshAtTop || !isInTop) {
+      return;
+    }
+
+    const refresh = () => {
+      if (isDocumentHidden() || isBrowserOffline()) {
+        return;
+      }
+
+      onRefreshAtTop();
+    };
+
+    const interval = setInterval(refresh, refreshAtTopInterval);
+
+    return () => clearInterval(interval);
+  }, [isInTop, onRefreshAtTop, refreshAtTopInterval]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
