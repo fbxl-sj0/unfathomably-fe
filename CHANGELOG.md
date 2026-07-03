@@ -12,6 +12,10 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 - Added package resolutions for advisory-sensitive build-time dependencies so the frontend uses current esbuild, glob, and source-map packages while upstream Vite and Workbox tooling catches up.
 
 ### Changed
+- Refreshed release metadata for the latest deployed static build paired with the Lemmy, PieFed, and MBin verified Unfathomably BE threadiverse federation matrix.
+- Added moderator-facing group notification controls so busy local groups can disable join and join-request notifications.
+- Added moderator-facing group discovery controls so local groups can opt into or out of Lemmy-compatible public community discovery.
+- Made the Feeds navigation default to the Feed Timeline, with a personal preference to choose either Feed Timeline or My Feeds as the default `/feeds` landing view.
 - Added responsive feed-type filters with per-browser preferences and a hide-bots/services option on the Feeds page.
 - Expanded the desktop layout so the post column has more room on 1080p and wider displays.
 - Improved thread connector lines so replies show clearer parent/child continuity in post and threadiverse discussions.
@@ -26,6 +30,9 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 - Added an in-progress translation spinner and duplicate-click guard while slower OpenTranslate requests complete.
 
 ### Fixed
+- Fixed group follow notifications so they say someone followed or requested to join the group, rather than saying they followed the group owner personally.
+- Changed ordinary My Feeds searches to filter followed feeds locally through the followed-scope API, while keeping URL and full-handle lookups on the broader feed discovery endpoint.
+- Added media fallback handling so images, GIFs, video, and audio try the original remote URL when the backend media proxy URL fails to load.
 - Fixed remote group pages so WordPress-style actor outbox previews render as a normal page section when the local group timeline has not cached posts yet.
 - Polished Feeds filter counts and checkbox contrast so the new controls read cleanly on the site theme.
 - Fixed shared input, select, textarea, checkbox, and file controls so unlabeled form fields still receive stable DOM ids.

@@ -50,6 +50,10 @@ const ManageGroup: React.FC<IManageGroup> = ({ params }) => {
   const deleteGroup = useDeleteGroup();
 
   const isOwner = group?.relationship?.role === GroupRoles.OWNER;
+  const isManager =
+    group?.relationship?.role
+      ? [GroupRoles.OWNER, GroupRoles.ADMIN, GroupRoles.MODERATOR].includes(group.relationship.role)
+      : false;
 
   if (!group || !group.relationship) {
     return (
@@ -59,7 +63,7 @@ const ManageGroup: React.FC<IManageGroup> = ({ params }) => {
     );
   }
 
-  if (!group.relationship.role || !['owner', 'admin', 'moderator'].includes(group.relationship.role)) {
+  if (!isManager) {
     return (<ColumnForbidden />);
   }
 
@@ -82,7 +86,7 @@ const ManageGroup: React.FC<IManageGroup> = ({ params }) => {
   return (
     <Column label={intl.formatMessage(messages.heading)} backHref={`/group/${group.slug}`}>
       <CardBody className='space-y-4'>
-        {isOwner && (
+        {isManager && (
           <>
             <CardHeader>
               <CardTitle title={intl.formatMessage(messages.editGroup)} />

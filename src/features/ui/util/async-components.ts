@@ -141,6 +141,7 @@ export const Events = lazy(() => import('@/features/events/index.tsx'));
 export const GroupsDefault = lazy(() => import('@/features/groups/default.tsx'));
 export const Groups = lazy(() => import('@/features/groups/index.tsx'));
 export const Sources = lazy(() => import('@/features/sources/index.tsx'));
+export const SourcesDefault = lazy(() => import('@/features/sources/default.tsx'));
 export const SourcesFeed = lazy(() => import('@/features/sources/feed.tsx'));
 export const GroupsFeed = lazy(() => import('@/features/groups/feed.tsx'));
 export const GroupsDiscover = lazy(() => import('@/features/groups/discover.tsx'));

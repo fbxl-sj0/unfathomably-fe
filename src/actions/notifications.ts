@@ -54,7 +54,7 @@ const PLEROMA_UNSUPPORTED_INCLUDE_TYPES = [
   'ditto:zap',
 ] as const;
 
-const GROUPED_NOTIFICATION_TYPES = ['favourite', 'follow', 'reblog'] as const;
+const GROUPED_NOTIFICATION_TYPES = ['favourite', 'follow', 'group_follow', 'reblog'] as const;
 
 interface GroupedNotificationsPayload {
   accounts?: APIEntity[];
@@ -224,8 +224,16 @@ const getSupportedNotificationTypes = (state: RootState) => {
   return NOTIFICATION_TYPES;
 };
 
+const typesForFilter = (filter: string, notificationTypes: readonly string[]) => {
+  const filters = filter === 'follow' ? ['follow', 'group_follow', 'group_follow_request'] : [filter];
+
+  return filters.filter(type => notificationTypes.includes(type));
+};
+
 const excludeTypesFromFilter = (filter: string, notificationTypes: readonly string[]) => {
-  return notificationTypes.filter(item => item !== filter);
+  const filteredTypes = typesForFilter(filter, notificationTypes);
+
+  return notificationTypes.filter(item => !filteredTypes.includes(item));
 };
 
 const noOp = () => new Promise(f => f(undefined));
@@ -264,7 +272,7 @@ const expandNotifications = ({ maxId, grouped }: Record<string, any> = {}, done:
       }
     } else {
       if (features.notificationsIncludeTypes) {
-        params.types = [activeFilter];
+        params.types = typesForFilter(activeFilter, notificationTypes);
       } else {
         params.exclude_types = excludeTypesFromFilter(activeFilter, notificationTypes);
       }

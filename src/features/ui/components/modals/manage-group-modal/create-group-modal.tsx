@@ -37,6 +37,7 @@ const CreateGroupModal: React.FC<ICreateGroupModal> = ({ onClose }) => {
   const [group, setGroup] = useState<Group | null>(null);
   const [params, setParams] = useState<CreateGroupParams>({
     group_visibility: 'everyone',
+    discoverable: true,
   });
   const [currentStep, setCurrentStep] = useState<Steps>(Steps.ONE);
 

@@ -4,6 +4,7 @@ import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
 
 import { useGroup, useGroupTags, useUpdateGroup } from '@/api/hooks/index.ts';
 import Button from '@/components/ui/button.tsx';
+import Checkbox from '@/components/ui/checkbox.tsx';
 import { Column } from '@/components/ui/column.tsx';
 import FormActions from '@/components/ui/form-actions.tsx';
 import FormGroup from '@/components/ui/form-group.tsx';
@@ -49,6 +50,8 @@ const EditGroup: React.FC<IEditGroup> = ({ params: { groupId } }) => {
   const { invalidate } = useGroupTags(groupId);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [discoverable, setDiscoverable] = useState(false);
+  const [groupJoinNotifications, setGroupJoinNotifications] = useState(true);
   const [tags, setTags] = useState<string[]>(['']);
 
   const avatar = useImageField({ maxPixels: 400 * 400, preview: nonDefaultAvatar(group?.avatar) });
@@ -72,6 +75,8 @@ const EditGroup: React.FC<IEditGroup> = ({ params: { groupId } }) => {
       note: note.value,
       avatar: avatar.file === null ? '' : avatar.file,
       header: header.file === null ? '' : header.file,
+      discoverable,
+      group_join_notifications: groupJoinNotifications,
       tags,
     }, {
       onSuccess() {
@@ -102,6 +107,8 @@ const EditGroup: React.FC<IEditGroup> = ({ params: { groupId } }) => {
 
   useEffect(() => {
     if (group) {
+      setDiscoverable(group.discoverable);
+      setGroupJoinNotifications(group.group_join_notifications);
       setTags(group.tags.map((t) => t.name));
     }
   }, [group?.id]);
@@ -139,6 +146,44 @@ const EditGroup: React.FC<IEditGroup> = ({ params: { groupId } }) => {
             maxLength={maxNote}
             {...note}
           />
+        </FormGroup>
+
+        <FormGroup
+          labelText={<FormattedMessage id='manage_group.discovery.label' defaultMessage='Outside discovery' />}
+        >
+          <label className='flex cursor-pointer items-start gap-3 rounded-lg bg-gradient-to-r from-gradient-start/20 to-gradient-end/20 px-4 py-3 dark:from-gradient-start/10 dark:to-gradient-end/10'>
+            <Checkbox
+              checked={discoverable}
+              onChange={(event) => setDiscoverable(event.currentTarget.checked)}
+            />
+            <span>
+              <span className='block text-gray-900 dark:text-gray-100'>
+                <FormattedMessage id='manage_group.discovery.advertise.label' defaultMessage='Advertise this group to other servers' />
+              </span>
+              <span className='block text-sm text-gray-700 dark:text-gray-600'>
+                <FormattedMessage id='manage_group.discovery.advertise.hint' defaultMessage='Show this group in Lemmy-compatible public community discovery so other servers can find it.' />
+              </span>
+            </span>
+          </label>
+        </FormGroup>
+
+        <FormGroup
+          labelText={<FormattedMessage id='manage_group.notifications.label' defaultMessage='Notifications' />}
+        >
+          <label className='flex cursor-pointer items-start gap-3 rounded-lg bg-gray-100 px-4 py-3 dark:bg-gray-800'>
+            <Checkbox
+              checked={groupJoinNotifications}
+              onChange={(event) => setGroupJoinNotifications(event.currentTarget.checked)}
+            />
+            <span>
+              <span className='block text-gray-900 dark:text-gray-100'>
+                <FormattedMessage id='manage_group.notifications.join.label' defaultMessage='Notify moderators when people join or request to join' />
+              </span>
+              <span className='block text-sm text-gray-700 dark:text-gray-600'>
+                <FormattedMessage id='manage_group.notifications.join.hint' defaultMessage='Turn this off for busy groups where join notifications create too much noise.' />
+              </span>
+            </span>
+          </label>
         </FormGroup>
 
         <div className='pb-6'>

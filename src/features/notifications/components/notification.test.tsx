@@ -29,6 +29,52 @@ describe('<Notification />', () => {
     expect(screen.getByTestId('message')).toHaveTextContent('Nekobit followed you');
   });
 
+  it('renders a group follow notification with the group as the target', async () => {
+    const followNotification = await import('@/__fixtures__/notification-follow.json');
+    const { notification, state } = normalize({
+      ...followNotification,
+      id: 'group-follow-notification',
+      type: 'group_follow',
+      target: {
+        ...followNotification.account,
+        id: 'group-1',
+        acct: 'general',
+        username: 'general',
+        display_name: 'General',
+        url: 'https://example.test/groups/general',
+      },
+    });
+
+    render(<Notification notification={notification} />, undefined, state);
+
+    expect(screen.getByTestId('notification')).toBeInTheDocument();
+    expect(screen.getByTestId('account')).toContainHTML('neko@rdrama.cc');
+    expect(screen.getByTestId('message')).toHaveTextContent('Nekobit followed your group General');
+  });
+
+  it('renders a group follow request notification with the group as the target', async () => {
+    const followNotification = await import('@/__fixtures__/notification-follow.json');
+    const { notification, state } = normalize({
+      ...followNotification,
+      id: 'group-follow-request-notification',
+      type: 'group_follow_request',
+      target: {
+        ...followNotification.account,
+        id: 'group-1',
+        acct: 'general',
+        username: 'general',
+        display_name: 'General',
+        url: 'https://example.test/groups/general',
+      },
+    });
+
+    render(<Notification notification={notification} />, undefined, state);
+
+    expect(screen.getByTestId('notification')).toBeInTheDocument();
+    expect(screen.getByTestId('account')).toContainHTML('neko@rdrama.cc');
+    expect(screen.getByTestId('message')).toHaveTextContent('Nekobit has requested to join your group General');
+  });
+
   describe('grouped notifications', () => {
     it('renders a grouped follow notification for more than 2', async () => {
       const { notification, state } = normalize({

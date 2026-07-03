@@ -10,6 +10,7 @@ import { defineMessages, useIntl } from 'react-intl';
 
 import SvgIcon from '@/components/ui/svg-icon.tsx';
 import { formatTime, getPointerPosition } from '@/features/video/index.tsx';
+import useMediaSourceFallback from '@/hooks/useMediaSourceFallback.ts';
 
 import Visualizer from './visualizer.ts';
 
@@ -41,6 +42,7 @@ interface IAudio {
   autoPlay?: boolean;
   volume?: number;
   muted?: boolean;
+  fallbackSrc?: string | null;
   deployPictureInPicture?: (type: string, opts: Record<string, any>) => void;
 }
 
@@ -57,6 +59,7 @@ const Audio: React.FC<IAudio> = (props) => {
     autoPlay,
     editable,
     deployPictureInPicture = false,
+    fallbackSrc,
   } = props;
 
   const intl = useIntl();
@@ -81,9 +84,10 @@ const Audio: React.FC<IAudio> = (props) => {
   const seek = useRef<HTMLDivElement>(null);
   const slider = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const [currentSrc, handleAudioError] = useMediaSourceFallback(src, fallbackSrc);
 
   const _pack = () => ({
-    src: props.src,
+    src: currentSrc,
     volume: audio.current?.volume,
     muted: audio.current?.muted,
     currentTime: audio.current?.currentTime,
@@ -453,7 +457,7 @@ const Audio: React.FC<IAudio> = (props) => {
   useEffect(() => {
     _clear();
     _draw();
-  }, [src, width, height, accentColor]);
+  }, [currentSrc, width, height, accentColor]);
 
   return (
     <div
@@ -471,14 +475,15 @@ const Audio: React.FC<IAudio> = (props) => {
       onClick={e => e.stopPropagation()}
     >
       <audio
-        src={src}
+        src={currentSrc}
         ref={audio}
         preload='auto'
         onPlay={handlePlay}
         onPause={handlePause}
         onProgress={handleProgress}
         onLoadedData={handleLoadedData}
-        crossOrigin='anonymous'
+        onError={handleAudioError}
+        crossOrigin={currentSrc === src ? 'anonymous' : undefined}
       />
 
       <canvas

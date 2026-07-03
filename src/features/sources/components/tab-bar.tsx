@@ -34,7 +34,7 @@ const TabBar = ({ activeTab }: ITabBar) => {
   const tabItems: Item[] = useMemo(() => ([
     {
       text: 'My Feeds',
-      action: () => history.push('/feeds'),
+      action: () => history.push('/feeds/my'),
       name: TabItems.MY_SOURCES,
     },
     {

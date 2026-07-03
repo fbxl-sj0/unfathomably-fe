@@ -10,6 +10,7 @@ interface UpdateGroupParams {
   header?: File | '';
   group_visibility?: string;
   discoverable?: boolean;
+  group_join_notifications?: boolean;
   tags?: string[];
 }
 

@@ -11,6 +11,7 @@ import { defineMessages, useIntl } from 'react-intl';
 
 import Blurhash from '@/components/blurhash.tsx';
 import SvgIcon from '@/components/ui/svg-icon.tsx';
+import useMediaSourceFallback from '@/hooks/useMediaSourceFallback.ts';
 import { useIsMobile } from '@/hooks/useIsMobile.ts';
 import { isPanoramic, isPortrait, minimumAspectRatio, maximumAspectRatio } from '@/utils/media-aspect-ratio.ts';
 
@@ -117,6 +118,7 @@ interface IVideo {
   link?: React.ReactNode;
   aspectRatio?: number;
   displayMedia?: string;
+  fallbackSrc?: string | null;
 }
 
 const Video: React.FC<IVideo> = ({
@@ -134,6 +136,7 @@ const Video: React.FC<IVideo> = ({
   link,
   blurhash,
   preview,
+  fallbackSrc,
 }) => {
   const intl = useIntl();
   const isMobile = useIsMobile();
@@ -157,6 +160,7 @@ const Video: React.FC<IVideo> = ({
   const [seekHovered, setSeekHovered] = useState(false);
   const [muted, setMuted] = useState(true);
   const [buffer, setBuffer] = useState(0);
+  const [currentSrc, handleVideoError] = useMediaSourceFallback(src, fallbackSrc);
 
   const setDimensions = () => {
     if (player.current) {
@@ -550,7 +554,7 @@ const Video: React.FC<IVideo> = ({
 
       <video
         ref={video}
-        src={src}
+        src={currentSrc}
         loop
         role='button'
         autoPlay
@@ -570,6 +574,7 @@ const Video: React.FC<IVideo> = ({
         onTimeUpdate={handleTimeUpdate}
         onLoadedData={handleLoadedData}
         onProgress={handleProgress}
+        onError={handleVideoError}
         onVolumeChange={handleVolumeChange}
         muted={muted}
         poster={preview}

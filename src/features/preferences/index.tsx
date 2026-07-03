@@ -89,6 +89,8 @@ const messages = defineMessages({
   content_type_markdown: { id: 'preferences.options.content_type_markdown', defaultMessage: 'Markdown' },
   groupsDefaultMyGroups: { id: 'preferences.options.groups_default_tab_my_groups', defaultMessage: 'My Groups' },
   groupsDefaultFeed: { id: 'preferences.options.groups_default_tab_group_feed', defaultMessage: 'Group Feed' },
+  sourcesDefaultMySources: { id: 'preferences.options.sources_default_tab_my_sources', defaultMessage: 'My Feeds' },
+  sourcesDefaultFeed: { id: 'preferences.options.sources_default_tab_source_feed', defaultMessage: 'Feed Timeline' },
 });
 
 const Preferences = () => {
@@ -127,6 +129,11 @@ const Preferences = () => {
     group_feed: intl.formatMessage(messages.groupsDefaultFeed),
   }), []);
 
+  const sourcesDefaultTabOptions = useMemo(() => ({
+    source_feed: intl.formatMessage(messages.sourcesDefaultFeed),
+    my_sources: intl.formatMessage(messages.sourcesDefaultMySources),
+  }), []);
+
   return (
     <Form>
       <List>
@@ -159,6 +166,15 @@ const Preferences = () => {
             items={groupsDefaultTabOptions}
             defaultValue={settings.groups.defaultTab}
             onChange={(event: React.ChangeEvent<HTMLSelectElement>) => onSelectChange(event, ['groups', 'defaultTab'])}
+          />
+        </ListItem>
+
+        <ListItem label={<FormattedMessage id='preferences.fields.sources_default_tab_label' defaultMessage='Default feeds view' />}>
+          <SelectDropdown
+            className='max-w-[200px]'
+            items={sourcesDefaultTabOptions}
+            defaultValue={settings.sources.defaultTab}
+            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => onSelectChange(event, ['sources', 'defaultTab'])}
           />
         </ListItem>
 

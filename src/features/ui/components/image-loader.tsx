@@ -8,6 +8,7 @@ type EventRemover = () => void;
 interface IImageLoader {
   alt?: string;
   src: string;
+  fallbackSrc?: string | null;
   previewSrc?: string;
   width?: number;
   height?: number;
@@ -26,6 +27,7 @@ class ImageLoader extends PureComponent<IImageLoader> {
     loading: true,
     error: false,
     width: null,
+    src: '',
   };
 
   removers: EventRemover[] = [];
@@ -41,12 +43,12 @@ class ImageLoader extends PureComponent<IImageLoader> {
   }
 
   componentDidMount() {
-    this.loadImage(this.props);
+    this.loadImage(this.props, this.props.src);
   }
 
   componentDidUpdate(prevProps: IImageLoader) {
-    if (prevProps.src !== this.props.src) {
-      this.loadImage(this.props);
+    if (prevProps.src !== this.props.src || prevProps.fallbackSrc !== this.props.fallbackSrc) {
+      this.loadImage(this.props, this.props.src);
     }
   }
 
@@ -54,18 +56,24 @@ class ImageLoader extends PureComponent<IImageLoader> {
     this.removeEventListeners();
   }
 
-  loadImage(props: IImageLoader) {
+  loadImage(props: IImageLoader, src: string, triedFallback = false) {
     this.removeEventListeners();
-    this.setState({ loading: true, error: false });
+    this.setState({ loading: true, error: false, src });
     Promise.all([
-      props.previewSrc && this.loadPreviewCanvas(props),
-      this.hasSize() && this.loadOriginalImage(props),
+      props.previewSrc && this.loadPreviewCanvas(props).catch(() => undefined),
+      this.hasSize() && this.loadOriginalImage(src),
     ].filter(Boolean))
       .then(() => {
         this.setState({ loading: false, error: false });
         this.clearPreviewCanvas();
       })
-      .catch(() => this.setState({ loading: false, error: true }));
+      .catch(() => {
+        if (!triedFallback && props.fallbackSrc && props.fallbackSrc !== src) {
+          this.loadImage(props, props.fallbackSrc, true);
+        } else {
+          this.setState({ loading: false, error: true });
+        }
+      });
   }
 
   loadPreviewCanvas = ({ previewSrc, width, height }: IImageLoader) => new Promise<void>((resolve, reject) => {
@@ -96,7 +104,7 @@ class ImageLoader extends PureComponent<IImageLoader> {
     }
   }
 
-  loadOriginalImage = ({ src }: IImageLoader) => new Promise<void>((resolve, reject) => {
+  loadOriginalImage = (src: string) => new Promise<void>((resolve, reject) => {
     const image = new Image();
     const removeEventListeners = () => {
       image.removeEventListener('error', handleError);
@@ -131,9 +139,18 @@ class ImageLoader extends PureComponent<IImageLoader> {
     if (c) this.setState({ width: c.offsetWidth });
   };
 
+  handleImageError = () => {
+    const { fallbackSrc } = this.props;
+    const { src } = this.state;
+
+    if (fallbackSrc && fallbackSrc !== src) {
+      this.setState({ src: fallbackSrc, error: false });
+    }
+  };
+
   render() {
-    const { alt, src, width, height, onClick } = this.props;
-    const { loading } = this.state;
+    const { alt, width, height, onClick } = this.props;
+    const { loading, src } = this.state;
 
     const className = 'relative h-screen flex items-center justify-center flex-col';
 
@@ -153,6 +170,7 @@ class ImageLoader extends PureComponent<IImageLoader> {
           <ZoomableImage
             alt={alt}
             src={src}
+            onError={this.handleImageError}
             onClick={onClick}
           />
         )}

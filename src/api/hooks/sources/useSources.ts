@@ -20,6 +20,7 @@ import { type Source, sourceSchema } from '@/schemas/index.ts';
 const emptySources: Source[] = [];
 const sourceListSchema = sourceSchema.array().catch(emptySources);
 const pageSize = 24;
+const fetchableIdentifierPattern = /^(https?:\/\/|@?[^@\s]+@[^@\s]+$)/i;
 
 const mergeSources = (current: Source[], incoming: Source[]) => {
   const seen = new Set(current.map(source => source.id));
@@ -47,11 +48,16 @@ function useSources(q = '') {
   const [reloadKey, setReloadKey] = useState(0);
 
   const loadSourcesPage = useCallback(async (offset: number) => {
-    const endpoint = query ? '/api/v1/feeds/search' : '/api/v1/feeds';
+    const queryIsFetchableIdentifier = fetchableIdentifierPattern.test(query);
+    const endpoint = queryIsFetchableIdentifier ? '/api/v1/feeds/search' : '/api/v1/feeds';
     const searchParams: Record<string, string | number> = { limit: pageSize, offset };
 
     if (query) {
       searchParams.q = query;
+
+      if (!queryIsFetchableIdentifier) {
+        searchParams.scope = 'followed';
+      }
     }
 
     const response = await api.get(endpoint, { searchParams });

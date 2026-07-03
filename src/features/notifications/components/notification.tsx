@@ -67,6 +67,8 @@ const buildLink = (account: AccountEntity): JSX.Element => (
 const icons: Record<NotificationType, string> = {
   follow: userPlusIcon,
   follow_request: userPlusIcon,
+  group_follow: userPlusIcon,
+  group_follow_request: userPlusIcon,
   mention: atIcon,
   favourite: heartIcon,
   group_favourite: heartIcon,
@@ -104,6 +106,14 @@ const notificationMessages: Record<NotificationType, MessageDescriptor> = define
   follow_request: {
     id: 'notification.follow_request',
     defaultMessage: '{name} has requested to follow you',
+  },
+  group_follow: {
+    id: 'notification.group_follow',
+    defaultMessage: '{name} followed your group {targetName}',
+  },
+  group_follow_request: {
+    id: 'notification.group_follow_request',
+    defaultMessage: '{name} has requested to join your group {targetName}',
   },
   mention: {
     id: 'notification.mentioned',
@@ -349,6 +359,8 @@ const Notification: React.FC<INotification> = (props) => {
   const renderContent = () => {
     switch (type as NotificationType) {
       case 'follow':
+      case 'group_follow':
+      case 'group_follow_request':
       case 'ditto:zap':
         if (!status) {
           return account && typeof account === 'object' ? (
@@ -440,7 +452,9 @@ const Notification: React.FC<INotification> = (props) => {
   };
 
   const acct = notification.name;
-  const targetName = notification.target && typeof notification.target === 'object' ? notification.target.acct : '';
+  const targetName = notification.target && typeof notification.target === 'object'
+    ? notification.target.display_name || notification.target.acct
+    : '';
 
   const message: React.ReactNode = validType(type) && account && typeof account === 'object' ? buildMessage(intl, type, account, acct, targetName, instance.title, notification.amount / 1000, notification.total_count) : null;
 

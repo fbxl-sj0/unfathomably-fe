@@ -6,6 +6,7 @@ import { useState, useRef, useLayoutEffect, CSSProperties } from 'react';
 import Blurhash from '@/components/blurhash.tsx';
 import StillImage from '@/components/still-image.tsx';
 import { MIMETYPE_ICONS } from '@/components/upload.tsx';
+import useMediaSourceFallback from '@/hooks/useMediaSourceFallback.ts';
 import { useSettings } from '@/hooks/useSettings.ts';
 import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
 import { Attachment } from '@/schemas/index.ts';
@@ -78,6 +79,15 @@ const Item: React.FC<IItem> = ({
 }) => {
   const { autoPlayGif } = useSettings();
   const { mediaPreview } = useSoapboxConfig();
+  const imageSrc = mediaPreview ? attachment.preview_url : attachment.url;
+  const [displayImageSrc, handleImageError] = useMediaSourceFallback(
+    imageSrc,
+    attachment.remote_url,
+  );
+  const [displayMediaSrc, handleMediaError] = useMediaSourceFallback(
+    attachment.url,
+    attachment.remote_url,
+  );
 
   const handleMouseEnter: React.MouseEventHandler<HTMLVideoElement> = ({ currentTarget: video }) => {
     if (hoverToPlay()) {
@@ -191,10 +201,11 @@ const Item: React.FC<IItem> = ({
       >
         <StillImage
           className='size-full'
-          src={mediaPreview ? attachment.preview_url : attachment.url}
+          src={displayImageSrc}
           alt={attachment.description}
           letterboxed={letterboxed}
           showExt
+          onError={handleImageError}
         />
       </a>
     );
@@ -214,7 +225,8 @@ const Item: React.FC<IItem> = ({
           aria-label={attachment.description}
           title={attachment.description}
           role='application'
-          src={attachment.url}
+          src={displayMediaSrc}
+          onError={handleMediaError}
           onClick={handleClick}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
@@ -257,7 +269,7 @@ const Item: React.FC<IItem> = ({
           onFocus={handleFocus}
           onBlur={handleBlur}
         >
-          <source src={attachment.url} />
+          <source src={displayMediaSrc} onError={handleMediaError} />
         </video>
         <span className={clsx('pointer-events-none absolute bottom-1.5 left-1.5 z-[1] block bg-black/50 px-1.5 py-0.5 text-[11px] font-semibold uppercase leading-[18px] text-white opacity-90 transition-opacity duration-100 ease-linear', { 'hidden': compact })}>{ext}</span>
       </a>

@@ -138,6 +138,7 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
         <ImageLoader
           previewSrc={attachment.preview_url}
           src={attachment.url}
+          fallbackSrc={attachment.remote_url}
           width={width}
           height={height}
           alt={attachment.description}
@@ -151,6 +152,7 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
           preview={attachment.preview_url}
           blurhash={attachment.blurhash ?? undefined}
           src={attachment.url}
+          fallbackSrc={attachment.remote_url}
           width={width}
           height={height}
           startTime={time}
@@ -166,6 +168,7 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
       return (
         <Audio
           src={attachment.url}
+          fallbackSrc={attachment.remote_url}
           alt={attachment.description}
           poster={attachment.preview_url !== attachment.url ? attachment.preview_url : status?.account.avatar_static}
           backgroundColor={attachment.meta?.colors?.background}
@@ -179,6 +182,7 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
       return (
         <ExtendedVideoPlayer
           src={attachment.url}
+          fallbackSrc={attachment.remote_url}
           muted
           controls={false}
           width={width}

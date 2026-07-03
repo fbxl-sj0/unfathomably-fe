@@ -15,6 +15,8 @@ filenames.forEach(filename => {
     'notification.favourite': full['notification.favourite'] || '',
     'notification.follow': full['notification.follow'] || '',
     'notification.follow_request': full['notification.follow_request'] || '',
+    'notification.group_follow': full['notification.group_follow'] || '',
+    'notification.group_follow_request': full['notification.group_follow_request'] || '',
     'notification.mention': full['notification.mention'] || '',
     'notification.reblog': full['notification.reblog'] || '',
     'notification.poll': full['notification.poll'] || '',

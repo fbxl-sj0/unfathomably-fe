@@ -6,6 +6,7 @@ import { useState } from 'react';
 import Blurhash from '@/components/blurhash.tsx';
 import StillImage from '@/components/still-image.tsx';
 import SvgIcon from '@/components/ui/svg-icon.tsx';
+import useMediaSourceFallback from '@/hooks/useMediaSourceFallback.ts';
 import { useSettings } from '@/hooks/useSettings.ts';
 import { isIOS } from '@/is-mobile.ts';
 
@@ -19,6 +20,14 @@ interface IMediaItem {
 const MediaItem: React.FC<IMediaItem> = ({ attachment, onOpenMedia }) => {
   const { autoPlayGif, displayMedia } = useSettings();
   const [visible, setVisible] = useState<boolean>(displayMedia !== 'hide_all' && !attachment.status?.sensitive || displayMedia === 'show_all');
+  const [displayImageSrc, handleImageError] = useMediaSourceFallback(
+    attachment.preview_url,
+    attachment.remote_url,
+  );
+  const [displayMediaSrc, handleMediaError] = useMediaSourceFallback(
+    attachment.url,
+    attachment.remote_url,
+  );
 
   const handleMouseEnter: React.MouseEventHandler<HTMLVideoElement> = e => {
     const video = e.target as HTMLVideoElement;
@@ -67,10 +76,11 @@ const MediaItem: React.FC<IMediaItem> = ({ attachment, onOpenMedia }) => {
 
     thumbnail = (
       <StillImage
-        src={attachment.preview_url}
+        src={displayImageSrc}
         alt={attachment.description}
         style={{ objectPosition: `${x}% ${y}%` }}
         className='size-full overflow-hidden rounded-lg'
+        onError={handleImageError}
       />
     );
   } else if (['gifv', 'video'].indexOf(attachment.type) !== -1) {
@@ -88,7 +98,8 @@ const MediaItem: React.FC<IMediaItem> = ({ attachment, onOpenMedia }) => {
           aria-label={attachment.description}
           title={attachment.description}
           role='application'
-          src={attachment.url}
+          src={displayMediaSrc}
+          onError={handleMediaError}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           loop

@@ -74,6 +74,8 @@ const defaultSettings = ImmutableMap({
     alerts: ImmutableMap({
       follow: true,
       follow_request: false,
+      group_follow: true,
+      group_follow_request: false,
       favourite: true,
       reblog: true,
       mention: true,
@@ -91,6 +93,8 @@ const defaultSettings = ImmutableMap({
     shows: ImmutableMap({
       follow: true,
       follow_request: true,
+      group_follow: true,
+      group_follow_request: true,
       favourite: true,
       reblog: true,
       mention: true,
@@ -102,6 +106,8 @@ const defaultSettings = ImmutableMap({
     sounds: ImmutableMap({
       follow: false,
       follow_request: false,
+      group_follow: false,
+      group_follow_request: false,
       favourite: false,
       reblog: false,
       mention: false,
@@ -159,6 +165,10 @@ const defaultSettings = ImmutableMap({
 
   groups: ImmutableMap({
     defaultTab: 'my_groups',
+  }),
+
+  sources: ImmutableMap({
+    defaultTab: 'source_feed',
   }),
 
   trends: ImmutableMap({

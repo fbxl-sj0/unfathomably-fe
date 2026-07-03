@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 
+import useMediaSourceFallback from '@/hooks/useMediaSourceFallback.ts';
 import { isIOS } from '@/is-mobile.ts';
 
 interface IExtendedVideoPlayer {
@@ -10,11 +11,13 @@ interface IExtendedVideoPlayer {
   time?: number;
   controls?: boolean;
   muted?: boolean;
+  fallbackSrc?: string | null;
   onClick?: () =>  void;
 }
 
-const ExtendedVideoPlayer: React.FC<IExtendedVideoPlayer> = ({ src, alt, time, controls, muted, onClick }) => {
+const ExtendedVideoPlayer: React.FC<IExtendedVideoPlayer> = ({ src, fallbackSrc, alt, time, controls, muted, onClick }) => {
   const video = useRef<HTMLVideoElement>(null);
+  const [currentSrc, handleVideoError] = useMediaSourceFallback(src, fallbackSrc);
 
   useEffect(() => {
     const handleLoadedData = () => {
@@ -45,7 +48,7 @@ const ExtendedVideoPlayer: React.FC<IExtendedVideoPlayer> = ({ src, alt, time, c
     <div className='flex size-full items-center justify-center'>
       <video
         ref={video}
-        src={src}
+        src={currentSrc}
         className='max-h-[80%] max-w-full'
         autoPlay
         role='button'
@@ -56,6 +59,7 @@ const ExtendedVideoPlayer: React.FC<IExtendedVideoPlayer> = ({ src, alt, time, c
         controls={controls}
         loop={!controls}
         onClick={handleClick}
+        onError={handleVideoError}
         {...conditionalAttributes}
       />
     </div>

@@ -2,6 +2,8 @@
 const NOTIFICATION_TYPES = [
   'follow',
   'follow_request',
+  'group_follow',
+  'group_follow_request',
   'mention',
   'reblog',
   'favourite',

@@ -19,6 +19,7 @@ const clamp = (min: number, max: number, value: number): number => Math.min(max,
 interface IZoomableImage {
   alt?: string;
   src: string;
+  onError?: React.ReactEventHandler<HTMLImageElement>;
   onClick?: React.MouseEventHandler;
 }
 
@@ -119,7 +120,7 @@ class ZoomableImage extends PureComponent<IZoomableImage> {
   };
 
   render() {
-    const { alt, src } = this.props;
+    const { alt, src, onError } = this.props;
     const { scale } = this.state;
     const overflow = scale === 1 ? 'hidden' : 'scroll';
 
@@ -136,6 +137,7 @@ class ZoomableImage extends PureComponent<IZoomableImage> {
           className={clsx('size-auto max-h-[80%] max-w-full object-contain', { 'size-full max-h-full': scale !== 1 })}
           title={alt}
           src={src}
+          onError={onError}
           style={{
             transform: `scale(${scale})`,
             transformOrigin: '0 0',

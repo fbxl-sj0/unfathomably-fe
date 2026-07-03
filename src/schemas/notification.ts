@@ -35,6 +35,16 @@ const followRequestNotificationSchema = baseNotificationSchema.extend({
   type: z.literal('follow_request'),
 });
 
+const groupFollowNotificationSchema = baseNotificationSchema.extend({
+  type: z.literal('group_follow'),
+  target: accountSchema,
+});
+
+const groupFollowRequestNotificationSchema = baseNotificationSchema.extend({
+  type: z.literal('group_follow_request'),
+  target: accountSchema,
+});
+
 const favouriteNotificationSchema = baseNotificationSchema.extend({
   type: z.literal('favourite'),
   status: statusSchema,
@@ -92,6 +102,8 @@ const notificationSchema = z.discriminatedUnion('type', [
   reblogNotificationSchema,
   followNotificationSchema,
   followRequestNotificationSchema,
+  groupFollowNotificationSchema,
+  groupFollowRequestNotificationSchema,
   favouriteNotificationSchema,
   pollNotificationSchema,
   updateNotificationSchema,

@@ -35,6 +35,7 @@ const VideoModal: React.FC<IVideoModal> = ({ status, account, media, time, onClo
         preview={media.preview_url}
         blurhash={media.blurhash}
         src={media.url}
+        fallbackSrc={media.remote_url}
         startTime={time}
         link={link}
         detailed

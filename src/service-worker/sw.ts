@@ -19,7 +19,7 @@ const MAX_NOTIFICATIONS = 5;
 /** Tag for the grouped notification. */
 const GROUP_TAG = 'tag';
 /** Push types that are safe to display as native device notifications. */
-const DISPLAYABLE_TYPES = ['follow', 'follow_request', 'favourite', 'mention', 'poll', 'reblog', 'status', 'update'];
+const DISPLAYABLE_TYPES = ['follow', 'follow_request', 'group_follow', 'group_follow_request', 'favourite', 'mention', 'poll', 'reblog', 'status', 'update'];
 
 // https://www.devextent.com/create-service-worker-typescript/
 declare const self: ServiceWorkerGlobalScope;
@@ -176,7 +176,7 @@ const handlePush = (event: PushEvent) => {
       }
 
       const options: ExtendedNotificationOptions = {
-        title:     formatMessage(`notification.${notification.type}`, preferred_locale, { name: notification.account.display_name.length > 0 ? notification.account.display_name : notification.account.username }),
+        title:     formatMessage(`notification.${notification.type}`, preferred_locale, { name: notification.account.display_name.length > 0 ? notification.account.display_name : notification.account.username, targetName: notification.target?.display_name || notification.target?.acct || '' }),
         body:      notification.status && htmlToPlainText(notification.status.content),
         icon:      notification.account.avatar_static,
         timestamp: notification.created_at && Number(new Date(notification.created_at)),

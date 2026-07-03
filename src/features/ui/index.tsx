@@ -131,6 +131,7 @@ import {
   GroupGallery,
   Groups,
   Sources,
+  SourcesDefault,
   SourcesFeed,
   GroupsFeed,
   GroupsDiscover,
@@ -342,9 +343,11 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
 
         {features.groups && <WrappedRoute path='/groups' exact page={GroupsPage} component={GroupsDefault} content={children} />}
         {features.groups && <WrappedRoute path='/groups/my' exact page={GroupsPage} component={Groups} content={children} />}
-        <WrappedRoute path='/feeds' exact page={DefaultPage} component={Sources} content={children} />
+        <WrappedRoute path='/feeds' exact page={DefaultPage} component={SourcesDefault} content={children} />
+        <WrappedRoute path='/feeds/my' exact page={DefaultPage} component={Sources} content={children} />
         <WrappedRoute path='/feeds/feed' exact page={DefaultPage} component={SourcesFeed} content={children} />
-        <WrappedRoute path='/sources' exact page={DefaultPage} component={Sources} content={children} />
+        <WrappedRoute path='/sources' exact page={DefaultPage} component={SourcesDefault} content={children} />
+        <WrappedRoute path='/sources/my' exact page={DefaultPage} component={Sources} content={children} />
         <WrappedRoute path='/sources/feed' exact page={DefaultPage} component={SourcesFeed} content={children} />
         {features.groups && <WrappedRoute path='/groups/feed' exact page={GroupsPage} component={GroupsFeed} content={children} />}
         {features.groupsDiscovery && <WrappedRoute path='/groups/discover' exact page={GroupsPage} component={GroupsDiscover} content={children} />}

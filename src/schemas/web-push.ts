@@ -12,6 +12,8 @@ const webPushSubscriptionSchema = z.object({
     reblog: z.boolean().optional(),
     follow: z.boolean().optional(),
     follow_request: z.boolean().optional(),
+    group_follow: z.boolean().optional(),
+    group_follow_request: z.boolean().optional(),
     favourite: z.boolean().optional(),
     poll: z.boolean().optional(),
     update: z.boolean().optional(),

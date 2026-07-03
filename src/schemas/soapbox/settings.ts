@@ -52,6 +52,9 @@ const settingsSchema = z.object({
   groups: coerceObject({
     defaultTab: z.enum(['my_groups', 'group_feed']).catch('my_groups'),
   }),
+  sources: coerceObject({
+    defaultTab: z.enum(['source_feed', 'my_sources']).catch('source_feed'),
+  }),
   remote_timeline: coerceObject({
     pinnedHosts: z.string().array().catch([]),
   }),
