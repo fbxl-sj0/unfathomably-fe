@@ -19,7 +19,12 @@ function useTimelineStream(...args: Parameters<typeof connectTimelineStream>) {
   const streamingUrl = instance.configuration.urls.streaming;
 
   const connect = () => {
-    if (enabled && streamingUrl && !stream.current) {
+    if (
+      enabled &&
+      streamingUrl &&
+      !stream.current &&
+      (!requiresAccessToken(path) || accessToken)
+    ) {
       stream.current = dispatch(connectTimelineStream(...args));
     }
   };
@@ -39,6 +44,12 @@ function useTimelineStream(...args: Parameters<typeof connectTimelineStream>) {
   return {
     disconnect,
   };
+}
+
+function requiresAccessToken(path: string) {
+  const stream = path.split('&', 1)[0];
+
+  return stream === 'direct' || stream === 'list' || stream === 'user' || stream.startsWith('user:');
 }
 
 export { useTimelineStream };

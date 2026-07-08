@@ -47,6 +47,9 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 - Improved stream recovery so visible tabs reconnect after unexpected websocket or event-stream disconnects and silent stalls without requiring refresh.
 - Subscribed the Groups Feed and Feeds Feed to Unfathomably BE aggregate websocket streams, keeping HTTP timeline loading as the initial-load and fallback path.
 - Added an in-progress translation spinner and duplicate-click guard while slower OpenTranslate requests complete.
+- Documented release alignment with the backend PostgreSQL peer-statistics and
+  large-table maintenance tuning; no frontend runtime changes were required for
+  this database-side rollout.
 
 ### Fixed
 - Rewrote translation action menu label selection without nested ternaries so

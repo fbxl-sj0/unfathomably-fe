@@ -9,8 +9,10 @@ import {
   LIST_UPDATE_SUCCESS,
   LIST_EDITOR_RESET,
   LIST_EDITOR_SETUP,
+  LIST_FETCH_SUCCESS,
   LIST_EDITOR_TITLE_CHANGE,
   LIST_EDITOR_EMOJI_CHANGE,
+  LIST_EDITOR_EXCLUSIVE_CHANGE,
   LIST_ACCOUNTS_FETCH_REQUEST,
   LIST_ACCOUNTS_FETCH_SUCCESS,
   LIST_ACCOUNTS_FETCH_FAIL,
@@ -40,6 +42,7 @@ const ReducerRecord = ImmutableRecord({
   isChanged: false,
   title: '',
   emoji: '',
+  exclusive: false,
 
   accounts: AccountsRecord(),
 
@@ -54,10 +57,28 @@ export default function listEditorReducer(state: State = ReducerRecord(), action
       return ReducerRecord();
     case LIST_EDITOR_SETUP:
       return state.withMutations(map => {
-        map.set('listId', action.list.get('id'));
-        map.set('title', action.list.get('title'));
-        map.set('emoji', action.list.getIn(['pleroma', 'emoji']) || '');
+        map.set('listId', action.listId);
+
+        if (action.list?.get) {
+          map.set('title', action.list.get('title'));
+          map.set('emoji', action.list.getIn(['pleroma', 'emoji']) || '');
+          map.set('exclusive', !!action.list.get('exclusive'));
+        } else {
+          map.set('title', '');
+          map.set('emoji', '');
+          map.set('exclusive', false);
+        }
+
         map.set('isSubmitting', false);
+      });
+    case LIST_FETCH_SUCCESS:
+      if (state.listId !== String(action.list.id)) {
+        return state;
+      }
+
+      return state.withMutations(map => {
+        map.set('title', action.list.title);
+        map.set('exclusive', !!action.list.exclusive);
       });
     case LIST_EDITOR_TITLE_CHANGE:
       return state.withMutations(map => {
@@ -67,6 +88,11 @@ export default function listEditorReducer(state: State = ReducerRecord(), action
     case LIST_EDITOR_EMOJI_CHANGE:
       return state.withMutations(map => {
         map.set('emoji', action.value);
+        map.set('isChanged', true);
+      });
+    case LIST_EDITOR_EXCLUSIVE_CHANGE:
+      return state.withMutations(map => {
+        map.set('exclusive', action.value);
         map.set('isChanged', true);
       });
     case LIST_CREATE_REQUEST:
@@ -83,7 +109,9 @@ export default function listEditorReducer(state: State = ReducerRecord(), action
       return state.withMutations(map => {
         map.set('isSubmitting', false);
         map.set('listId', action.list.id);
+        map.set('title', action.list.title);
         map.set('emoji', action.list.pleroma?.emoji || '');
+        map.set('exclusive', !!action.list.exclusive);
       });
     case LIST_ACCOUNTS_FETCH_REQUEST:
       return state.setIn(['accounts', 'isLoading'], true);
@@ -105,7 +133,17 @@ export default function listEditorReducer(state: State = ReducerRecord(), action
         map.set('value', '');
       }));
     case LIST_EDITOR_ADD_SUCCESS:
-      return state.updateIn(['accounts', 'items'], list => (list as ImmutableList<string>).unshift(action.accountId));
+      return state.withMutations(map => {
+        map.updateIn(['accounts', 'items'], list => {
+          const items = list as ImmutableList<string>;
+
+          return items.includes(action.accountId) ? items : items.unshift(action.accountId);
+        });
+
+        map.updateIn(['suggestions', 'items'], list =>
+          (list as ImmutableList<string>).filterNot((item) => item === action.accountId),
+        );
+      });
     case LIST_EDITOR_REMOVE_SUCCESS:
       return state.updateIn(['accounts', 'items'], list => (list as ImmutableList<string>).filterNot((item) => item === action.accountId));
     default:

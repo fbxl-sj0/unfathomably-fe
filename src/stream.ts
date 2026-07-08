@@ -439,8 +439,9 @@ function buildMastodonPath(stream: string, params: URLSearchParams): string | nu
     case 'user:notification':
       return `${STREAMING_PATH}/user/notification`;
     case 'user:groups':
+      return `${STREAMING_PATH}/user/groups`;
     case 'user:sources':
-      return null;
+      return `${STREAMING_PATH}/user/sources`;
     case 'group': {
       const group = params.get('group');
 

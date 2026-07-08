@@ -21,20 +21,21 @@ const Search = () => {
   const dispatch = useAppDispatch();
 
   const value = useAppSelector((state) => state.listEditor.suggestions.value);
+  const hasValue = value.trim().length > 0;
 
   const handleChange: React.ChangeEventHandler<HTMLInputElement> = e => {
     dispatch(changeListSuggestions(e.target.value));
   };
 
   const handleSubmit = () => {
+    if (!hasValue) return;
+
     dispatch(fetchListSuggestions(value));
   };
 
   const handleClear = () => {
     dispatch(clearListSuggestions());
   };
-
-  const hasValue = value.length > 0;
 
   return (
     <Form onSubmit={handleSubmit}>
@@ -53,7 +54,7 @@ const Search = () => {
           </div>
         </label>
 
-        <Button onClick={handleSubmit}>{intl.formatMessage(messages.searchTitle)}</Button>
+        <Button disabled={!hasValue} onClick={handleSubmit}>{intl.formatMessage(messages.searchTitle)}</Button>
       </HStack>
     </Form>
   );

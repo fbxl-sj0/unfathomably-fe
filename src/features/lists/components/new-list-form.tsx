@@ -1,18 +1,21 @@
 import { defineMessages, useIntl } from 'react-intl';
 
-import { changeListEditorEmoji, changeListEditorTitle, submitListEditor } from '@/actions/lists.ts';
+import { changeListEditorExclusive, changeListEditorTitle, submitListEditor } from '@/actions/lists.ts';
 import Button from '@/components/ui/button.tsx';
 import Form from '@/components/ui/form.tsx';
 import HStack from '@/components/ui/hstack.tsx';
 import Input from '@/components/ui/input.tsx';
+import Text from '@/components/ui/text.tsx';
+import Toggle from '@/components/ui/toggle.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 
 const messages = defineMessages({
   label: { id: 'lists.new.title_placeholder', defaultMessage: 'New list title' },
-  emoji: { id: 'lists.new.emoji_placeholder', defaultMessage: 'Emoji' },
   title: { id: 'lists.new.create', defaultMessage: 'Add list' },
   create: { id: 'lists.new.create_title', defaultMessage: 'Add list' },
+  exclusive: { id: 'lists.exclusive', defaultMessage: 'Exclusive list' },
+  exclusiveHint: { id: 'lists.exclusive_hint', defaultMessage: 'Hide members of this list from your Home feed.' },
 });
 
 const NewListForm: React.FC = () => {
@@ -20,15 +23,15 @@ const NewListForm: React.FC = () => {
   const intl = useIntl();
 
   const value = useAppSelector((state) => state.listEditor.get('title'));
-  const emoji = useAppSelector((state) => state.listEditor.get('emoji'));
+  const exclusive = useAppSelector((state) => state.listEditor.get('exclusive'));
   const disabled = useAppSelector((state) => !!state.listEditor.get('isSubmitting'));
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(changeListEditorTitle(e.target.value));
   };
 
-  const handleEmojiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(changeListEditorEmoji(e.target.value));
+  const handleExclusiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(changeListEditorExclusive(e.target.checked));
   };
 
   const handleSubmit = (e: React.FormEvent<Element>) => {
@@ -37,8 +40,8 @@ const NewListForm: React.FC = () => {
   };
 
   const label = intl.formatMessage(messages.label);
-  const emojiLabel = intl.formatMessage(messages.emoji);
   const create = intl.formatMessage(messages.create);
+  const hasTitle = value.trim().length > 0;
 
   return (
     <Form onSubmit={handleSubmit}>
@@ -55,27 +58,32 @@ const NewListForm: React.FC = () => {
           />
         </label>
 
-        <label className='w-24 shrink-0'>
-          <span style={{ display: 'none' }}>{emojiLabel}</span>
-
-          <Input
-            type='text'
-            value={emoji}
-            disabled={disabled}
-            onChange={handleEmojiChange}
-            placeholder={emojiLabel}
-            maxLength={64}
-          />
-        </label>
-
         <Button
-          disabled={disabled}
+          disabled={disabled || !hasTitle}
           onClick={handleSubmit}
           theme='primary'
         >
           {create}
         </Button>
       </HStack>
+
+      <div className='flex items-start gap-3 rounded-lg bg-gray-100 p-3 dark:bg-gray-900 black:bg-black'>
+        <Toggle
+          id='new-list-exclusive'
+          checked={exclusive}
+          disabled={disabled}
+          onChange={handleExclusiveChange}
+        />
+
+        <div>
+          <Text tag='label' htmlFor='new-list-exclusive' weight='medium'>
+            {intl.formatMessage(messages.exclusive)}
+          </Text>
+          <Text theme='muted' size='sm'>
+            {intl.formatMessage(messages.exclusiveHint)}
+          </Text>
+        </div>
+      </div>
     </Form>
   );
 };

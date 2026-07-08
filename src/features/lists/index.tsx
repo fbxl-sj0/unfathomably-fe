@@ -13,6 +13,7 @@ import ScrollableList from '@/components/scrollable-list.tsx';
 import { Column } from '@/components/ui/column.tsx';
 import IconButton from '@/components/ui/icon-button.tsx';
 import Spinner from '@/components/ui/spinner.tsx';
+import Text from '@/components/ui/text.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 
@@ -29,6 +30,8 @@ const messages = defineMessages({
   deleteConfirm: { id: 'confirmations.delete_list.confirm', defaultMessage: 'Delete' },
   editList: { id: 'lists.edit', defaultMessage: 'Edit list' },
   deleteList: { id: 'lists.delete', defaultMessage: 'Delete list' },
+  description: { id: 'lists.description', defaultMessage: 'Lists collect posts from people you follow. Exclusive lists keep those people out of your Home feed so you can read them here instead.' },
+  exclusive: { id: 'lists.exclusive_badge', defaultMessage: 'Exclusive' },
 });
 
 const getOrderedLists = createSelector([(state: RootState) => state.lists], lists => {
@@ -96,6 +99,10 @@ const Lists: React.FC = () => {
   return (
     <Column label={intl.formatMessage(messages.heading)}>
       <div className='space-y-4'>
+        <Text theme='muted' size='sm'>
+          {intl.formatMessage(messages.description)}
+        </Text>
+
         <NewListForm />
 
         <ScrollableList
@@ -109,6 +116,11 @@ const Lists: React.FC = () => {
               <span className='grow'>
                 {list.title}
               </span>
+              {list.exclusive && (
+                <Text tag='span' theme='muted' size='xs' className='rounded-full bg-gray-100 px-2 py-0.5 dark:bg-gray-900'>
+                  {intl.formatMessage(messages.exclusive)}
+                </Text>
+              )}
               <IconButton iconClassName='h-5 w-5 text-gray-700 hover:text-gray-800 dark:text-gray-600 dark:hover:text-gray-500' src={pencilIcon} onClick={handleEditClick(list.id)} title={intl.formatMessage(messages.editList)} />
               <IconButton iconClassName='h-5 w-5 text-gray-700 hover:text-gray-800 dark:text-gray-600 dark:hover:text-gray-500' src={trashIcon} onClick={handleDeleteClick(list.id)} title={intl.formatMessage(messages.deleteList)} />
             </Link>

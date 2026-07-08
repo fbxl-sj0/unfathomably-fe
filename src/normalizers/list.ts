@@ -9,6 +9,7 @@ import { Record as ImmutableRecord, Map as ImmutableMap, fromJS } from 'immutabl
 export const ListRecord = ImmutableRecord({
   id: '',
   title: '',
+  exclusive: false,
   replies_policy: null as 'followed' | 'list' | 'none' | null,
   pleroma: ImmutableMap({
     emoji: null as string | null,

@@ -19,6 +19,7 @@ const LISTS_FETCH_FAIL    = 'LISTS_FETCH_FAIL';
 
 const LIST_EDITOR_TITLE_CHANGE = 'LIST_EDITOR_TITLE_CHANGE';
 const LIST_EDITOR_EMOJI_CHANGE = 'LIST_EDITOR_EMOJI_CHANGE';
+const LIST_EDITOR_EXCLUSIVE_CHANGE = 'LIST_EDITOR_EXCLUSIVE_CHANGE';
 const LIST_EDITOR_RESET        = 'LIST_EDITOR_RESET';
 const LIST_EDITOR_SETUP        = 'LIST_EDITOR_SETUP';
 
@@ -114,21 +115,30 @@ const fetchListsFail = (error: unknown) => ({
 const submitListEditor = (shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
   const listEditor = getState().listEditor;
   const listId = listEditor.listId!;
-  const title = listEditor.title;
-  const emoji = listEditor.emoji;
+  const title = listEditor.title.trim();
+  const exclusive = listEditor.exclusive;
+
+  if (!title) return;
 
   if (listId === null) {
-    dispatch(createList(title, emoji, shouldReset));
+    dispatch(createList(title, exclusive, shouldReset));
   } else {
-    dispatch(updateList(listId, title, emoji, shouldReset));
+    dispatch(updateList(listId, title, exclusive, shouldReset));
   }
 };
 
 const setupListEditor = (listId: string | number) => (dispatch: AppDispatch, getState: () => RootState) => {
+  const list = getState().lists.get(String(listId));
+
   dispatch({
     type: LIST_EDITOR_SETUP,
-    list: getState().lists.get(String(listId)),
+    listId: String(listId),
+    list,
   });
+
+  if (!list) {
+    dispatch(fetchList(listId));
+  }
 
   dispatch(fetchListAccounts(listId));
 };
@@ -143,17 +153,22 @@ const changeListEditorEmoji = (value: string) => ({
   value,
 });
 
-const listParams = (title: string, emoji: string | null | undefined) => ({
-  title,
-  emoji: emoji?.trim() || null,
+const changeListEditorExclusive = (value: boolean) => ({
+  type: LIST_EDITOR_EXCLUSIVE_CHANGE,
+  value,
 });
 
-const createList = (title: string, emoji?: string | null, shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
+const listParams = (title: string, exclusive: boolean) => ({
+  title,
+  exclusive,
+});
+
+const createList = (title: string, exclusive = false, shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
   if (!isLoggedIn(getState)) return;
 
   dispatch(createListRequest());
 
-  api(getState).post('/api/v1/lists', listParams(title, emoji)).then((response) => response.json()).then((data) => {
+  api(getState).post('/api/v1/lists', listParams(title, exclusive)).then((response) => response.json()).then((data) => {
     dispatch(createListSuccess(data));
 
     if (shouldReset) {
@@ -176,12 +191,12 @@ const createListFail = (error: unknown) => ({
   error,
 });
 
-const updateList = (id: string | number, title: string, emoji?: string | null, shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
+const updateList = (id: string | number, title: string, exclusive = false, shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
   if (!isLoggedIn(getState)) return;
 
   dispatch(updateListRequest(id));
 
-  api(getState).put(`/api/v1/lists/${id}`, listParams(title, emoji)).then((response) => response.json()).then((data) => {
+  api(getState).put(`/api/v1/lists/${id}`, listParams(title, exclusive)).then((response) => response.json()).then((data) => {
     dispatch(updateListSuccess(data));
 
     if (shouldReset) {
@@ -268,8 +283,15 @@ const fetchListAccountsFail = (id: string | number, error: unknown) => ({
 const fetchListSuggestions = (q: string) => (dispatch: AppDispatch, getState: () => RootState) => {
   if (!isLoggedIn(getState)) return;
 
+  const query = q.trim();
+
+  if (!query) {
+    dispatch(clearListSuggestions());
+    return;
+  }
+
   const searchParams = {
-    q,
+    q: query,
     resolve: false,
     limit: 4,
     following: true,
@@ -422,6 +444,7 @@ export {
   LISTS_FETCH_FAIL,
   LIST_EDITOR_TITLE_CHANGE,
   LIST_EDITOR_EMOJI_CHANGE,
+  LIST_EDITOR_EXCLUSIVE_CHANGE,
   LIST_EDITOR_RESET,
   LIST_EDITOR_SETUP,
   LIST_CREATE_REQUEST,
@@ -462,6 +485,7 @@ export {
   setupListEditor,
   changeListEditorTitle,
   changeListEditorEmoji,
+  changeListEditorExclusive,
   createList,
   createListRequest,
   createListSuccess,
