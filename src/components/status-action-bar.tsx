@@ -514,8 +514,16 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
     }
 
     if (manualTranslation.canTranslate) {
+      let translationMessage = messages.translate;
+
+      if (status.translationLoading) {
+        translationMessage = messages.translating;
+      } else if (status.translation) {
+        translationMessage = messages.showOriginal;
+      }
+
       menu.push({
-        text: intl.formatMessage(status.translationLoading ? messages.translating : status.translation ? messages.showOriginal : messages.translate),
+        text: intl.formatMessage(translationMessage),
         action: status.translationLoading ? undefined : handleTranslateClick,
         icon: languageIcon,
       });

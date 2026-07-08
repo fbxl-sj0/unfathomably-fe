@@ -5,6 +5,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { accountSearch } from '@/actions/accounts.ts';
 import AutosuggestInput, { AutoSuggestion } from '@/components/autosuggest-input.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
+import { looksLikeActorIdentifier } from '@/utils/search.ts';
 
 import type { Menu } from '@/components/dropdown-menu/index.ts';
 import type { InputThemes } from '@/components/ui/input.tsx';
@@ -46,7 +47,7 @@ const AutosuggestAccountInput: React.FC<IAutosuggestAccountInput> = ({
   };
 
   const handleAccountSearch = useCallback(throttle((q) => {
-    const params = { q, limit, resolve: false };
+    const params = { q, limit, resolve: looksLikeActorIdentifier(q) };
 
     dispatch(accountSearch(params, controller.current.signal))
       .then((accounts: { id: string }[]) => {

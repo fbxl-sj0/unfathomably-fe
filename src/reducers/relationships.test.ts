@@ -24,6 +24,7 @@ describe('relationships reducer', () => {
           blocking: false,
           domain_blocking: false,
           endorsed: false,
+          federation_blocked: false,
           followed_by: true,
           following: true,
           id: '9v5bqYwY2jfmvPNhTM',

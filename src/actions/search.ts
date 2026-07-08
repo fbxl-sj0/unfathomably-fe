@@ -60,6 +60,14 @@ const submitSearch = (filter?: SearchFilter, newValue?: string, shortVideosOnly?
       return;
     }
 
+    if (filter && filter !== getState().search.filter) {
+      dispatch({
+        type: SEARCH_FILTER_SET,
+        path: ['search', 'filter'],
+        value: filter,
+      });
+    }
+
     dispatch(fetchSearchRequest(value));
 
     const params: Record<string, any> = {

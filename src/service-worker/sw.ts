@@ -153,6 +153,15 @@ const formatMessage = (messageId: string, locale: string, values = {}): string =
 const htmlToPlainText = (html: string): string =>
   unescape(html.replace(/<br\s*\/?>/g, '\n').replace(/<\/p><[^>]*>/g, '\n\n').replace(/<[^>]*>/g, ''));
 
+/** Return a safe display name for optional embedded notification targets. */
+const targetName = (target: APINotification['target']): string => {
+  if (!target || typeof target === 'string') {
+    return '';
+  }
+
+  return target.display_name || target.acct || '';
+};
+
 /** Check whether a visible app tab can show the notification itself. */
 const hasVisibleClient = () =>
   self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients =>
@@ -176,7 +185,7 @@ const handlePush = (event: PushEvent) => {
       }
 
       const options: ExtendedNotificationOptions = {
-        title:     formatMessage(`notification.${notification.type}`, preferred_locale, { name: notification.account.display_name.length > 0 ? notification.account.display_name : notification.account.username, targetName: notification.target?.display_name || notification.target?.acct || '' }),
+        title:     formatMessage(`notification.${notification.type}`, preferred_locale, { name: notification.account.display_name.length > 0 ? notification.account.display_name : notification.account.username, targetName: targetName(notification.target) }),
         body:      notification.status && htmlToPlainText(notification.status.content),
         icon:      notification.account.avatar_static,
         timestamp: notification.created_at && Number(new Date(notification.created_at)),

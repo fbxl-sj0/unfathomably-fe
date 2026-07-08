@@ -70,7 +70,7 @@ describe('<Discover />', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('group-search-icon')).toBeInTheDocument();
-        expect(screen.getByTestId('recent-searches')).toBeInTheDocument();
+        expect(screen.getByTestId('no-results')).toBeInTheDocument();
         expect(screen.queryAllByTestId('popular-groups')).toHaveLength(0);
       });
     });

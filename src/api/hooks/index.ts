@@ -48,6 +48,8 @@ export { useUpdateGroupTag } from './groups/useUpdateGroupTag.ts';
 export { useFollowSource } from './sources/useFollowSource.ts';
 export { useSources } from './sources/useSources.ts';
 export { useUnfollowSource } from './sources/useUnfollowSource.ts';
+export { useTargetSearch } from './discovery/useTargetSearch.ts';
+export { useFederationStatus } from './federation/useFederationStatus.ts';
 
 // Statuses
 export { useBookmarks } from './statuses/useBookmarks.ts';

@@ -439,9 +439,8 @@ function buildMastodonPath(stream: string, params: URLSearchParams): string | nu
     case 'user:notification':
       return `${STREAMING_PATH}/user/notification`;
     case 'user:groups':
-      return `${STREAMING_PATH}/user/groups`;
     case 'user:sources':
-      return `${STREAMING_PATH}/user/sources`;
+      return null;
     case 'group': {
       const group = params.get('group');
 
@@ -598,7 +597,7 @@ export function buildStreamingRequest(
     websocketUrl = new URL(mastodonPath, `${baseUrl}/`);
     appendParams(websocketUrl, params);
   } else {
-    websocketUrl = new URL(`${STREAMING_PATH}/`, `${baseUrl}/`);
+    websocketUrl = new URL(STREAMING_PATH, `${baseUrl}/`);
     websocketUrl.searchParams.set('stream', stream);
     appendParams(websocketUrl, params);
   }

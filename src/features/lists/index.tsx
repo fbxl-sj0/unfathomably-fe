@@ -39,6 +39,21 @@ const getOrderedLists = createSelector([(state: RootState) => state.lists], list
   return lists.toList().filter((item) => !!item).sort((a: any, b: any) => a.get('title').localeCompare(b.get('title')));
 });
 
+const renderListIcon = (list: any) => {
+  const emoji = list.getIn(['pleroma', 'emoji']);
+  const emojiUrl = list.getIn(['pleroma', 'emoji_url']);
+
+  if (emojiUrl) {
+    return <img className='size-4' src={emojiUrl} alt={emoji || ''} />;
+  }
+
+  if (emoji) {
+    return <span className='flex size-4 items-center justify-center text-base leading-none'>{emoji}</span>;
+  }
+
+  return <Icon src={listIcon} />;
+};
+
 const Lists: React.FC = () => {
   const dispatch = useAppDispatch();
   const intl = useIntl();
@@ -90,7 +105,7 @@ const Lists: React.FC = () => {
         >
           {lists.map((list: any) => (
             <Link key={list.id} to={`/list/${list.id}`} className='flex items-center gap-1.5 rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800'>
-              <Icon src={listIcon} />
+              {renderListIcon(list)}
               <span className='grow'>
                 {list.title}
               </span>

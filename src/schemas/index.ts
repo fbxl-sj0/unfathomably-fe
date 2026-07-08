@@ -23,7 +23,7 @@ export { moderationLogEntrySchema, type ModerationLogEntry } from './moderation-
 export { notificationSchema, type Notification } from './notification.ts';
 export { patronUserSchema, type PatronUser } from './patron.ts';
 export { pollSchema, type Poll, type PollOption } from './poll.ts';
-export { relationshipSchema, type Relationship } from './relationship.ts';
+export { federationStatusSchema, relationshipSchema, type FederationStatus, type Relationship } from './relationship.ts';
 export { relaySchema, type Relay } from './relay.ts';
 export { ruleSchema, adminRuleSchema, type Rule, type AdminRule } from './rule.ts';
 export { sourceSchema, sourceRelationshipSchema, type Source, type SourceRelationship } from './source.ts';

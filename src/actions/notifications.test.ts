@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeGroupedNotificationsPayload } from './notifications.ts';
+import { isPleromaNotificationReadId, normalizeGroupedNotificationsPayload } from './notifications.ts';
 
 describe('normalizeGroupedNotificationsPayload()', () => {
   it('turns grouped API rows into renderable notifications', () => {
@@ -64,5 +64,18 @@ describe('normalizeGroupedNotificationsPayload()', () => {
       account,
       total_count: 2,
     });
+  });
+});
+
+describe('isPleromaNotificationReadId()', () => {
+  it('accepts numeric notification ids returned by the Pleroma notification API', () => {
+    expect(isPleromaNotificationReadId(1)).toBe(true);
+    expect(isPleromaNotificationReadId('12345')).toBe(true);
+  });
+
+  it('rejects grouped notification keys before they are sent to the mark-read endpoint', () => {
+    expect(isPleromaNotificationReadId('follow-1-100')).toBe(false);
+    expect(isPleromaNotificationReadId('favourite-20-100')).toBe(false);
+    expect(isPleromaNotificationReadId(undefined)).toBe(false);
   });
 });

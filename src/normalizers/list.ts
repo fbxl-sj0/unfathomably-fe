@@ -10,6 +10,10 @@ export const ListRecord = ImmutableRecord({
   id: '',
   title: '',
   replies_policy: null as 'followed' | 'list' | 'none' | null,
+  pleroma: ImmutableMap({
+    emoji: null as string | null,
+    emoji_url: null as string | null,
+  }),
 });
 
 export const normalizeList = (list: Record<string, any>) => {

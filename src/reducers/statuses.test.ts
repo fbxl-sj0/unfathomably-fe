@@ -54,6 +54,36 @@ describe('statuses reducer', () => {
       expect(state.getIn(['AFmFMSpITT9xcOJKcK', 'quote'])).toEqual('AFmFLcd6XYVdjWCrOS');
     });
 
+    it('normalizes Misskey quote and emoji reaction fields exposed by the backend', async () => {
+      const { default: quotePost } = await import('@/__fixtures__/pleroma-quote-post.json');
+      const misskeyStatus = {
+        ...quotePost,
+        id: 'misskey-quote-wrapper',
+        uri: 'https://misskey-ref.test/notes/misskey-quote-wrapper',
+        url: 'https://misskey-ref.test/notes/misskey-quote-wrapper',
+        content: '<p>Misskey quote wrapper</p>',
+        pleroma: {
+          ...quotePost.pleroma,
+          quote_url: 'https://misskey-ref.test/notes/quoted-note',
+          quote_visible: true,
+          emoji_reactions: [{
+            name: '⭐',
+            count: 1,
+            me: true,
+            url: undefined,
+          }],
+        },
+      };
+
+      const state = reducer(undefined, { type: STATUS_IMPORT, status: misskeyStatus });
+      const result = state.get('misskey-quote-wrapper');
+
+      expect(result?.quote).toEqual(quotePost.pleroma.quote.id);
+      expect(result?.reactions?.first()?.name).toEqual('⭐');
+      expect(result?.reactions?.first()?.count).toEqual(1);
+      expect(result?.reactions?.first()?.me).toBe(true);
+    });
+
     it('normalizes Mitra attachments', async () => {
       const { default: status } = await import('@/__fixtures__/mitra-status-with-attachments.json');
 
@@ -73,7 +103,7 @@ describe('statuses reducer', () => {
         remote_url: null,
       }, {
         id: '017eeb0e-e5e5-79fd-6054-8b6869b1db49',
-        type: 'unknown',
+        type: 'audio',
         url: 'https://mitra.social/media/55a81a090247cc4fc127e5716bcf7964f6e0df9b584f85f4696c0b994747a4d0.oga',
         preview_url: 'https://mitra.social/media/55a81a090247cc4fc127e5716bcf7964f6e0df9b584f85f4696c0b994747a4d0.oga',
         remote_url: null,

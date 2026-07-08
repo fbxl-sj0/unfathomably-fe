@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import { VirtuosoGridMockContext, VirtuosoMockContext } from 'react-virtuoso';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -35,32 +34,50 @@ const renderApp = (children: React.ReactNode) => (
   )
 );
 
-const groupSearchResult = {
-  groups: [buildGroup()],
+const sourceTarget = {
+  target_type: 'source',
+  source: {
+    actor_type: 'Person',
+    acct: 'library@audio.example',
+    avatar: '',
+    capabilities: ['follow library', 'preview tracks'],
+    display_name: 'Funkwhale Library',
+    domain: 'audio.example',
+    id: 'source-1',
+    note: '<p>Audio tracks and podcasts</p>',
+    platform_family: 'audio',
+    platform_label: 'Funkwhale',
+    relationship: {
+      following: false,
+    },
+    source_profile: 'library',
+    url: 'https://audio.example/library',
+  },
+} as any;
+
+const targetSearchResult = {
+  targets: [
+    { target_type: 'group', group: buildGroup() },
+    sourceTarget,
+  ],
   hasNextPage: false,
   isFetching: false,
   fetchNextPage: vi.fn(),
 } as any;
 
 describe('<Results />', () => {
-  describe('with a list layout', () => {
-    it('should render the GroupListItem components', async () => {
-      renderApp(<Results groupSearchResult={groupSearchResult} />);
+  describe('with target search results', () => {
+    it('should render group targets', async () => {
+      renderApp(<Results targetSearchResult={targetSearchResult} />);
       await waitFor(() => {
         expect(screen.getByTestId('group-list-item')).toBeInTheDocument();
       });
     });
-  });
 
-  describe('with a grid layout', () => {
-    it('should render the GroupGridItem components', async () => {
-      const user = userEvent.setup();
-      renderApp(<Results groupSearchResult={groupSearchResult} />);
-
-      await user.click(screen.getByTestId('layout-grid-action'));
-
+    it('should render feed targets', async () => {
+      renderApp(<Results targetSearchResult={targetSearchResult} />);
       await waitFor(() => {
-        expect(screen.getByTestId('group-grid-item')).toBeInTheDocument();
+        expect(screen.getByText('Funkwhale Library')).toBeInTheDocument();
       });
     });
   });

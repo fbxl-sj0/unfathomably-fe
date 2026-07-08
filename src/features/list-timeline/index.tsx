@@ -37,7 +37,8 @@ const ListTimeline: React.FC = () => {
     dispatch(openModal('LIST_EDITOR', { listId: id }));
   };
 
-  const title  = list ? list.title : id;
+  const listEmoji = list ? list.getIn(['pleroma', 'emoji']) : null;
+  const title = list ? [listEmoji, list.title].filter(Boolean).join(' ') : id;
 
   if (typeof list === 'undefined') {
     return (

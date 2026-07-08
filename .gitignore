@@ -22,6 +22,8 @@ yarn-error.log*
 /public/
 /dist/
 /unfathomably-fe.zip
+/unfathomably-fe-dist*.tgz
+/unfathomably-fe-dist*.zip
 
 .idea
 .DS_Store

@@ -146,4 +146,56 @@ describe('<GroupActionButton />', () => {
       expect(screen.getByRole('button')).toHaveTextContent('Leave Group');
     });
   });
+
+  describe('when the user is blocked from the group', () => {
+    beforeEach(() => {
+      group = buildGroup({
+        relationship: buildGroupRelationship({
+          blocked_by: true,
+          can_follow: false,
+          moderation_message: 'You are blocked from this group and cannot follow or post there.',
+        }),
+      });
+    });
+
+    it('should render a disabled blocked button with the moderation reason', () => {
+      render(<GroupActionButton group={group} />);
+
+      expect(screen.getByRole('button')).toBeDisabled();
+      expect(screen.getByRole('button')).toHaveTextContent('Blocked from group');
+      expect(screen.getByRole('button')).toHaveAttribute(
+        'title',
+        'You are blocked from this group and cannot follow or post there.',
+      );
+    });
+  });
+
+  describe('when federation policy blocks the group host', () => {
+    beforeEach(() => {
+      group = buildGroup({
+        federation: {
+          defederated: true,
+          direction: 'local_policy',
+          host: 'blocked.example',
+          known: true,
+          message: 'Federation paused',
+          reason: 'Federation paused',
+          severity: 'reject',
+        },
+        relationship: buildGroupRelationship({
+          can_follow: false,
+          federation_blocked: true,
+          moderation_message: 'Federation paused',
+        }),
+      });
+    });
+
+    it('should render a disabled federation-blocked button with the policy reason', () => {
+      render(<GroupActionButton group={group} />);
+
+      expect(screen.getByRole('button')).toBeDisabled();
+      expect(screen.getByRole('button')).toHaveTextContent('Federation blocked');
+      expect(screen.getByRole('button')).toHaveAttribute('title', 'Federation paused');
+    });
+  });
 });

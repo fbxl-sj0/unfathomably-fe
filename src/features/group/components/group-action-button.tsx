@@ -23,6 +23,8 @@ const messages = defineMessages({
   joinRequestSuccess: { id: 'group.join.request_success', defaultMessage: 'Request sent to group owner' },
   joinSuccess: { id: 'group.join.success', defaultMessage: 'Group joined successfully!' },
   leaveSuccess: { id: 'group.leave.success', defaultMessage: 'Left the group' },
+  blocked: { id: 'group.join.blocked', defaultMessage: 'Blocked from group' },
+  federationBlocked: { id: 'group.join.federation_blocked', defaultMessage: 'Federation blocked' },
 });
 
 const GroupActionButton = ({ group }: IGroupActionButton) => {
@@ -40,6 +42,8 @@ const GroupActionButton = ({ group }: IGroupActionButton) => {
   const isAdmin = group.relationship?.role === GroupRoles.ADMIN;
   const isModerator = group.relationship?.role === GroupRoles.MODERATOR;
   const isBlocked = group.relationship?.blocked_by;
+  const isFederationBlocked = group.relationship?.federation_blocked || group.federation?.defederated;
+  const canFollow = group.relationship?.can_follow ?? (!isBlocked && !isFederationBlocked);
 
   const onJoinGroup = () => joinGroup.mutate({}, {
     onSuccess(entity) {
@@ -88,8 +92,17 @@ const GroupActionButton = ({ group }: IGroupActionButton) => {
     },
   });
 
-  if (isBlocked) {
-    return null;
+  if (isBlocked || isFederationBlocked || !canFollow) {
+    return (
+      <Button
+        disabled
+        size='sm'
+        theme='secondary'
+        title={group.relationship?.moderation_message || group.federation?.message || undefined}
+      >
+        {isBlocked ? intl.formatMessage(messages.blocked) : intl.formatMessage(messages.federationBlocked)}
+      </Button>
+    );
   }
 
   if (isOwner || isAdmin || isModerator) {

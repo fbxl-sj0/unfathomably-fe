@@ -1,34 +1,29 @@
 import clsx from 'clsx';
-import { forwardRef, useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { FormattedMessage } from 'react-intl';
-import { Components, Virtuoso, VirtuosoGrid } from 'react-virtuoso';
+import { Virtuoso } from 'react-virtuoso';
 
-import { useGroupSearch } from '@/api/hooks/index.ts';
-import HStack from '@/components/ui/hstack.tsx';
+import { useTargetSearch } from '@/api/hooks/index.ts';
 import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
+import { SourceListItem } from '@/features/sources/index.tsx';
 
-import GroupGridItem from '../group-grid-item.tsx';
 import GroupListItem from '../group-list-item.tsx';
-import LayoutButtons, { GroupLayout } from '../layout-buttons.tsx';
 
-import type { Group } from '@/types/entities.ts';
+import type { DiscoveryTarget } from '@/api/hooks/discovery/useTargetSearch.ts';
 
 interface Props {
-  groupSearchResult: ReturnType<typeof useGroupSearch>;
+  targetSearchResult?: ReturnType<typeof useTargetSearch>;
 }
 
-const GridList: Components['List'] = forwardRef((props, ref) => {
-  const { context, ...rest } = props;
-  return <div ref={ref} {...rest} className='flex flex-wrap' />;
-});
-
 export default (props: Props) => {
-  const { groupSearchResult } = props;
-
-  const [layout, setLayout] = useState<GroupLayout>(GroupLayout.LIST);
-
-  const { groups, hasNextPage, isFetching, fetchNextPage } = groupSearchResult;
+  const { targetSearchResult } = props;
+  const {
+    targets = [],
+    hasNextPage = false,
+    isFetching = false,
+    fetchNextPage = () => undefined,
+  } = targetSearchResult || {};
 
   const handleLoadMore = () => {
     if (hasNextPage && !isFetching) {
@@ -36,7 +31,7 @@ export default (props: Props) => {
     }
   };
 
-  const renderGroupList = useCallback((group: Group, index: number) => (
+  const renderTarget = useCallback((target: DiscoveryTarget, index: number) => (
     <div
       className={
         clsx({
@@ -44,51 +39,29 @@ export default (props: Props) => {
         })
       }
     >
-      <GroupListItem group={group} withJoinAction />
+      {target.target_type === 'group' ? (
+        <GroupListItem group={target.group} withJoinAction />
+      ) : (
+        <SourceListItem source={target.source} onChanged={() => undefined} />
+      )}
     </div>
-  ), []);
-
-  const renderGroupGrid = useCallback((group: Group) => (
-    <GroupGridItem group={group} />
   ), []);
 
   return (
     <Stack space={4} data-testid='results'>
-      <HStack alignItems='center' justifyContent='between'>
-        <Text weight='semibold'>
-          <FormattedMessage
-            id='groups.discover.search.results.groups'
-            defaultMessage='Groups'
-          />
-        </Text>
+      <Text weight='semibold'>
+        <FormattedMessage
+          id='groups.discover.search.results.targets'
+          defaultMessage='Groups and feeds'
+        />
+      </Text>
 
-        <LayoutButtons
-          layout={layout}
-          onSelect={(selectedLayout) => setLayout(selectedLayout)}
-        />
-      </HStack>
-
-      {layout === GroupLayout.LIST ? (
-        <Virtuoso
-          useWindowScroll
-          data={groups}
-          itemContent={(index, group) => renderGroupList(group, index)}
-          endReached={handleLoadMore}
-        />
-      ) : (
-        <VirtuosoGrid
-          useWindowScroll
-          data={groups}
-          itemContent={(_index, group) => renderGroupGrid(group)}
-          components={{
-            Item: (props) => (
-              <div {...props} className='w-1/2 flex-none pb-4 [&:nth-last-of-type(-n+2)]:pb-0' />
-            ),
-            List: GridList,
-          }}
-          endReached={handleLoadMore}
-        />
-      )}
+      <Virtuoso
+        useWindowScroll
+        data={targets}
+        itemContent={(index, target) => renderTarget(target, index)}
+        endReached={handleLoadMore}
+      />
     </Stack>
   );
 };

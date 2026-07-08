@@ -55,6 +55,7 @@ const PLEROMA_UNSUPPORTED_INCLUDE_TYPES = [
 ] as const;
 
 const GROUPED_NOTIFICATION_TYPES = ['favourite', 'follow', 'group_follow', 'reblog'] as const;
+const PLEROMA_NOTIFICATION_READ_ID = /^\d+$/;
 
 interface GroupedNotificationsPayload {
   accounts?: APIEntity[];
@@ -238,6 +239,18 @@ const excludeTypesFromFilter = (filter: string, notificationTypes: readonly stri
 
 const noOp = () => new Promise(f => f(undefined));
 
+const isPleromaNotificationReadId = (id: unknown) => {
+  if (typeof id === 'number') {
+    return Number.isInteger(id) && id >= 0;
+  }
+
+  if (typeof id === 'string') {
+    return PLEROMA_NOTIFICATION_READ_ID.test(id);
+  }
+
+  return false;
+};
+
 const expandNotifications = ({ maxId, grouped }: Record<string, any> = {}, done: () => any = noOp) =>
   (dispatch: AppDispatch, getState: () => RootState) => {
     if (!isLoggedIn(getState)) return dispatch(noOp);
@@ -396,7 +409,15 @@ const setGroupedNotifications = (grouped: boolean) =>
 // https://git.pleroma.social/pleroma/pleroma/-/issues/2769
 const markReadPleroma = (max_id: string | number) =>
   (dispatch: AppDispatch, getState: () => RootState) => {
-    return api(getState).post('/api/v1/pleroma/notifications/read', { max_id });
+    if (!isPleromaNotificationReadId(max_id)) {
+      return noOp();
+    }
+
+    return api(getState)
+      .post('/api/v1/pleroma/notifications/read', { max_id })
+      .catch((error) => {
+        console.warn('Unable to mark Pleroma notifications as read.', error);
+      });
   };
 
 const markReadNotifications = () =>
@@ -452,5 +473,6 @@ export {
   setGroupedNotifications,
   markReadPleroma,
   markReadNotifications,
+  isPleromaNotificationReadId,
   normalizeGroupedNotificationsPayload,
 };

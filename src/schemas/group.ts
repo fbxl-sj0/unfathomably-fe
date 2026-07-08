@@ -6,6 +6,7 @@ import headerMissing from '@/assets/images/header-missing.png';
 
 import { customEmojiSchema } from './custom-emoji.ts';
 import { groupRelationshipSchema } from './group-relationship.ts';
+import { federationStatusSchema } from './relationship.ts';
 import { groupTagSchema } from './group-tag.ts';
 import { filteredArray } from './utils.ts';
 
@@ -47,6 +48,7 @@ const groupSchema = z.object({
   target_kind: z.string().catch('group'),
   target_kind_label: z.string().catch('Group'),
   capabilities: z.array(z.string()).catch([]),
+  federation: federationStatusSchema.optional().catch(undefined),
 }).transform(group => {
   group.avatar_static = group.avatar_static || group.avatar;
   group.header_static = group.header_static || group.header;

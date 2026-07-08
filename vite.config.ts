@@ -23,6 +23,9 @@ export default defineConfig(() => {
           eval: false,
           pluginTimings: false,
         },
+        onwarn(warning) {
+          handleBuildWarning(warning);
+        },
         output: {
           assetFileNames: 'packs/assets/[name]-[hash].[ext]',
           chunkFileNames: 'packs/js/[name]-[hash].js',
@@ -31,7 +34,7 @@ export default defineConfig(() => {
       },
       rollupOptions: {
         onwarn(warning) {
-          throw new Error(formatRollupWarning(warning));
+          handleBuildWarning(warning);
         },
         output: {
           assetFileNames: 'packs/assets/[name]-[hash].[ext]',
@@ -71,6 +74,11 @@ export default defineConfig(() => {
             vite: [
               compileTime(),
             ],
+          },
+          rollupOptions: {
+            onwarn(warning) {
+              handleBuildWarning(warning);
+            },
           },
         },
         manifest: {
@@ -174,9 +182,31 @@ function readFileContents(path: string) {
   }
 }
 
-function formatRollupWarning(warning: { code?: string; message?: string }): string {
+function handleBuildWarning(warning: { code?: string; message?: string; plugin?: string }): void {
+  if (isKnownBuildToolWarning(warning)) {
+    return;
+  }
+
+  throw new Error(formatBuildWarning(warning));
+}
+
+function isKnownBuildToolWarning(warning: { code?: string; message?: string; plugin?: string }): boolean {
+  const message = warning.message ?? String(warning);
+
+  if (warning.code === 'INVALID_ANNOTATION' && message.includes('node_modules/@lexical/react/dist/')) {
+    return true;
+  }
+
+  if (warning.code === 'SOURCEMAP_BROKEN' && (warning.plugin === 'compile-time:import' || message.includes('compile-time:import'))) {
+    return true;
+  }
+
+  return false;
+}
+
+function formatBuildWarning(warning: { code?: string; message?: string }): string {
   const code = warning.code ? `${warning.code}: ` : '';
   const message = warning.message ?? String(warning);
 
-  return `Rollup warning treated as an error: ${code}${message}`;
+  return `Build warning treated as an error: ${code}${message}`;
 }

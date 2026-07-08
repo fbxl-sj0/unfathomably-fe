@@ -22,6 +22,7 @@ import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { selectAccount } from '@/selectors/index.ts';
 import { AppDispatch, RootState } from '@/store.ts';
+import { looksLikeActorIdentifier } from '@/utils/search.ts';
 
 const messages = defineMessages({
   placeholder: { id: 'search.placeholder', defaultMessage: 'Search' },
@@ -106,14 +107,18 @@ const Search = (props: ISearch) => {
   };
 
   const handleSubmit = () => {
+    const actorLikeSearch = looksLikeActorIdentifier(value);
+    const searchFilter = actorLikeSearch ? 'accounts' : undefined;
+    const explorePath = actorLikeSearch ? '/explore/accounts' : '/explore';
+
     if (openInRoute) {
       addToken(value);
       dispatch(setSearchAccount(null));
-      dispatch(submitSearch());
-      history.push('/explore');
+      dispatch(submitSearch(searchFilter));
+      history.push(explorePath);
     } else {
       addToken(value);
-      dispatch(submitSearch());
+      dispatch(submitSearch(searchFilter));
     }
   };
 

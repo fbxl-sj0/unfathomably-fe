@@ -3,4 +3,4 @@
 - `chat.mp3`
 - `chat.ogg`
 
-© [notificationsounds.com](https://notificationsounds.com/notification-sounds/intuition-561), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+Copyright [notificationsounds.com](https://notificationsounds.com/notification-sounds/intuition-561), licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).

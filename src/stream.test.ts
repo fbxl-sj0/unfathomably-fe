@@ -70,15 +70,15 @@ describe('buildStreamingRequest', () => {
     });
   });
 
-  it('uses path-style URLs for Unfathomably aggregate feed streams', () => {
+  it('uses query-style URLs for Unfathomably aggregate feed streams', () => {
     expect(buildStreamingRequest('wss://social.test', 'user:groups', 'token-1')).toEqual({
-      websocketUrl: 'wss://social.test/api/v1/streaming/user/groups',
-      eventSourceUrl: 'https://social.test/api/v1/streaming/user/groups?access_token=token-1',
+      websocketUrl: 'wss://social.test/api/v1/streaming?stream=user%3Agroups',
+      eventSourceUrl: 'https://social.test/api/v1/streaming?stream=user%3Agroups&access_token=token-1',
     });
 
     expect(buildStreamingRequest('wss://social.test', 'user:sources', 'token-1')).toEqual({
-      websocketUrl: 'wss://social.test/api/v1/streaming/user/sources',
-      eventSourceUrl: 'https://social.test/api/v1/streaming/user/sources?access_token=token-1',
+      websocketUrl: 'wss://social.test/api/v1/streaming?stream=user%3Asources',
+      eventSourceUrl: 'https://social.test/api/v1/streaming?stream=user%3Asources&access_token=token-1',
     });
   });
 

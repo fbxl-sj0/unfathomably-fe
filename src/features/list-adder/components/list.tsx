@@ -14,6 +14,21 @@ const messages = defineMessages({
   add: { id: 'lists.account.add', defaultMessage: 'Add to list' },
 });
 
+const renderListIcon = (list: any) => {
+  const emoji = list.getIn(['pleroma', 'emoji']);
+  const emojiUrl = list.getIn(['pleroma', 'emoji_url']);
+
+  if (emojiUrl) {
+    return <img className='size-4' src={emojiUrl} alt={emoji || ''} />;
+  }
+
+  if (emoji) {
+    return <span className='flex size-4 items-center justify-center text-base leading-none'>{emoji}</span>;
+  }
+
+  return <Icon src={listIcon} />;
+};
+
 interface IList {
   listId: string;
 }
@@ -40,7 +55,7 @@ const List: React.FC<IList> = ({ listId }) => {
 
   return (
     <div className='flex items-center gap-1.5 px-2 py-4 text-black dark:text-white'>
-      <Icon src={listIcon} />
+      {renderListIcon(list)}
       <span className='grow'>
         {list.title}
       </span>

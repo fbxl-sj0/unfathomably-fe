@@ -1,11 +1,16 @@
 import { FlatCompat } from '@eslint/eslintrc';
 import js from '@eslint/js';
+import jsdocPlugin from 'eslint-plugin-jsdoc';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const legacyConfig = require('./.eslintrc.json');
+const compatLegacyConfig = {
+  ...legacyConfig,
+  plugins: legacyConfig.plugins?.filter((plugin) => plugin !== 'jsdoc'),
+};
 const baseDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 const compat = new FlatCompat({
@@ -44,5 +49,10 @@ export default [
       'custom/**',
     ],
   },
-  ...compat.config(legacyConfig).map(unwrapDefaultPlugins),
+  {
+    plugins: {
+      jsdoc: jsdocPlugin,
+    },
+  },
+  ...compat.config(compatLegacyConfig).map(unwrapDefaultPlugins),
 ];

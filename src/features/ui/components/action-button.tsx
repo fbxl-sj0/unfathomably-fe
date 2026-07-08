@@ -29,6 +29,7 @@ const messages = defineMessages({
   remote_follow: { id: 'account.remote_follow', defaultMessage: 'Remote follow' },
   requested: { id: 'account.requested', defaultMessage: 'Awaiting approval. Click to cancel follow request' },
   requested_small: { id: 'account.requested_small', defaultMessage: 'Awaiting approval' },
+  federation_blocked: { id: 'account.federation_blocked', defaultMessage: 'Federation blocked' },
   unblock: { id: 'account.unblock', defaultMessage: 'Unblock @{name}' },
   unfollow: { id: 'account.unfollow', defaultMessage: 'Unfollow' },
   unmute: { id: 'account.unmute', defaultMessage: 'Unmute @{name}' },
@@ -197,6 +198,7 @@ const ActionButton: React.FC<IActionButton> = ({ account, actionType, small }) =
   if (me !== account.id) {
     const isFollowing = account.relationship?.following;
     const blockedBy = account.relationship?.blocked_by as boolean;
+    const federationBlocked = account.relationship?.federation_blocked || account.pleroma?.federation?.defederated;
 
     if (actionType) {
       if (actionType === 'muting') {
@@ -226,24 +228,33 @@ const ActionButton: React.FC<IActionButton> = ({ account, actionType, small }) =
 
       let icon: string | undefined;
 
-      if (blockedBy) {
+      if (blockedBy || federationBlocked) {
         icon = banIcon;
       } else if (!isFollowing) {
         icon = plusIcon;
       }
 
+      let followLabel = intl.formatMessage(messages.follow);
+
+      if (blockedBy) {
+        followLabel = intl.formatMessage(messages.blocked);
+      } else if (federationBlocked) {
+        followLabel = intl.formatMessage(messages.federation_blocked);
+      }
+
       return (
         <Button
           size='sm'
-          disabled={blockedBy}
+          disabled={blockedBy || federationBlocked}
           theme={isFollowing ? 'secondary' : 'primary'}
           icon={icon}
           onClick={handleFollow}
+          title={federationBlocked ? account.relationship?.federation?.message || account.pleroma?.federation?.message || undefined : undefined}
         >
           {isFollowing ? (
             intl.formatMessage(messages.unfollow)
           ) : (
-            intl.formatMessage(blockedBy ? messages.blocked : messages.follow)
+            followLabel
           )}
         </Button>
       );

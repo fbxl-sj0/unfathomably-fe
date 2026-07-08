@@ -6,13 +6,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Entries before the Unfathomably FE fork are inherited from Soapbox history.
 
-## [Unreleased]
+## [3.3.0] - 2026-07-08
 
 ### Security
+- Refreshed the frontend package set to current audited releases across the
+  build, lint, test, React, Vite, and Workbox toolchain.
 - Added package resolutions for advisory-sensitive build-time dependencies so the frontend uses current esbuild, glob, and source-map packages while upstream Vite and Workbox tooling catches up.
 
 ### Changed
-- Refreshed release metadata for the latest deployed static build paired with the Lemmy, PieFed, and MBin verified Unfathomably BE threadiverse federation matrix.
+- Improved global search so remote handle and URL-shaped queries prioritize
+  account lookup, and ordinary searches surface matching groups and feeds
+  alongside posts and accounts.
+- Added combined group/feed discovery search to the group discovery surface, so
+  remote groups, forums, feeds, blogs, libraries, and channel actors can appear
+  in one ranked result list.
+- Modernized the ESLint flat-config bridge so the current JSDoc plugin loads
+  natively while preserving the existing public UI component documentation rule.
+- Centralized Vite/Rolldown warning handling for the main app and service-worker
+  builds, keeping known dependency metadata warnings quiet while preserving
+  warnings-as-errors behavior for new build warnings.
+- Regenerated the default English locale catalog after the dependency and
+  tooling refresh.
+- Made Pleroma/Rebased list emojis usable from the frontend by preserving list emoji metadata, showing list emojis in list pickers, and sending emoji values from list create/edit forms.
+- Refreshed release metadata for the latest deployed static build paired with the verified Unfathomably BE federation matrix across Lemmy, PieFed, MBin, PeerTube, NodeBB, Discourse, Friendica, and Hubzilla.
+- Added frontend regression coverage for Misskey quote-note and emoji-reaction
+  fields as exposed by Unfathomably BE, keeping Misskey-specific federation
+  support wired into the normalized status model.
 - Added moderator-facing group notification controls so busy local groups can disable join and join-request notifications.
 - Added moderator-facing group discovery controls so local groups can opt into or out of Lemmy-compatible public community discovery.
 - Made the Feeds navigation default to the Feed Timeline, with a personal preference to choose either Feed Timeline or My Feeds as the default `/feeds` landing view.
@@ -30,6 +49,18 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 - Added an in-progress translation spinner and duplicate-click guard while slower OpenTranslate requests complete.
 
 ### Fixed
+- Rewrote translation action menu label selection without nested ternaries so
+  the stricter refreshed ESLint rule set stays warning-free without changing
+  translation behavior.
+- Changed followed Groups and Feeds aggregate websocket subscriptions to use
+  the query-style streaming endpoint as the compatibility path, avoiding
+  fragile proxy handling of the new path-style aggregate routes.
+- Stopped sending grouped notification keys to Pleroma's numeric
+  `/api/v1/pleroma/notifications/read` endpoint and caught mark-read failures so
+  notification rendering does not surface uncaught promise errors.
+- Fixed a desktop layout regression that dropped the wider post-column class covered by the layout regression test.
+- Hardened service-worker push notification formatting when notification targets arrive as string IDs instead of embedded account objects.
+- Kept Mitra `.oga` attachments classified and tested as playable audio media.
 - Fixed group follow notifications so they say someone followed or requested to join the group, rather than saying they followed the group owner personally.
 - Changed ordinary My Feeds searches to filter followed feeds locally through the followed-scope API, while keeping URL and full-handle lookups on the broader feed discovery endpoint.
 - Added media fallback handling so images, GIFs, video, and audio try the original remote URL when the backend media proxy URL fails to load.
@@ -476,8 +507,7 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 ### Added
 - Initial beta release.
 
-[Unreleased]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.1...HEAD
-[Unreleased patch]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.1...HEAD
+[3.3.0]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.1...v3.3.0
 [3.2.1]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.0...v3.2.1
 [1.0.0]: https://github.com/fbxl-sj0/unfathomably-fe/releases/tag/v1.0.0
 [0.9.0]: https://github.com/fbxl-sj0/unfathomably-fe/releases/tag/v0.9.0

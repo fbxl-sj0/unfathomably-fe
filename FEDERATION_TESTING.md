@@ -54,4 +54,4 @@ add component tests for native cards:
 * event card
 * generic ActivityPub fallback card
 
-# end of FEDERATION_TESTING.md
+<!-- end of FEDERATION_TESTING.md -->

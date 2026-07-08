@@ -6,7 +6,7 @@
 
 **Unfathomably FE** is a modern Fediverse frontend derived from Soapbox. It keeps the practical parts that made Soapbox useful for real communities: instance branding, custom navigation, moderation tools, chats, quote posts where the backend supports them, mobile-friendly layouts, and a PWA build that can sit in front of Mastodon-compatible APIs.
 
-This fork is being maintained for the Unfathomably/Rebased family of deployments, including FBXL Social, while preserving compatibility with Pleroma, Akkoma, Mastodon-style, and Rebased-style backends where the API surface allows it.
+This fork is being maintained for the Unfathomably/Rebased family of deployments while preserving compatibility with Pleroma, Akkoma, Mastodon-style, and Rebased-style backends where the API surface allows it.
 
 ## What Makes It Different
 
@@ -23,18 +23,73 @@ The largest difference is that the UI treats remote things that are not ordinary
 
 Compared with a plain Pleroma or Rebased frontend deployment, Unfathomably FE expects more of the backend: group/source APIs, richer status metadata, translation capability discovery, websocket streams, and compatibility hints. When those capabilities are absent, the UI should degrade instead of pretending unsupported actions are available.
 
-## Recent Highlights
+## Recent Stack Work
 
-Recent work has focused on making the wider Fediverse feel native from the web UI instead of bolted on.
+Recent work has moved Unfathomably well past a cosmetic frontend fork. The
+frontend and the paired backend have both been pushed toward treating the wider
+Fediverse as ordinary, navigable site content rather than a set of special
+cases.
 
-- Group browsing now includes a group feed for root posts from followed groups, group attribution on statuses, remote group previews, and per-account defaults for whether the groups page opens to the feed or the user's group list.
-- Source browsing has been moved closer to normal status rendering, so RSS items, publishing feeds, media sources, and other source-like actors can be shown as ordinary actionable posts when the backend can expose them that way.
-- RSS feed subscriptions can appear in normal feeds through the backend source APIs, with source entries treated as posts that can be boosted, quoted, bookmarked, or otherwise used locally where supported.
-- Thread views now have clearer reply guide rails, including multiple nesting lines for deeper discussions so Threadiverse-style conversations are easier to follow.
-- PeerTube and Funkwhale media can keep their normal in-card presentation while also offering a docked player mode for listening or watching while browsing.
-- Desktop layouts have been widened so 1080p screens leave more room for the central post column without losing the familiar Soapbox navigation shape.
-- The admin UI has started gaining first-class federation health surfaces, including remote-site health data and queue visibility exposed by unfathomably-be.
-- Account portability work has begun with UI surfaces for post archive export and import, including backend policies for disabled, review-required, and automatic imports.
+On the frontend side:
+
+- Groups and Feeds are now day-to-day navigation surfaces, with followed group
+  timelines, followed feed timelines, group attribution on statuses, combined
+  group/feed discovery search, per-account landing preferences, and feed-type
+  filters.
+- Remote group and feed previews render closer to normal status cards when the
+  backend exposes enough information for replies, likes, boosts, bookmarks,
+  quotes, and navigation.
+- RSS and Atom subscriptions can appear through the same feed UI as other
+  source-like actors, so blogs, libraries, podcasts, channels, and media feeds
+  do not need to look like fake user profiles.
+- PeerTube and Funkwhale media can keep their in-card presentation while also
+  offering a persistent docked player for listening or watching while browsing.
+- Thread views, desktop column sizing, profile media revisit behavior, form
+  labels, checkbox contrast, and other daily-use details have been tightened up
+  so the broader federation work still feels like a normal social interface.
+- Streaming and notification paths have been hardened with aggregate
+  Groups/Feeds websocket subscriptions, visible-tab reconnects, silent-stall
+  recovery, safer push notification formatting, and better handling for grouped
+  notification identifiers.
+- Translation controls follow backend capability metadata, including
+  provider-side source-language detection, slower OpenTranslate requests, and
+  unknown-language remote posts.
+- The build and release path has been refreshed with current frontend
+  dependencies, a stricter ESLint/Vite setup, regenerated locale data, and
+  generated release archives kept out of the Git tree.
+
+On the backend side, the sibling
+[`unfathomably-be`](https://github.com/fbxl-sj0/unfathomably-be) project has
+grown into the other half of the same compatibility push:
+
+- Broad federation smoke coverage now exercises Lemmy, PieFed, Mbin, Lotide,
+  PeerTube, NodeBB, Discourse, Friendica, Hubzilla, FediGroups, Mastodon-style,
+  Pleroma-style, and Rebased-style behavior where those platforms support the
+  relevant operations.
+- Group and Threadiverse handling has been expanded around follows, top-level
+  group posts, replies, likes, unlikes, deletes, unfollows, local group
+  discovery, and moderation fanout.
+- Remote discussion hydration, actor refresh jobs, duplicate-fetch collapse,
+  stale-data janitors, federation health reporting, and safer prune paths help
+  long-running instances deal with remote content without turning every missed
+  delivery into permanent local damage.
+- Translation, search, media, and archive-portability work now covers
+  OpenTranslate-compatible source detection, Meilisearch health and setup,
+  media proxy and upload improvements, ActivityPub backup exports, and post
+  archive import policy.
+- Compatibility backports from Pleroma and related projects have filled in
+  Mastodon-style followed hashtags, rule metadata, instance metadata, settings
+  storage, websocket behavior, mail handling, upload behavior, ActivityPub actor
+  metadata, and other API details that clients expect.
+- Misskey-family, NodeBB, Hubzilla, Discourse, Friendica, Funkwhale, PeerTube,
+  and Threadiverse quirks are handled as explicit compatibility surfaces rather
+  than accidental one-off fixes.
+
+Together, the two repositories are meant to make a small or medium Fediverse
+site feel less isolated. Unfathomably FE gives operators a browser interface for
+that wider world; unfathomably-be does the federation, policy, search,
+translation, cleanup, and compatibility work needed to make those screens
+truthful.
 
 ## Compatibility Notes
 

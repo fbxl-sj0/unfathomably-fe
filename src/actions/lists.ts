@@ -18,6 +18,7 @@ const LISTS_FETCH_SUCCESS = 'LISTS_FETCH_SUCCESS';
 const LISTS_FETCH_FAIL    = 'LISTS_FETCH_FAIL';
 
 const LIST_EDITOR_TITLE_CHANGE = 'LIST_EDITOR_TITLE_CHANGE';
+const LIST_EDITOR_EMOJI_CHANGE = 'LIST_EDITOR_EMOJI_CHANGE';
 const LIST_EDITOR_RESET        = 'LIST_EDITOR_RESET';
 const LIST_EDITOR_SETUP        = 'LIST_EDITOR_SETUP';
 
@@ -111,13 +112,15 @@ const fetchListsFail = (error: unknown) => ({
 });
 
 const submitListEditor = (shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
-  const listId = getState().listEditor.listId!;
-  const title  = getState().listEditor.title;
+  const listEditor = getState().listEditor;
+  const listId = listEditor.listId!;
+  const title = listEditor.title;
+  const emoji = listEditor.emoji;
 
   if (listId === null) {
-    dispatch(createList(title, shouldReset));
+    dispatch(createList(title, emoji, shouldReset));
   } else {
-    dispatch(updateList(listId, title, shouldReset));
+    dispatch(updateList(listId, title, emoji, shouldReset));
   }
 };
 
@@ -135,12 +138,22 @@ const changeListEditorTitle = (value: string) => ({
   value,
 });
 
-const createList = (title: string, shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
+const changeListEditorEmoji = (value: string) => ({
+  type: LIST_EDITOR_EMOJI_CHANGE,
+  value,
+});
+
+const listParams = (title: string, emoji: string | null | undefined) => ({
+  title,
+  emoji: emoji?.trim() || null,
+});
+
+const createList = (title: string, emoji?: string | null, shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
   if (!isLoggedIn(getState)) return;
 
   dispatch(createListRequest());
 
-  api(getState).post('/api/v1/lists', { title }).then((response) => response.json()).then((data) => {
+  api(getState).post('/api/v1/lists', listParams(title, emoji)).then((response) => response.json()).then((data) => {
     dispatch(createListSuccess(data));
 
     if (shouldReset) {
@@ -163,12 +176,12 @@ const createListFail = (error: unknown) => ({
   error,
 });
 
-const updateList = (id: string | number, title: string, shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
+const updateList = (id: string | number, title: string, emoji?: string | null, shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
   if (!isLoggedIn(getState)) return;
 
   dispatch(updateListRequest(id));
 
-  api(getState).put(`/api/v1/lists/${id}`, { title }).then((response) => response.json()).then((data) => {
+  api(getState).put(`/api/v1/lists/${id}`, listParams(title, emoji)).then((response) => response.json()).then((data) => {
     dispatch(updateListSuccess(data));
 
     if (shouldReset) {
@@ -408,6 +421,7 @@ export {
   LISTS_FETCH_SUCCESS,
   LISTS_FETCH_FAIL,
   LIST_EDITOR_TITLE_CHANGE,
+  LIST_EDITOR_EMOJI_CHANGE,
   LIST_EDITOR_RESET,
   LIST_EDITOR_SETUP,
   LIST_CREATE_REQUEST,
@@ -447,6 +461,7 @@ export {
   submitListEditor,
   setupListEditor,
   changeListEditorTitle,
+  changeListEditorEmoji,
   createList,
   createListRequest,
   createListSuccess,

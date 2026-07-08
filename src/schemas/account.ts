@@ -5,7 +5,7 @@ import avatarMissing from '@/assets/images/avatar-missing.png';
 import headerMissing from '@/assets/images/header-missing.png';
 
 import { customEmojiSchema } from './custom-emoji.ts';
-import { Relationship } from './relationship.ts';
+import { federationStatusSchema, Relationship } from './relationship.ts';
 import { coerceObject, contentSchema, filteredArray, nostrIdSchema } from './utils.ts';
 
 import type { Resolve } from '@/utils/types.ts';
@@ -83,6 +83,7 @@ const baseAccountSchema = z.object({
     birthday: birthdaySchema.nullish().catch(undefined),
     deactivated: z.boolean().catch(false),
     favicon: z.string().url().optional().catch(undefined),
+    federation: federationStatusSchema.optional().catch(undefined),
     hide_favorites: z.boolean().catch(false),
     hide_followers: z.boolean().catch(false),
     hide_followers_count: z.boolean().catch(false),

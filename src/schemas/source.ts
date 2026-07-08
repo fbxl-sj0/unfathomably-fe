@@ -5,10 +5,13 @@ import avatarMissing from '@/assets/images/avatar-missing.png';
 import headerMissing from '@/assets/images/header-missing.png';
 
 import { customEmojiSchema } from './custom-emoji.ts';
+import { federationStatusSchema } from './relationship.ts';
 import { filteredArray } from './utils.ts';
 
 const sourceRelationshipSchema = z.object({
   blocked_by: z.boolean().catch(false),
+  federation: federationStatusSchema.optional().catch(undefined),
+  federation_blocked: z.boolean().catch(false),
   following: z.boolean().catch(false),
   id: z.coerce.string(),
   muting: z.boolean().nullable().catch(false),
@@ -39,6 +42,7 @@ const sourceSchema = z.object({
   source_kind: z.string().catch('actor_feed'),
   source_kind_label: z.string().catch('Actor feed'),
   capabilities: z.array(z.string()).catch([]),
+  federation: federationStatusSchema.optional().catch(undefined),
   uri: z.string().catch(''),
   url: z.string().catch(''),
   username: z.string().catch(''),

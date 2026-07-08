@@ -150,6 +150,7 @@ const SourceListItem: React.FC<ISourceListItem> = ({ source, onChanged }) => {
   const [expanded, setExpanded] = useState(false);
   const isFollowing = !!source.relationship?.following;
   const isRequested = !!source.relationship?.requested;
+  const isFederationBlocked = !!source.relationship?.federation_blocked || !!source.federation?.defederated;
   const isConnected = isFollowing || isRequested;
   const isSubmitting = followSource.isSubmitting || unfollowSource.isSubmitting;
   const note = stripHtml(source.note);
@@ -232,12 +233,15 @@ const SourceListItem: React.FC<ISourceListItem> = ({ source, onChanged }) => {
           ) : null}
 
           <Button
-            disabled={isSubmitting}
+            disabled={isSubmitting || isFederationBlocked}
             onClick={handleClick}
             size='sm'
             theme={isConnected ? 'secondary' : 'primary'}
+            title={isFederationBlocked ? source.federation?.message || undefined : undefined}
           >
-            {buttonMessage}
+            {isFederationBlocked ? (
+              <FormattedMessage id='sources.actions.federation_blocked' defaultMessage='Federation blocked' />
+            ) : buttonMessage}
           </Button>
         </HStack>
       </HStack>
@@ -253,6 +257,12 @@ const SourceListItem: React.FC<ISourceListItem> = ({ source, onChanged }) => {
           {note && (
             <Text size='sm' theme='muted'>
               {note}
+            </Text>
+          )}
+
+          {source.federation?.message && (
+            <Text size='sm' theme='danger'>
+              {source.federation.message}
             </Text>
           )}
 

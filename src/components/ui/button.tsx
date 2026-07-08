@@ -32,6 +32,8 @@ interface IButton {
   size?: ButtonSizes;
   /** Anchor target attribute. */
   target?: React.HTMLAttributeAnchorTarget;
+  /** Native browser tooltip text. */
+  title?: string;
   /** Text inside the button. Takes precedence over `children`. */
   text?: React.ReactNode;
   /** Makes the button into a navlink, if provided. */
@@ -55,6 +57,7 @@ const Button = forwardRef<HTMLButtonElement, IButton>((props, ref): JSX.Element 
     rel,
     size = 'md',
     target,
+    title,
     text,
     theme = 'secondary',
     to,
@@ -98,6 +101,7 @@ const Button = forwardRef<HTMLButtonElement, IButton>((props, ref): JSX.Element 
       disabled={disabled}
       onClick={handleClick}
       ref={ref}
+      title={title}
       type={type}
       data-testid='button'
     >
@@ -118,6 +122,7 @@ const Button = forwardRef<HTMLButtonElement, IButton>((props, ref): JSX.Element 
       rel={target === '_blank' && !rel ? 'noopener noreferrer' : rel}
       tabIndex={disabled ? -1 : undefined}
       target={target}
+      title={title}
       data-testid='button'
     >
       {renderIcon()}

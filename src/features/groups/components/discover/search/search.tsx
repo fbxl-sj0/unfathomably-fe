@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { FormattedMessage } from 'react-intl';
 
-import { useGroupSearch } from '@/api/hooks/index.ts';
+import { useTargetSearch } from '@/api/hooks/index.ts';
 import Stack from '@/components/ui/stack.tsx';
 import PlaceholderGroupSearch from '@/features/placeholder/components/placeholder-group-search.tsx';
 import { useDebounce } from '@/hooks/useDebounce.ts';
@@ -26,11 +26,11 @@ export default (props: Props) => {
   const debouncedValue = debounce(searchValue as string, 300);
   const debouncedValueToSave = debounce(searchValue as string, 1000);
 
-  const groupSearchResult = useGroupSearch(debouncedValue);
-  const { groups, isLoading, isFetched, isError } = groupSearchResult;
+  const targetSearchResult = useTargetSearch(debouncedValue);
+  const { targets, isLoading, isFetched, isError } = targetSearchResult;
 
-  const hasSearchResults = isFetched && groups.length > 0;
-  const hasNoSearchResults = isFetched && groups.length === 0;
+  const hasSearchResults = isFetched && targets.length > 0;
+  const hasNoSearchResults = isFetched && targets.length === 0;
 
   useEffect(() => {
     if (debouncedValueToSave && debouncedValueToSave.length >= 0) {
@@ -79,7 +79,7 @@ export default (props: Props) => {
         subtitle={
           <FormattedMessage
             id='groups.discover.search.no_results.subtitle'
-            defaultMessage='Try searching for another group, or paste a remote handle like 3dprinting@lemmy.world.'
+            defaultMessage='Try another group or feed search, or paste a remote handle like 3dprinting@lemmy.world.'
           />
         }
       />
@@ -89,7 +89,7 @@ export default (props: Props) => {
   if (hasSearchResults) {
     return (
       <Results
-        groupSearchResult={groupSearchResult}
+        targetSearchResult={targetSearchResult}
       />
     );
   }

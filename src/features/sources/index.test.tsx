@@ -156,6 +156,37 @@ describe('SourceListItem', () => {
     );
     expect(screen.queryByTestId('source-preview')).not.toBeInTheDocument();
   });
+
+  it('disables following when federation policy blocks the source host', () => {
+    render(
+      <IntlProvider locale='en'>
+        <SourceListItem
+          source={{
+            ...sourceFixture,
+            federation: {
+              defederated: true,
+              direction: 'local_policy',
+              host: 'blocked.example',
+              known: true,
+              message: 'Federation paused',
+              reason: 'Federation paused',
+              severity: 'reject',
+            },
+            relationship: {
+              federation_blocked: true,
+              following: false,
+            },
+          } as Source}
+          onChanged={vi.fn()}
+        />
+      </IntlProvider>,
+    );
+
+    const button = screen.getByRole('button', { name: 'Federation blocked' });
+
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('title', 'Federation paused');
+  });
 });
 
 const sourceFixture = {

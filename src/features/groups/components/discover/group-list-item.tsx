@@ -76,6 +76,12 @@ const GroupListItem = (props: IGroupListItem) => {
             </HStack>
 
             <CapabilityChips labels={group.capabilities} />
+
+            {(group.relationship?.moderation_message || group.federation?.message) && (
+              <Text size='xs' theme='danger' truncate>
+                {group.relationship?.moderation_message || group.federation?.message}
+              </Text>
+            )}
           </Stack>
         </HStack>
       </Link>
