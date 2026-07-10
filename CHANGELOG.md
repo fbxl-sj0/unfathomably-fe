@@ -52,6 +52,9 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
   this database-side rollout.
 
 ### Fixed
+- Fixed the inline translate button so remote statuses with a concrete detected
+  source language outside the advertised provider list can still use the
+  backend's `auto` source-language fallback.
 - Rewrote translation action menu label selection without nested ternaries so
   the stricter refreshed ESLint rule set stays warning-free without changing
   translation behavior.

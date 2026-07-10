@@ -78,6 +78,21 @@ describe('getStatusTranslationAvailability', () => {
     }).canTranslate).toBe(true);
   });
 
+  it('allows the inline button for remote posts whose detected source can fall back to auto', () => {
+    expect(getStatusTranslationAvailability({
+      allowRemote: true,
+      featuresEnabled: true,
+      locale: 'en',
+      me: '1',
+      sourceLanguages: ['auto', 'fr'],
+      status: {
+        ...status,
+        language: 'lt',
+      },
+      targetLanguages: ['en'],
+    }).canTranslate).toBe(true);
+  });
+
   it('does not offer manual translation for direct posts', () => {
     expect(getStatusTranslationAvailability({
       allowRemote: true,

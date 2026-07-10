@@ -54,7 +54,11 @@ const getStatusTranslationAvailability = ({
   const visibilityAllowed = allowedVisibilities.includes(status.visibility);
   const hasContent = status.content.length > 0;
 
-  const sourceSupported = !sourceLanguage || !sourceLanguages || sourceLanguages.includes(sourceLanguage);
+  const sourceSupported =
+    !sourceLanguage ||
+    !sourceLanguages ||
+    sourceLanguages.includes(sourceLanguage) ||
+    sourceLanguages.includes('auto');
   const hasTranslatableSource = sourceLanguage ? targetLanguage !== sourceLanguage : !status.account.local;
   const languageAllowed = manual || (sourceSupported && hasTranslatableSource);
   const targetAvailable = translated || Boolean(targetLanguage);
