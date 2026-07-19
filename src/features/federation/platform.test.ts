@@ -71,6 +71,35 @@ describe('federation platform classification', () => {
     }));
   });
 
+  it('classifies XWiki as a publishing resource surface', () => {
+    expect(classifyFederationPlatform({ software: { name: 'XWiki' } })).toEqual({
+      platform: 'xwiki',
+      label: 'XWiki',
+      family: 'publishing',
+      confidence: 'software',
+    });
+
+    expect(FEDERATION_RENDER_HINTS.publishing).toEqual({
+      layout: 'resource',
+      primaryAction: 'open',
+    });
+  });
+
+  it('classifies bounded native presentation metadata', () => {
+    expect(classifyFederationPlatform({
+      pleroma: {
+        native: {
+          fields: { platform: 'flohmarkt' },
+        },
+      },
+    })).toEqual({
+      platform: 'flohmarkt',
+      label: 'Flohmarkt',
+      family: 'marketplace',
+      confidence: 'software',
+    });
+  });
+
   it('falls back to ActivityPub object type when software is unknown', () => {
     expect(classifyFederationPlatform({ type: 'Audio' })).toEqual(expect.objectContaining({
       platform: 'activitypub-audio',
@@ -81,6 +110,86 @@ describe('federation platform classification', () => {
     expect(classifyFederationPlatform({ object: { type: 'Group' } })).toEqual(expect.objectContaining({
       platform: 'activitypub-group',
       family: 'groups',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({ type: 'Review' })).toEqual(expect.objectContaining({
+      platform: 'bookwyrm',
+      family: 'books',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({ type: 'Ticket' })).toEqual(expect.objectContaining({
+      platform: 'forgefed',
+      family: 'development',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({ type: 'Document' })).toEqual(expect.objectContaining({
+      platform: 'activitypub-document',
+      family: 'publishing',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({ type: 'ValueFlows:EconomicEvent' })).toEqual(expect.objectContaining({
+      platform: 'bonfire_valueflows',
+      family: 'coordination',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({ type: 'Proposal' })).toEqual(expect.objectContaining({
+      platform: 'forgefed',
+      family: 'development',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({ type: 'ValueFlows:Proposal' })).toEqual(expect.objectContaining({
+      platform: 'bonfire_valueflows',
+      family: 'coordination',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({ type: 'pair:Project' })).toEqual(expect.objectContaining({
+      platform: 'activitypods',
+      family: 'coordination',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({ type: 'maid:Offer' })).toEqual(expect.objectContaining({
+      platform: 'mutual_aid',
+      family: 'marketplace',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({
+      type: 'https://mutual-aid.app/ns/core#Request',
+    })).toEqual(expect.objectContaining({
+      platform: 'mutual_aid',
+      family: 'marketplace',
+      confidence: 'object',
+    }));
+  });
+
+  it('classifies Manyfold actors by their f3di concrete type', () => {
+    expect(classifyFederationPlatform({
+      type: 'Service',
+      'f3di:concreteType': '3DModel',
+    })).toEqual({
+      platform: 'manyfold',
+      label: '3D model',
+      family: 'models',
+      confidence: 'object',
+    });
+
+    expect(classifyFederationPlatform({
+      pleroma: {
+        native: {
+          type: 'Collection',
+        },
+      },
+    })).toEqual(expect.objectContaining({
+      platform: 'manyfold',
+      family: 'models',
       confidence: 'object',
     }));
   });
@@ -102,10 +211,18 @@ describe('federation platform classification', () => {
       'longform',
       'microblog',
       'photo',
+      'models',
+      'games',
+      'marketplace',
+      'culture',
       'books',
       'bookmarks',
       'groups',
       'events',
+      'development',
+      'coordination',
+      'publishing',
+      'routes',
       'local',
       'generic',
     ]);

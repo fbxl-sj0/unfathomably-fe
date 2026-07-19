@@ -208,7 +208,7 @@ describe('getFeatures', () => {
         version: '2.7.2 (compatible; unfathomably-be 2.6.50+unfathomably-be.dev)',
         pleroma: {
           metadata: {
-            features: ['bookmark_folders', 'groups', 'groups_discovery', 'notifications_v2', 'pleroma_explicit_addressing', 'post_archive_import', 'sources', 'v2_suggestions'],
+            features: ['bookmark_folders', 'groups', 'groups_discovery', 'notifications_v2', 'pleroma_dislikes', 'pleroma_explicit_addressing', 'post_archive_import', 'sources', 'v2_suggestions'],
           },
         },
       });
@@ -232,6 +232,7 @@ describe('getFeatures', () => {
       expect(features.conversations).toBe(true);
       expect(features.customEmojiReacts).toBe(true);
       expect(features.directTimeline).toBe(true);
+      expect(features.dislikes).toBe(true);
       expect(features.domainBlocks).toBe(true);
       expect(features.editProfile).toBe(true);
       expect(features.emojiReacts).toBe(true);

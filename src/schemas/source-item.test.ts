@@ -50,6 +50,16 @@ test('sourceItemsEnvelopeSchema with a Funkwhale audio item', () => {
         musicbrainz_url: 'https://musicbrainz.org/recording/11111111-1111-1111-1111-111111111111',
         event_start: null,
         location: null,
+        native: {
+          canonical_id: 'https://audio.example.org/library/tracks/1',
+          class: 'resource',
+          context: null,
+          controls: ['open'],
+          fields: {
+            work: 'https://audio.example.org/library/albums/1',
+          },
+          type: 'Track',
+        },
         source_kind: 'funkwhale_library',
         source_kind_label: 'Library',
         capabilities: ['follow library', 'preview tracks', 'owner inbox'],
@@ -70,6 +80,8 @@ test('sourceItemsEnvelopeSchema with a Funkwhale audio item', () => {
   expect(envelope.items[0].album).toEqual('Alturas');
   expect(envelope.items[0].artists).toEqual(['Los Jaivas']);
   expect(envelope.items[0].musicbrainz_url).toEqual('https://musicbrainz.org/recording/11111111-1111-1111-1111-111111111111');
+  expect(envelope.items[0].native?.type).toEqual('Track');
+  expect(envelope.items[0].native?.controls).toEqual(['open']);
   expect(envelope.items[0].source_kind).toEqual('funkwhale_library');
   expect(envelope.items[0].capabilities).toEqual(['follow library', 'preview tracks', 'owner inbox']);
   expect(envelope.items[0].render_hint?.primary_action).toEqual('play');

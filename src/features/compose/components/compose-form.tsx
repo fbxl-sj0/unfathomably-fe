@@ -43,6 +43,7 @@ import MarkdownButton from './markdown-button.tsx';
 import PollButton from './poll-button.tsx';
 import PollForm from './polls/poll-form.tsx';
 import PrivacyDropdown from './privacy-dropdown.tsx';
+import QuotePolicySelect from './quote-policy-select.tsx';
 import ReplyGroupIndicator from './reply-group-indicator.tsx';
 import ReplyMentions from './reply-mentions.tsx';
 import ScheduleButton from './schedule-button.tsx';
@@ -241,6 +242,8 @@ const ComposeForm = <ID extends string>({ id, shouldCondense, autoFocus, clickab
       />
 
       <ScheduleForm composeId={id} />
+
+      {privacy !== 'direct' && !event && !group && <QuotePolicySelect composeId={id} />}
     </Stack>
   );
 

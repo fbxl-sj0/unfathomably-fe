@@ -107,6 +107,9 @@ const Toast = (props: IToast) => {
   return (
     <div
       data-testid='toast'
+      role={type === 'error' ? 'alert' : 'status'}
+      aria-live={type === 'error' ? 'assertive' : 'polite'}
+      aria-atomic='true'
       className={
         clsx({
           'p-4 pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white black:bg-black dark:bg-gray-900 shadow-lg dark:ring-2 dark:ring-gray-800': true,

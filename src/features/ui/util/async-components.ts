@@ -7,6 +7,7 @@ export const Notifications = lazy(() => import('@/features/notifications/index.t
 export const LandingTimeline = lazy(() => import('@/features/landing-timeline/index.tsx'));
 export const HomeTimeline = lazy(() => import('@/features/home-timeline/index.tsx'));
 export const PublicTimeline = lazy(() => import('@/features/public-timeline/index.tsx'));
+export const NativeFederationTimeline = lazy(() => import('@/features/native-federation/index.tsx'));
 export const BubbleTimeline = lazy(() => import('@/features/bubble-timeline/index.tsx'));
 export const Catchup = lazy(() => import('@/features/catchup/index.tsx'));
 export const RemoteTimeline = lazy(() => import('@/features/remote-timeline/index.tsx'));
@@ -85,6 +86,7 @@ export const Dashboard = lazy(() => import('@/features/admin/index.tsx'));
 export const DatabaseCleanup = lazy(() => import('@/features/admin/database-cleanup.tsx'));
 export const FederationHealth = lazy(() => import('@/features/admin/federation-health.tsx'));
 export const ModerationLog = lazy(() => import('@/features/admin/moderation-log.tsx'));
+export const Invites = lazy(() => import('@/features/admin/invites.tsx'));
 export const ThemeEditor = lazy(() => import('@/features/theme-editor/index.tsx'));
 export const PromoPanel = lazy(() => import('@/features/ui/components/promo-panel.tsx'));
 export const SignUpPanel = lazy(() => import('@/features/ui/components/panels/sign-up-panel.tsx'));

@@ -6,6 +6,8 @@ import { FormattedDate, FormattedMessage, useIntl } from 'react-intl';
 import { Link } from 'react-router-dom';
 
 import Account from '@/components/account.tsx';
+import NativeStatusContext from '@/components/native-status-context.tsx';
+import QuoteAuthorizationControls from '@/components/quote-authorization-controls.tsx';
 import StatusContent from '@/components/status-content.tsx';
 import StatusMedia from '@/components/status-media.tsx';
 import StatusReplyMentions from '@/components/status-reply-mentions.tsx';
@@ -102,6 +104,14 @@ const DetailedStatus: React.FC<IDetailedStatus> = ({
   let statusTypeIcon = null;
 
   let quote;
+  const quoteState = actualStatus.pleroma.get('quote_state') as 'pending' | 'accepted' | 'rejected' | 'revoked' | null;
+  const quoteControls = quoteState ? (
+    <QuoteAuthorizationControls
+      statusId={actualStatus.id}
+      state={quoteState}
+      manageable={actualStatus.pleroma.get('quote_manageable', false)}
+    />
+  ) : null;
 
   if (actualStatus.quote) {
     if (actualStatus.pleroma.get('quote_visible', true) === false) {
@@ -158,9 +168,11 @@ const DetailedStatus: React.FC<IDetailedStatus> = ({
               translatable
             />
 
+            <NativeStatusContext native={actualStatus.pleroma.get('native')} />
+
             <TranslateButton status={actualStatus} />
 
-            {(withMedia && (quote || actualStatus.card || actualStatus.media_attachments.size > 0)) && (
+            {(withMedia && (quote || quoteControls || actualStatus.card || actualStatus.media_attachments.size > 0)) && (
               <Stack space={4}>
                 <StatusMedia
                   status={actualStatus.toJS() as StatusEntity}
@@ -169,6 +181,7 @@ const DetailedStatus: React.FC<IDetailedStatus> = ({
                 />
 
                 {quote}
+                {quoteControls}
               </Stack>
             )}
           </Stack>

@@ -7,6 +7,7 @@
 
   Responsibilities:
     Map the sources feed timeline to the backend user:sources stream.
+    Reject replies before they enter the aggregate timeline cache.
 
   This file intentionally does NOT contain:
     Source discovery, source follow state changes, or timeline pagination.
@@ -14,6 +15,7 @@
 
 import { useLoggedIn } from '@/hooks/useLoggedIn.ts';
 
+import { isStatusDiscussionRoot } from './isStatusDiscussionRoot.ts';
 import { useTimelineStream } from './useTimelineStream.ts';
 
 const useSourcesFeedStream = () => {
@@ -22,7 +24,7 @@ const useSourcesFeedStream = () => {
   return useTimelineStream(
     'sources:feed',
     'user:sources',
-    null,
+    isStatusDiscussionRoot,
     { enabled: isLoggedIn },
   );
 };

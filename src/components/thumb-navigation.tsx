@@ -10,6 +10,7 @@ import mailIcon from '@tabler/icons/outline/mail.svg';
 import messagesIcon from '@tabler/icons/outline/messages.svg';
 import searchIcon from '@tabler/icons/outline/search.svg';
 import videoIcon from '@tabler/icons/outline/video.svg';
+import worldIcon from '@tabler/icons/outline/world.svg';
 import { FormattedMessage } from 'react-intl';
 
 import ThumbNavigationLink from '@/components/thumb-navigation-link.tsx';
@@ -80,6 +81,15 @@ const ThumbNavigation: React.FC = (): JSX.Element => {
           activeSrc={circlesFilledIcon}
           text={<FormattedMessage id='tabs_bar.groups' defaultMessage='Groups' />}
           to='/groups'
+          exact
+        />
+      )}
+
+      {features.federating && (
+        <ThumbNavigationLink
+          src={worldIcon}
+          text={<FormattedMessage id='tabs_bar.native_federation' defaultMessage='Worlds' />}
+          to='/federation'
           exact
         />
       )}

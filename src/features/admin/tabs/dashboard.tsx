@@ -1,7 +1,7 @@
 import { format as formatSemver } from '@std/semver/format';
 import downloadIcon from '@tabler/icons/outline/download.svg';
 import externalLinkIcon from '@tabler/icons/outline/external-link.svg';
-import { FormattedMessage } from 'react-intl';
+import { FormattedMessage, defineMessages, useIntl } from 'react-intl';
 
 import { getSubscribersCsv, getUnsubscribersCsv, getCombinedCsv } from '@/actions/email-list.ts';
 import { useInstanceV1 } from '@/api/hooks/instance/useInstanceV1.ts';
@@ -13,6 +13,7 @@ import Stack from '@/components/ui/stack.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useFeatures } from '@/hooks/useFeatures.ts';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
+import toast from '@/toast.tsx';
 import sourceCode from '@/utils/code.ts';
 import { download } from '@/utils/download.ts';
 import { parseVersion } from '@/utils/features.ts';
@@ -20,31 +21,36 @@ import { parseVersion } from '@/utils/features.ts';
 import { DashCounter, DashCounters } from '../components/dashcounter.tsx';
 import RegistrationModePicker from '../components/registration-mode-picker.tsx';
 
+const messages = defineMessages({
+  csvDownloadFailed: { id: 'admin.dashboard.email_list_download_failed', defaultMessage: 'The email list could not be downloaded' },
+});
+
 const Dashboard: React.FC = () => {
+  const intl = useIntl();
   const dispatch = useAppDispatch();
   const { instance } = useInstanceV1();
   const features = useFeatures();
   const { account } = useOwnAccount();
 
   const handleSubscribersClick: React.MouseEventHandler = e => {
-    dispatch(getSubscribersCsv()).then((response) => response.json()).then((data) => {
-      download(data, 'subscribers.csv');
-    }).catch(() => {});
     e.preventDefault();
+    dispatch(getSubscribersCsv()).then((response) => response.text()).then((data) => {
+      download(data, 'subscribers.csv');
+    }).catch(() => toast.error(intl.formatMessage(messages.csvDownloadFailed)));
   };
 
   const handleUnsubscribersClick: React.MouseEventHandler = e => {
-    dispatch(getUnsubscribersCsv()).then((response) => response.json()).then((data) => {
-      download(data, 'unsubscribers.csv');
-    }).catch(() => {});
     e.preventDefault();
+    dispatch(getUnsubscribersCsv()).then((response) => response.text()).then((data) => {
+      download(data, 'unsubscribers.csv');
+    }).catch(() => toast.error(intl.formatMessage(messages.csvDownloadFailed)));
   };
 
   const handleCombinedClick: React.MouseEventHandler = e => {
-    dispatch(getCombinedCsv()).then((response) => response.json()).then((data) => {
-      download(data, 'combined.csv');
-    }).catch(() => {});
     e.preventDefault();
+    dispatch(getCombinedCsv()).then((response) => response.text()).then((data) => {
+      download(data, 'combined.csv');
+    }).catch(() => toast.error(intl.formatMessage(messages.csvDownloadFailed)));
   };
 
   const v = parseVersion(instance?.version ?? '0.0.0');
@@ -56,7 +62,7 @@ const Dashboard: React.FC = () => {
   } = instance?.stats ?? {};
 
   const mau = instance?.pleroma.stats.mau;
-  const retention = (userCount && mau) ? Math.round(mau / userCount * 100) : undefined;
+  const monthlyActiveShare = (userCount && mau) ? Math.round(mau / userCount * 100) : undefined;
 
   if (!account) return null;
 
@@ -73,8 +79,8 @@ const Dashboard: React.FC = () => {
           label={<FormattedMessage id='admin.dashcounters.user_count_label' defaultMessage='total users' />}
         />
         <DashCounter
-          count={retention}
-          label={<FormattedMessage id='admin.dashcounters.retention_label' defaultMessage='user retention' />}
+          count={monthlyActiveShare}
+          label={<FormattedMessage id='admin.dashcounters.monthly_active_share_label' defaultMessage='monthly active share' />}
           percent
         />
         <DashCounter
@@ -99,7 +105,20 @@ const Dashboard: React.FC = () => {
         {account.admin && (
           <ListItem
             to='/soapbox/config'
-            label={<FormattedMessage id='navigation_bar.soapbox_config' defaultMessage='Unfathomably config' />}
+            label={<FormattedMessage id='navigation_bar.soapbox_config' defaultMessage='Frontend configuration' />}
+          />
+        )}
+
+        <ListItem
+          to='/soapbox/admin/theme'
+          label={<FormattedMessage id='column.admin.theme' defaultMessage='Theme editor' />}
+        />
+
+        {account.admin && (
+          <ListItem
+            href='/pleroma/admin/'
+            label={<FormattedMessage id='column.admin.backend_tools' defaultMessage='Backend configuration and maintenance' />}
+            hint={<FormattedMessage id='column.admin.backend_tools_hint' defaultMessage='Configure the server, invitations, emoji packs, statuses, and media cache in AdminFE.' />}
           />
         )}
 
@@ -112,6 +131,13 @@ const Dashboard: React.FC = () => {
           <ListItem
             to='/soapbox/admin/database-cleanup'
             label={<FormattedMessage id='column.admin.database_cleanup' defaultMessage='Database cleanup' />}
+          />
+        )}
+
+        {account.admin && (
+          <ListItem
+            to='/soapbox/admin/relays'
+            label={<FormattedMessage id='column.admin.relays' defaultMessage='ActivityPub relays' />}
           />
         )}
 

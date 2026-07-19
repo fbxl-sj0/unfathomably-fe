@@ -53,7 +53,20 @@ describe('toasts', () =>{
     });
 
     expect(screen.getByTestId('toast')).toBeInTheDocument();
+    expect(screen.getByTestId('toast')).toHaveAttribute('role', 'status');
+    expect(screen.getByTestId('toast')).toHaveAttribute('aria-live', 'polite');
     expect(screen.getByTestId('toast-message')).toHaveTextContent('hello');
+  });
+
+  it('announces errors assertively', async() => {
+    const { toast } = renderApp();
+
+    act(() => {
+      toast.error('failed');
+    });
+
+    expect(screen.getByTestId('toast')).toHaveAttribute('role', 'alert');
+    expect(screen.getByTestId('toast')).toHaveAttribute('aria-live', 'assertive');
   });
 
   describe('actionable button', () => {

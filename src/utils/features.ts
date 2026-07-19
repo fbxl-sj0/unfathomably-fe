@@ -425,7 +425,10 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see POST /api/friendica/statuses/:id/undislike
      * @see GET  /api/friendica/statuses/:id/disliked_by
      */
-    dislikes: v.software === FRIENDICA && gte(v.version, parse('2023.3.0')),
+    dislikes: any([
+      v.software === FRIENDICA && gte(v.version, parse('2023.3.0')),
+      isPleromaApiFamily(v) && features.includes('pleroma_dislikes'),
+    ]),
 
     /**
      * Ditto-specific API extensions.

@@ -219,6 +219,9 @@ const expandFollowsTimeline = ({ url, maxId }: ExpandFollowsTimelineOpts = {}, d
 const expandPublicTimeline = ({ url, maxId, onlyMedia, language }: Record<string, any> = {}, done = noOp) =>
   expandTimeline(`public${onlyMedia ? ':media' : ''}`, url || '/api/v1/timelines/public', url ? {} : { max_id: maxId, only_media: !!onlyMedia, language: language || undefined }, done);
 
+const expandNativeFederationTimeline = ({ url, maxId }: Record<string, any> = {}, done = noOp) =>
+  expandTimeline('native-federation', url || '/api/v1/timelines/public', url ? {} : { max_id: maxId, limit: 40 }, done);
+
 const expandBubbleTimeline = ({ url, maxId, onlyMedia }: Record<string, any> = {}, done = noOp) =>
   expandTimeline(`bubble${onlyMedia ? ':media' : ''}`, url || '/api/v1/timelines/bubble', url ? {} : { max_id: maxId, only_media: !!onlyMedia }, done);
 
@@ -348,6 +351,7 @@ export {
   expandTimeline,
   expandFollowsTimeline,
   expandPublicTimeline,
+  expandNativeFederationTimeline,
   expandBubbleTimeline,
   expandRemoteTimeline,
   expandCommunityTimeline,

@@ -14,6 +14,8 @@
 
 import { z } from 'zod';
 
+import { nativeActivityPresentationSchema } from './native-activity.ts';
+
 const sourceItemRenderHintSchema = z.object({
   layout: z.string().catch('generic'),
   primary_action: z.string().catch('open'),
@@ -49,6 +51,7 @@ const sourceItemSchema = z.object({
   event_start: z.string().nullable().catch(null),
   location: z.string().nullable().catch(null),
   comments_count: z.number().nullable().catch(null),
+  native: nativeActivityPresentationSchema,
   source_kind: z.string().catch('actor_feed'),
   source_kind_label: z.string().catch('Actor feed'),
   capabilities: z.array(z.string()).catch([]),

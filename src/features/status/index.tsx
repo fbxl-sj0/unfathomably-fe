@@ -1,5 +1,5 @@
 import { debounce } from 'es-toolkit';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import { Redirect } from 'react-router-dom';
 
@@ -36,7 +36,11 @@ const messages = defineMessages({
   replyConfirm: { id: 'confirmations.reply.confirm', defaultMessage: 'Reply' },
   replyMessage: { id: 'confirmations.reply.message', defaultMessage: 'Replying now will overwrite the message you are currently composing. Are you sure you want to proceed?' },
   blockAndReport: { id: 'confirmations.block.block_and_report', defaultMessage: 'Block & Report' },
+  filtered: { id: 'status.filtered_with_reasons', defaultMessage: 'Filtered: {reasons}.' },
+  showAnyway: { id: 'status.show_filter_reason', defaultMessage: 'Show anyway' },
 });
+
+const THREAD_REFRESH_INTERVAL = 60_000;
 
 type RouteParams = {
   statusId: string;
@@ -58,22 +62,51 @@ const StatusDetails: React.FC<IStatusDetails> = (props) => {
 
   const [isLoaded, setIsLoaded] = useState<boolean>(!!status);
   const [next, setNext] = useState<string | null>(null);
+  const [showFiltered, setShowFiltered] = useState(false);
+  const refreshInFlight = useRef(false);
 
   /** Fetch the status (and context) from the API. */
-  const fetchData = async () => {
-    const { params } = props;
-    const { statusId } = params;
-    const { next } = await dispatch(fetchStatusWithContext(statusId));
-    setNext(next);
-  };
+  const fetchData = useCallback(async () => {
+    if (refreshInFlight.current) return;
+
+    refreshInFlight.current = true;
+
+    try {
+      const { next } = await dispatch(fetchStatusWithContext(props.params.statusId));
+      setNext(next);
+    } finally {
+      refreshInFlight.current = false;
+    }
+  }, [dispatch, props.params.statusId]);
 
   // Load data.
   useEffect(() => {
+    let active = true;
+
     fetchData().then(() => {
-      setIsLoaded(true);
+      if (active) setIsLoaded(true);
     }).catch(() => {
-      setIsLoaded(true);
+      if (active) setIsLoaded(true);
     });
+
+    const refreshVisibleThread = () => {
+      if (!document.hidden) void fetchData();
+    };
+
+    const interval = window.setInterval(refreshVisibleThread, THREAD_REFRESH_INTERVAL);
+    window.addEventListener('focus', refreshVisibleThread);
+    document.addEventListener('visibilitychange', refreshVisibleThread);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshVisibleThread);
+      document.removeEventListener('visibilitychange', refreshVisibleThread);
+    };
+  }, [fetchData]);
+
+  useEffect(() => {
+    setShowFiltered(false);
   }, [props.params.statusId]);
 
   const handleLoadMore = useCallback(debounce(() => {
@@ -83,6 +116,8 @@ const StatusDetails: React.FC<IStatusDetails> = (props) => {
       }).catch(() => { });
     }
   }, 300, { edges: ['leading'] }), [next, status]);
+
+  useEffect(() => () => handleLoadMore.cancel(), [handleLoadMore]);
 
   const handleRefresh = () => {
     return fetchData();
@@ -116,6 +151,23 @@ const StatusDetails: React.FC<IStatusDetails> = (props) => {
     if (status.visibility === 'direct') return messages.titleDirect;
     return messages.title;
   };
+
+  if (status.filtered.size > 0 && !showFiltered) {
+    return (
+      <Column label={intl.formatMessage(titleMessage())}>
+        <div className='p-6 text-center text-gray-600 dark:text-gray-300'>
+          <p>{intl.formatMessage(messages.filtered, { reasons: status.filtered.join(', ') })}</p>
+          <button
+            type='button'
+            className='mt-2 text-primary-600 hover:underline dark:text-accent-blue'
+            onClick={() => setShowFiltered(true)}
+          >
+            {intl.formatMessage(messages.showAnyway)}
+          </button>
+        </div>
+      </Column>
+    );
+  }
 
   return (
     <Stack space={4}>

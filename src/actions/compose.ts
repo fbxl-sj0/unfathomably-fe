@@ -41,6 +41,7 @@ const COMPOSE_EVENT_REPLY     = 'COMPOSE_EVENT_REPLY' as const;
 const COMPOSE_REPLY_CANCEL    = 'COMPOSE_REPLY_CANCEL' as const;
 const COMPOSE_QUOTE           = 'COMPOSE_QUOTE' as const;
 const COMPOSE_QUOTE_CANCEL    = 'COMPOSE_QUOTE_CANCEL' as const;
+const COMPOSE_QUOTE_POLICY_CHANGE = 'COMPOSE_QUOTE_POLICY_CHANGE' as const;
 const COMPOSE_DIRECT          = 'COMPOSE_DIRECT' as const;
 const COMPOSE_MENTION         = 'COMPOSE_MENTION' as const;
 const COMPOSE_RESET           = 'COMPOSE_RESET' as const;
@@ -177,6 +178,12 @@ const quoteCompose = (status: Status) =>
 const cancelQuoteCompose = () => ({
   type: COMPOSE_QUOTE_CANCEL,
   id: 'compose-modal',
+});
+
+const changeComposeQuotePolicy = (composeId: string, value: string) => ({
+  type: COMPOSE_QUOTE_POLICY_CHANGE,
+  id: composeId,
+  value,
 });
 
 const groupComposeModal = (group: Group) =>
@@ -324,7 +331,8 @@ const submitCompose = (composeId: string, opts: SubmitComposeOpts = {}) =>
     const params: Record<string, any> = {
       status,
       in_reply_to_id: compose.in_reply_to,
-      quote_id: compose.quote,
+      quoted_status_id: compose.quote,
+      quote_approval_policy: compose.quote_approval_policy,
       media_ids: media.map(item => item.id),
       sensitive: compose.sensitive,
       spoiler_text: compose.spoiler_text,
@@ -830,6 +838,7 @@ type ComposeAction =
   | ReturnType<typeof cancelReplyCompose>
   | ComposeQuoteAction
   | ReturnType<typeof cancelQuoteCompose>
+  | ReturnType<typeof changeComposeQuotePolicy>
   | ReturnType<typeof resetCompose>
   | ComposeMentionAction
   | ComposeDirectAction
@@ -882,6 +891,7 @@ export {
   COMPOSE_EVENT_REPLY,
   COMPOSE_QUOTE,
   COMPOSE_QUOTE_CANCEL,
+  COMPOSE_QUOTE_POLICY_CHANGE,
   COMPOSE_DIRECT,
   COMPOSE_MENTION,
   COMPOSE_RESET,
@@ -925,6 +935,7 @@ export {
   cancelReplyCompose,
   quoteCompose,
   cancelQuoteCompose,
+  changeComposeQuotePolicy,
   resetCompose,
   mentionCompose,
   directCompose,

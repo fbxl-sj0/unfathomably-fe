@@ -13,6 +13,7 @@ interface IImageLoader {
   width?: number;
   height?: number;
   onClick?: React.MouseEventHandler;
+  onZoomChange?(zoomed: boolean): void;
 }
 
 class ImageLoader extends PureComponent<IImageLoader> {
@@ -149,7 +150,7 @@ class ImageLoader extends PureComponent<IImageLoader> {
   };
 
   render() {
-    const { alt, width, height, onClick } = this.props;
+    const { alt, width, height, onClick, onZoomChange } = this.props;
     const { loading, src } = this.state;
 
     const className = 'relative h-screen flex items-center justify-center flex-col';
@@ -172,6 +173,7 @@ class ImageLoader extends PureComponent<IImageLoader> {
             src={src}
             onError={this.handleImageError}
             onClick={onClick}
+            onZoomChange={onZoomChange}
           />
         )}
       </div>

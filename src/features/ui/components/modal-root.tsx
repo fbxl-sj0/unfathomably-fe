@@ -114,17 +114,69 @@ interface IModalRoot {
 
 export default class ModalRoot extends PureComponent<IModalRoot> {
 
-  getSnapshotBeforeUpdate() {
-    return { visible: !!this.props.type };
+  private locked = false;
+  private scrollY = 0;
+  private previousBodyStyle = {
+    left: '',
+    overflow: '',
+    position: '',
+    right: '',
+    top: '',
+    width: '',
+  };
+
+  componentDidMount() {
+    if (this.props.type) this.lockDocumentScroll();
   }
 
-  componentDidUpdate(prevProps: IModalRoot, prevState: any, { visible }: any) {
-    if (visible) {
-      document.body.classList.add('overflow-hidden');
-    } else {
-      document.body.classList.remove('overflow-hidden');
-    }
+  componentDidUpdate(prevProps: IModalRoot) {
+    if (!prevProps.type && this.props.type) this.lockDocumentScroll();
+    if (prevProps.type && !this.props.type) this.unlockDocumentScroll();
   }
+
+  componentWillUnmount() {
+    this.unlockDocumentScroll();
+  }
+
+  lockDocumentScroll = () => {
+    if (this.locked) return;
+
+    const { body, documentElement } = document;
+    this.locked = true;
+    this.scrollY = window.scrollY;
+    this.previousBodyStyle = {
+      left: body.style.left,
+      overflow: body.style.overflow,
+      position: body.style.position,
+      right: body.style.right,
+      top: body.style.top,
+      width: body.style.width,
+    };
+
+    body.classList.add('overflow-hidden');
+    documentElement.classList.add('overflow-hidden');
+    body.style.position = 'fixed';
+    body.style.top = `-${this.scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+  };
+
+  unlockDocumentScroll = () => {
+    if (!this.locked) return;
+
+    const { body, documentElement } = document;
+    this.locked = false;
+    body.classList.remove('overflow-hidden');
+    documentElement.classList.remove('overflow-hidden');
+    body.style.position = this.previousBodyStyle.position;
+    body.style.top = this.previousBodyStyle.top;
+    body.style.left = this.previousBodyStyle.left;
+    body.style.right = this.previousBodyStyle.right;
+    body.style.width = this.previousBodyStyle.width;
+    body.style.overflow = this.previousBodyStyle.overflow;
+    window.scrollTo(0, this.scrollY);
+  };
 
   renderLoading = (modalId: string) => {
     return !['MEDIA', 'VIDEO', 'BOOST', 'CONFIRM', 'ACTIONS'].includes(modalId) ? <ModalLoading /> : null;

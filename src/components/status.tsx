@@ -17,6 +17,7 @@ import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
 import AccountContainer from '@/containers/account-container.tsx';
 import QuotedStatus from '@/features/status/containers/quoted-status-container.tsx';
+import QuoteAuthorizationControls from '@/components/quote-authorization-controls.tsx';
 import { HotKeys } from '@/features/ui/components/hotkeys.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useReblog } from '@/hooks/useReblog.ts';
@@ -362,6 +363,14 @@ const Status: React.FC<IStatus> = (props) => {
   }
 
   let quote;
+  const quoteState = actualStatus.pleroma.get('quote_state') as 'pending' | 'accepted' | 'rejected' | 'revoked' | null;
+  const quoteControls = quoteState ? (
+    <QuoteAuthorizationControls
+      statusId={actualStatus.id}
+      state={quoteState}
+      manageable={actualStatus.pleroma.get('quote_manageable', false)}
+    />
+  ) : null;
 
   if (actualStatus.quote) {
     if (actualStatus.pleroma.get('quote_visible', true) === false) {
@@ -467,7 +476,7 @@ const Status: React.FC<IStatus> = (props) => {
 
                   <TranslateButton status={actualStatus} />
 
-                  {(quote || actualStatus.card || actualStatus.media_attachments.size > 0) && (
+                  {(quote || quoteControls || actualStatus.card || actualStatus.media_attachments.size > 0) && (
                     <Stack space={4}>
                       <StatusMedia
                         status={actualStatus.toJS() as StatusEntity}
@@ -478,6 +487,7 @@ const Status: React.FC<IStatus> = (props) => {
                       />
 
                       {quote}
+                      {quoteControls}
                     </Stack>
                   )}
                 </Stack>

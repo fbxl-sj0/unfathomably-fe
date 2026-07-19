@@ -14,6 +14,7 @@ import {
   COMPOSE_REPLY_CANCEL,
   COMPOSE_QUOTE,
   COMPOSE_QUOTE_CANCEL,
+  COMPOSE_QUOTE_POLICY_CHANGE,
   COMPOSE_GROUP_POST,
   COMPOSE_DIRECT,
   COMPOSE_MENTION,
@@ -98,6 +99,7 @@ export const ReducerCompose = ImmutableRecord({
   privacy: 'public',
   progress: 0,
   quote: null as string | null,
+  quote_approval_policy: 'public',
   resetFileKey: null as number | null,
   schedule: null as Date | null,
   sensitive: false,
@@ -364,6 +366,10 @@ export default function compose(state = initialState, action: ComposeAction | Ev
     case COMPOSE_CHANGE:
       return updateCompose(state, action.id, compose => compose
         .set('text', action.text)
+        .set('idempotencyKey', crypto.randomUUID()));
+    case COMPOSE_QUOTE_POLICY_CHANGE:
+      return updateCompose(state, action.id, compose => compose
+        .set('quote_approval_policy', action.value)
         .set('idempotencyKey', crypto.randomUUID()));
     case COMPOSE_REPLY:
       return updateCompose(state, action.id, compose => compose.withMutations(map => {

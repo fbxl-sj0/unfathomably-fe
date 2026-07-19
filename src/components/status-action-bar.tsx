@@ -721,6 +721,7 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
   };
 
   const publicStatus = ['public', 'unlisted', 'group'].includes(status.visibility);
+  const quoteAllowed = status.pleroma?.get?.('quote_allowed') ?? publicStatus;
 
   const replyCount = status.replies_count;
   const reblogCount = status.reblogs_count;
@@ -792,10 +793,12 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
     text: intl.formatMessage(status.reblogged ? messages.cancel_reblog_private : messages.reblog),
     action: handleReblogClick,
     icon: repeatIcon,
+    disabled: !publicStatus,
   }, {
     text: intl.formatMessage(messages.quotePost),
     action: handleQuoteClick,
     icon: quoteIcon,
+    disabled: !quoteAllowed,
   }];
 
   const reblogButton = (
@@ -849,7 +852,7 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
         {(features.quotePosts && me) ? (
           <DropdownMenu
             items={reblogMenu}
-            disabled={!publicStatus}
+            disabled={!publicStatus && !quoteAllowed}
             onShiftClick={handleReblogClick}
           >
             {reblogButton}

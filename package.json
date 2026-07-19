@@ -1,7 +1,7 @@
 {
   "name": "unfathomably-fe",
   "displayName": "Unfathomably FE",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "type": "module",
   "description": "Unfathomably frontend for the Fediverse.",
   "homepage": "https://github.com/fbxl-sj0/unfathomably-fe",

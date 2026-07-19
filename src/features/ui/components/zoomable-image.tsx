@@ -21,6 +21,7 @@ interface IZoomableImage {
   src: string;
   onError?: React.ReactEventHandler<HTMLImageElement>;
   onClick?: React.MouseEventHandler;
+  onZoomChange?(zoomed: boolean): void;
 }
 
 class ZoomableImage extends PureComponent<IZoomableImage> {
@@ -44,11 +45,23 @@ class ZoomableImage extends PureComponent<IZoomableImage> {
     // on Chrome 56+, touch event listeners will default to passive
     // https://www.chromestatus.com/features/5093566007214080
     this.container?.addEventListener('touchmove', this.handleTouchMove, { passive: false });
+    this.container?.addEventListener('touchend', this.handleTouchEnd);
+  }
+
+  componentDidUpdate(prevProps: IZoomableImage) {
+    if (prevProps.src !== this.props.src && this.state.scale !== MIN_SCALE) {
+      this.setState({ scale: MIN_SCALE }, () => this.props.onZoomChange?.(false));
+    }
   }
 
   componentWillUnmount() {
     this.container?.removeEventListener('touchstart', this.handleTouchStart);
-    this.container?.removeEventListener('touchend', this.handleTouchMove);
+    this.container?.removeEventListener('touchmove', this.handleTouchMove);
+    this.container?.removeEventListener('touchend', this.handleTouchEnd);
+
+    if (this.state.scale !== MIN_SCALE) {
+      this.props.onZoomChange?.(false);
+    }
   }
 
   handleTouchStart = (e: TouchEvent) => {
@@ -61,8 +74,7 @@ class ZoomableImage extends PureComponent<IZoomableImage> {
   handleTouchMove = (e: TouchEvent) => {
     if (!this.container) return;
 
-    const { scrollTop, scrollHeight, clientHeight } = this.container;
-    if (e.touches.length === 1 && scrollTop !== scrollHeight - clientHeight) {
+    if (e.touches.length === 1 && this.state.scale > MIN_SCALE) {
       // prevent propagating event to MediaModal
       e.stopPropagation();
       return;
@@ -74,12 +86,22 @@ class ZoomableImage extends PureComponent<IZoomableImage> {
 
     const [p1, p2] = Array.from(e.touches);
     const distance = getDistance(p1, p2);
+
+    if (this.lastDistance <= 0) {
+      this.lastDistance = distance;
+      return;
+    }
+
     const midpoint = getMidpoint(p1, p2);
     const scale = clamp(MIN_SCALE, MAX_SCALE, this.state.scale * distance / this.lastDistance);
 
     this.zoom(scale, midpoint);
 
     this.lastDistance = distance;
+  };
+
+  handleTouchEnd = () => {
+    this.lastDistance = 0;
   };
 
   zoom(nextScale: number, midpoint: Point) {
@@ -97,10 +119,17 @@ class ZoomableImage extends PureComponent<IZoomableImage> {
     const nextScrollLeft = (scrollLeft + midpoint.x) * nextScale / scale - midpoint.x;
     const nextScrollTop = (scrollTop + midpoint.y) * nextScale / scale - midpoint.y;
 
+    const wasZoomed = scale > MIN_SCALE;
+    const isZoomed = nextScale > MIN_SCALE;
+
     this.setState({ scale: nextScale }, () => {
       if (!this.container) return;
       this.container.scrollLeft = nextScrollLeft;
       this.container.scrollTop = nextScrollTop;
+
+      if (wasZoomed !== isZoomed) {
+        this.props.onZoomChange?.(isZoomed);
+      }
     });
   }
 

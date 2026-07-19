@@ -28,10 +28,18 @@ export type FederationFamily =
   | 'longform'
   | 'microblog'
   | 'photo'
+  | 'models'
+  | 'games'
+  | 'marketplace'
+  | 'culture'
   | 'books'
   | 'bookmarks'
   | 'groups'
   | 'events'
+  | 'development'
+  | 'coordination'
+  | 'publishing'
+  | 'routes'
   | 'local'
   | 'generic';
 
@@ -46,7 +54,7 @@ export interface FederationPlatformClassification {
 }
 
 export interface FederationRenderHint {
-  layout: 'player' | 'article' | 'status' | 'gallery' | 'book' | 'link' | 'community' | 'event' | 'generic';
+  layout: 'player' | 'article' | 'status' | 'gallery' | 'model' | 'game' | 'listing' | 'catalog' | 'book' | 'link' | 'community' | 'event' | 'development' | 'coordination' | 'resource' | 'route' | 'generic';
   primaryAction: FederationPrimaryAction;
 }
 
@@ -60,10 +68,18 @@ export const FEDERATION_RENDER_HINTS: Record<FederationFamily, FederationRenderH
   longform: { layout: 'article', primaryAction: 'read' },
   microblog: { layout: 'status', primaryAction: 'reply' },
   photo: { layout: 'gallery', primaryAction: 'view' },
+  models: { layout: 'model', primaryAction: 'view' },
+  games: { layout: 'game', primaryAction: 'open' },
+  marketplace: { layout: 'listing', primaryAction: 'open' },
+  culture: { layout: 'catalog', primaryAction: 'open' },
   books: { layout: 'book', primaryAction: 'open' },
   bookmarks: { layout: 'link', primaryAction: 'open' },
   groups: { layout: 'community', primaryAction: 'join' },
   events: { layout: 'event', primaryAction: 'rsvp' },
+  development: { layout: 'development', primaryAction: 'open' },
+  coordination: { layout: 'coordination', primaryAction: 'open' },
+  publishing: { layout: 'resource', primaryAction: 'open' },
+  routes: { layout: 'route', primaryAction: 'open' },
   local: { layout: 'community', primaryAction: 'open' },
   generic: { layout: 'generic', primaryAction: 'open' },
 };
@@ -77,6 +93,7 @@ export function normalizeFederationFamily(value: unknown): FederationFamily {
 }
 
 export const FEDERATION_PLATFORM_FIXTURES: Array<{ software: string; family: FederationFamily }> = [
+  { software: 'ActivityPods', family: 'coordination' },
   { software: 'Funkwhale', family: 'audio' },
   { software: 'WordPress', family: 'longform' },
   { software: 'WriteFreely', family: 'longform' },
@@ -84,13 +101,24 @@ export const FEDERATION_PLATFORM_FIXTURES: Array<{ software: string; family: Fed
   { software: 'Iceshrimp', family: 'microblog' },
   { software: 'snac', family: 'microblog' },
   { software: 'Pixelfed', family: 'photo' },
+  { software: 'Manyfold', family: 'models' },
+  { software: 'Castling.club', family: 'games' },
+  { software: 'Flohmarkt', family: 'marketplace' },
   { software: 'Mitra', family: 'microblog' },
   { software: 'Owncast', family: 'video' },
   { software: 'Misskey', family: 'microblog' },
   { software: 'Sharkey', family: 'microblog' },
+  { software: 'NeoDB', family: 'culture' },
   { software: 'BookWyrm', family: 'books' },
+  { software: 'ForgeFed', family: 'development' },
+  { software: 'Bonfire ValueFlows', family: 'coordination' },
+  { software: 'CommonsPub', family: 'publishing' },
+  { software: 'ZenPub', family: 'publishing' },
+  { software: 'Vervis', family: 'development' },
   { software: 'Postmarks', family: 'bookmarks' },
   { software: 'wafrn', family: 'microblog' },
+  { software: 'Wanderer', family: 'routes' },
+  { software: 'XWiki', family: 'publishing' },
   { software: 'Castopod', family: 'audio' },
   { software: 'Lemmy', family: 'groups' },
   { software: 'Lotide', family: 'groups' },
@@ -100,6 +128,7 @@ export const FEDERATION_PLATFORM_FIXTURES: Array<{ software: string; family: Fed
   { software: 'Discourse', family: 'groups' },
   { software: 'Mbin', family: 'groups' },
   { software: 'Mobilizon', family: 'events' },
+  { software: 'Mutual Aid', family: 'marketplace' },
   { software: 'NodeBB', family: 'groups' },
   { software: 'PieFed', family: 'groups' },
   { software: 'FediGroups', family: 'groups' },
@@ -120,16 +149,23 @@ export const FEDERATION_PLATFORM_FIXTURES: Array<{ software: string; family: Fed
 
 const SOFTWARE: Record<string, PlatformBase> = {
   'ap groups': { platform: 'ap_groups', label: 'AP-Groups', family: 'groups' },
+  activitypods: { platform: 'activitypods', label: 'ActivityPods', family: 'coordination' },
   bookwyrm: { platform: 'bookwyrm', label: 'BookWyrm', family: 'books' },
+  forgefed: { platform: 'forgefed', label: 'ForgeFed', family: 'development' },
   bonfire: { platform: 'bonfire', label: 'Bonfire', family: 'groups' },
+  'bonfire valueflows': { platform: 'bonfire_valueflows', label: 'Bonfire ValueFlows', family: 'coordination' },
+  commonspub: { platform: 'zenpub', label: 'ZenPub/CommonsPub', family: 'publishing' },
   buzzrelay: { platform: 'buzzrelay', label: 'BuzzRelay', family: 'groups' },
   castopod: { platform: 'castopod', label: 'Castopod', family: 'audio' },
+  castling: { platform: 'castling', label: 'Castling.club', family: 'games' },
+  'castling club': { platform: 'castling', label: 'Castling.club', family: 'games' },
   discourse: { platform: 'discourse', label: 'Discourse', family: 'groups' },
   elgg: { platform: 'elgg', label: 'Elgg', family: 'groups' },
   'fedibird group': { platform: 'fedibird_group', label: 'Fedibird Group', family: 'groups' },
   fedigroup: { platform: 'fedigroups', label: 'FediGroups', family: 'groups' },
   fedigroups: { platform: 'fedigroups', label: 'FediGroups', family: 'groups' },
   flipboard: { platform: 'flipboard', label: 'Flipboard', family: 'longform' },
+  flohmarkt: { platform: 'flohmarkt', label: 'Flohmarkt', family: 'marketplace' },
   friendica: { platform: 'friendica', label: 'Friendica', family: 'groups' },
   funkwhale: { platform: 'funkwhale', label: 'Funkwhale', family: 'audio' },
   gancio: { platform: 'gancio', label: 'Gancio', family: 'events' },
@@ -143,10 +179,13 @@ const SOFTWARE: Record<string, PlatformBase> = {
   local: { platform: 'local', label: 'Local', family: 'local' },
   lotide: { platform: 'lotide', label: 'Lotide', family: 'groups' },
   mastodon: { platform: 'mastodon', label: 'Mastodon', family: 'microblog' },
+  manyfold: { platform: 'manyfold', label: 'Manyfold', family: 'models' },
   mbin: { platform: 'mbin', label: 'Mbin', family: 'groups' },
   misskey: { platform: 'misskey', label: 'Misskey', family: 'microblog' },
   mitra: { platform: 'mitra', label: 'Mitra', family: 'microblog' },
   mobilizon: { platform: 'mobilizon', label: 'Mobilizon', family: 'events' },
+  'mutual aid': { platform: 'mutual_aid', label: 'Mutual Aid', family: 'marketplace' },
+  neodb: { platform: 'neodb', label: 'NeoDB', family: 'culture' },
   nodebb: { platform: 'nodebb', label: 'NodeBB', family: 'groups' },
   owncast: { platform: 'owncast', label: 'Owncast', family: 'video' },
   peertube: { platform: 'peertube', label: 'PeerTube', family: 'video' },
@@ -160,22 +199,77 @@ const SOFTWARE: Record<string, PlatformBase> = {
   'streams forte': { platform: 'streams_forte', label: 'Streams/Forte', family: 'groups' },
   tootgroup: { platform: 'tootgroup', label: 'tootgroup.py', family: 'groups' },
   wafrn: { platform: 'wafrn', label: 'wafrn', family: 'microblog' },
+  wanderer: { platform: 'wanderer', label: 'Wanderer', family: 'routes' },
+  vervis: { platform: 'vervis', label: 'Vervis', family: 'development' },
   'wordpress event bridge': { platform: 'wordpress_event_bridge', label: 'WordPress Event Bridge', family: 'events' },
   wordpress: { platform: 'wordpress', label: 'WordPress', family: 'longform' },
   writefreely: { platform: 'writefreely', label: 'WriteFreely', family: 'longform' },
+  xwiki: { platform: 'xwiki', label: 'XWiki', family: 'publishing' },
+  zenpub: { platform: 'zenpub', label: 'ZenPub', family: 'publishing' },
 };
 
 const OBJECT_TYPES: Record<string, PlatformBase> = {
   Article: { platform: 'activitypub-article', label: 'Article', family: 'longform' },
+  Author: { platform: 'bookwyrm', label: 'BookWyrm author', family: 'books' },
   Audio: { platform: 'activitypub-audio', label: 'Audio', family: 'audio' },
+  Book: { platform: 'bookwyrm', label: 'Book', family: 'books' },
+  BookList: { platform: 'bookwyrm', label: 'Book list', family: 'books' },
+  Branch: { platform: 'forgefed', label: 'Branch', family: 'development' },
+  Comment: { platform: 'bookwyrm', label: 'Book comment', family: 'books' },
+  Commit: { platform: 'forgefed', label: 'Commit', family: 'development' },
+  Edition: { platform: 'bookwyrm', label: 'Book edition', family: 'books' },
+  Document: { platform: 'activitypub-document', label: 'Document', family: 'publishing' },
   Event: { platform: 'activitypub-event', label: 'Event', family: 'events' },
   Group: { platform: 'activitypub-group', label: 'Group', family: 'groups' },
   Image: { platform: 'activitypub-image', label: 'Image', family: 'photo' },
+  Issue: { platform: 'forgefed', label: 'Issue', family: 'development' },
+  MergeRequest: { platform: 'forgefed', label: 'Merge request', family: 'development' },
   Note: { platform: 'activitypub-note', label: 'Note', family: 'microblog' },
   Page: { platform: 'activitypub-page', label: 'Page', family: 'longform' },
+  Patch: { platform: 'forgefed', label: 'Patch', family: 'development' },
+  Proposal: { platform: 'forgefed', label: 'Proposal', family: 'development' },
+  Push: { platform: 'forgefed', label: 'Push', family: 'development' },
   Question: { platform: 'activitypub-question', label: 'Question', family: 'groups' },
+  Quotation: { platform: 'bookwyrm', label: 'Book quotation', family: 'books' },
+  Rating: { platform: 'bookwyrm', label: 'Book rating', family: 'books' },
+  Review: { platform: 'bookwyrm', label: 'Book review', family: 'books' },
+  Shelf: { platform: 'bookwyrm', label: 'Book shelf', family: 'books' },
+  Ticket: { platform: 'forgefed', label: 'Ticket', family: 'development' },
+  TicketDependency: { platform: 'forgefed', label: 'Ticket dependency', family: 'development' },
   Video: { platform: 'activitypub-video', label: 'Video', family: 'video' },
+  Work: { platform: 'bookwyrm', label: 'Book work', family: 'books' },
+  'pair:Project': { platform: 'activitypods', label: 'ActivityPods project', family: 'coordination' },
+  'http://virtual-assembly.org/ontologies/pair#Project': { platform: 'activitypods', label: 'ActivityPods project', family: 'coordination' },
+  'maid:Offer': { platform: 'mutual_aid', label: 'Mutual Aid Offer', family: 'marketplace' },
+  'maid:Request': { platform: 'mutual_aid', label: 'Mutual Aid Request', family: 'marketplace' },
+  'https://mutual-aid.app/ns/core#Offer': { platform: 'mutual_aid', label: 'Mutual Aid Offer', family: 'marketplace' },
+  'https://mutual-aid.app/ns/core#Request': { platform: 'mutual_aid', label: 'Mutual Aid Request', family: 'marketplace' },
 };
+
+const CONCRETE_TYPES: Record<string, PlatformBase> = {
+  '3DModel': { platform: 'manyfold', label: '3D model', family: 'models' },
+  Collection: { platform: 'manyfold', label: 'Model collection', family: 'models' },
+  Creator: { platform: 'manyfold', label: 'Model creator', family: 'models' },
+  User: { platform: 'manyfold', label: 'Manyfold user', family: 'models' },
+};
+
+const VALUEFLOWS_TYPES = new Set([
+  'Claim',
+  'Commitment',
+  'EconomicEvent',
+  'EconomicResource',
+  'Intent',
+  'Measure',
+  'Need',
+  'Offer',
+  'Process',
+  'ProcessSpecification',
+  'Proposal',
+  'ProposedIntent',
+  'ProposedTo',
+  'ResourceSpecification',
+  'Unit',
+]);
 
 export function classifyFederationPlatform(input: unknown): FederationPlatformClassification {
   if (typeof input === 'string') {
@@ -186,9 +280,32 @@ export function classifyFederationPlatform(input: unknown): FederationPlatformCl
     return unknown();
   }
 
-  return withConfidence(findSoftwareClassification(input), 'software')
+  return withConfidence(findNativeFamilyClassification(input), 'object')
+    ?? withConfidence(findSoftwareClassification(input), 'software')
     ?? withConfidence(findObjectClassification(input), 'object')
     ?? unknown();
+}
+
+function findNativeFamilyClassification(input: JsonRecord): PlatformBase | undefined {
+  const candidates = [
+    getPath(input, ['pleroma', 'native', 'fields']),
+    getPath(input, ['native', 'fields']),
+    getPath(input, ['source', 'pleroma', 'native', 'fields']),
+  ];
+
+  for (const candidate of candidates) {
+    if (!isRecord(candidate) || typeof candidate.family !== 'string') continue;
+
+    const family = normalizeFederationFamily(candidate.family);
+
+    if (family !== 'generic') {
+      return {
+        platform: typeof candidate.platform === 'string' ? candidate.platform : 'unfathomably',
+        label: 'Unfathomably native',
+        family,
+      };
+    }
+  }
 }
 
 function findSoftwareClassification(input: JsonRecord): PlatformBase | undefined {
@@ -202,11 +319,57 @@ function findSoftwareClassification(input: JsonRecord): PlatformBase | undefined
 }
 
 function findObjectClassification(input: JsonRecord): PlatformBase | undefined {
-  const type = getPath(input, ['type'])
-    ?? getPath(input, ['object', 'type'])
-    ?? getPath(input, ['activity', 'object', 'type']);
+  const concreteTypes = [
+    getPath(input, ['f3di:concreteType']),
+    getPath(input, ['object', 'f3di:concreteType']),
+    getPath(input, ['activity', 'object', 'f3di:concreteType']),
+    getPath(input, ['native', 'type']),
+    getPath(input, ['pleroma', 'native', 'type']),
+    getPath(input, ['source', 'pleroma', 'native', 'type']),
+  ];
 
-  return typeof type === 'string' ? OBJECT_TYPES[type] : undefined;
+  for (const type of concreteTypes) {
+    if (typeof type === 'string' && CONCRETE_TYPES[type]) {
+      return CONCRETE_TYPES[type];
+    }
+  }
+
+  const objectTypes = [
+    getPath(input, ['type']),
+    getPath(input, ['object', 'type']),
+    getPath(input, ['activity', 'object', 'type']),
+  ];
+
+  for (const type of objectTypes) {
+    if (typeof type === 'string') {
+      const valueflowsType = valueflowsTypeName(type);
+
+      if (valueflowsType) {
+        return {
+          platform: 'bonfire_valueflows',
+          label: `ValueFlows ${valueflowsType}`,
+          family: 'coordination',
+        };
+      }
+
+      if (OBJECT_TYPES[type]) {
+        return OBJECT_TYPES[type];
+      }
+    }
+  }
+}
+
+function valueflowsTypeName(type: string) {
+  const prefixes = ['ValueFlows:', 'https://w3id.org/valueflows#'];
+  const prefix = prefixes.find((candidate) => type.startsWith(candidate));
+
+  if (!prefix) {
+    return;
+  }
+
+  const name = type.slice(prefix.length);
+
+  return VALUEFLOWS_TYPES.has(name) ? name : undefined;
 }
 
 function lookupSoftware(name: string): PlatformBase | undefined {
@@ -224,6 +387,9 @@ function softwareNames(input: JsonRecord): string[] {
     getPath(input, ['platform']),
     getPath(input, ['application']),
     getPath(input, ['generator']),
+    getPath(input, ['pleroma', 'native', 'fields', 'platform']),
+    getPath(input, ['native', 'fields', 'platform']),
+    getPath(input, ['source', 'pleroma', 'native', 'fields', 'platform']),
   ].flatMap(nameCandidates);
 }
 

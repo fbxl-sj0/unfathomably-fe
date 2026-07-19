@@ -23,23 +23,24 @@ interface IListItem {
   label: React.ReactNode;
   hint?: React.ReactNode;
   to?: string;
+  href?: string;
   onClick?(): void;
   onSelect?(): void;
   isSelected?: boolean;
   children?: React.ReactNode;
 }
 
-const ListItem: React.FC<IListItem> = ({ label, hint, children, to, onClick, onSelect, isSelected }) => {
+const ListItem: React.FC<IListItem> = ({ label, hint, children, to, href, onClick, onSelect, isSelected }) => {
   const id = crypto.randomUUID();
   const domId = `list-group-${id}`;
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      onClick!();
+      (onClick || onSelect)?.();
     }
   };
 
-  const LabelComp = to || onClick || onSelect ? 'span' : 'label';
+  const LabelComp = to || href || onClick || onSelect ? 'span' : 'label';
 
   const renderChildren = useCallback(() => {
     return Children.map(children, (child) => {
@@ -60,7 +61,7 @@ const ListItem: React.FC<IListItem> = ({ label, hint, children, to, onClick, onS
   }, [children, domId]);
 
   const className = clsx('flex items-center justify-between overflow-hidden bg-gradient-to-r from-gradient-start/20 to-gradient-end/20 px-4 py-2 first:rounded-t-lg last:rounded-b-lg dark:from-gradient-start/10 dark:to-gradient-end/10', {
-    'cursor-pointer hover:from-gradient-start/30 hover:to-gradient-end/30 dark:hover:from-gradient-start/5 dark:hover:to-gradient-end/5': typeof to !== 'undefined' || typeof onClick !== 'undefined' || typeof onSelect !== 'undefined',
+    'cursor-pointer hover:from-gradient-start/30 hover:to-gradient-end/30 dark:hover:from-gradient-start/5 dark:hover:to-gradient-end/5': typeof to !== 'undefined' || typeof href !== 'undefined' || typeof onClick !== 'undefined' || typeof onSelect !== 'undefined',
   });
 
   const body = (
@@ -73,7 +74,7 @@ const ListItem: React.FC<IListItem> = ({ label, hint, children, to, onClick, onS
         ) : null}
       </div>
 
-      {(to || onClick) ? (
+      {(to || href || onClick) ? (
         <HStack space={1} alignItems='center' className='overflow-hidden text-gray-700 dark:text-gray-600'>
           {children}
 
@@ -116,6 +117,12 @@ const ListItem: React.FC<IListItem> = ({ label, hint, children, to, onClick, onS
     <Link className={className} to={to}>
       {body}
     </Link>
+  );
+
+  if (href) return (
+    <a className={className} href={href}>
+      {body}
+    </a>
   );
 
   const Comp = onClick ? 'a' : 'div';

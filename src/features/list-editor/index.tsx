@@ -64,15 +64,16 @@ const ListEditor: React.FC<IListEditor> = ({ listId, onClose }) => {
           <CardTitle title={intl.formatMessage(messages.removeFromList)} />
         </CardHeader>
 
-        {accountIds.size > 0 ? (
+        {accountIds.size > 0 && (
           <div className='max-h-48 overflow-y-auto'>
             {accountIds.map(accountId => <Account key={accountId} accountId={accountId} />)}
           </div>
-        ) : accountsLoaded ? (
+        )}
+        {accountIds.size === 0 && accountsLoaded && (
           <Text className='px-4' theme='muted' size='sm'>
             {intl.formatMessage(messages.noMembers)}
           </Text>
-        ) : null}
+        )}
       </div>
 
       <br />

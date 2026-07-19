@@ -17,9 +17,11 @@ import type { Relay as RelayEntity } from '@/schemas/index.ts';
 const messages = defineMessages({
   heading: { id: 'column.admin.relays', defaultMessage: 'Instance relays' },
   relayDeleteSuccess: { id: 'admin.relays.deleted', defaultMessage: 'Relay unfollowed' },
+  relayDeleteFail: { id: 'admin.relays.delete_fail', defaultMessage: 'Failed to unfollow the instance relay' },
   label: { id: 'admin.relays.new.url_placeholder', defaultMessage: 'Instance relay URL' },
   createSuccess: { id: 'admin.relays.add.success', defaultMessage: 'Instance relay followed' },
   createFail: { id: 'admin.relays.add.fail', defaultMessage: 'Failed to follow the instance relay' },
+  invalidUrl: { id: 'admin.relays.add.invalid_url', defaultMessage: 'Enter a valid HTTP or HTTPS relay URL' },
 });
 
 interface IRelay {
@@ -27,12 +29,16 @@ interface IRelay {
 }
 
 const Relay: React.FC<IRelay> = ({ relay }) => {
-  const { unfollowRelay } = useRelays();
+  const intl = useIntl();
+  const { unfollowRelay, isPendingUnfollow } = useRelays();
 
-  const handleDeleteRelay = () => () => {
+  const handleDeleteRelay = () => {
     unfollowRelay(relay.actor, {
       onSuccess: () => {
-        toast.success(messages.relayDeleteSuccess);
+        toast.success(intl.formatMessage(messages.relayDeleteSuccess));
+      },
+      onError: () => {
+        toast.error(intl.formatMessage(messages.relayDeleteFail));
       },
     });
   };
@@ -55,7 +61,7 @@ const Relay: React.FC<IRelay> = ({ relay }) => {
           )}
         </HStack>
         <HStack justifyContent='end' space={2}>
-          <Button theme='primary' onClick={handleDeleteRelay()}>
+          <Button theme='primary' onClick={handleDeleteRelay} disabled={isPendingUnfollow}>
             <FormattedMessage id='admin.relays.unfollow' defaultMessage='Unfollow' />
           </Button>
         </HStack>
@@ -73,12 +79,26 @@ const NewRelayForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent<Element>) => {
     e.preventDefault();
-    followRelay(name.value, {
+
+    const relayUrl = name.value.trim();
+
+    try {
+      const url = new URL(relayUrl);
+
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        throw new TypeError('Unsupported relay URL protocol');
+      }
+    } catch {
+      toast.error(intl.formatMessage(messages.invalidUrl));
+      return;
+    }
+
+    followRelay(relayUrl, {
       onSuccess() {
-        toast.success(messages.createSuccess);
+        toast.success(intl.formatMessage(messages.createSuccess));
       },
       onError() {
-        toast.error(messages.createFail);
+        toast.error(intl.formatMessage(messages.createFail));
       },
     });
   };
@@ -95,14 +115,15 @@ const NewRelayForm: React.FC = () => {
             type='text'
             placeholder={label}
             disabled={isPendingFollow}
+            required
             {...name}
           />
         </label>
 
         <Button
-          disabled={isPendingFollow}
-          onClick={handleSubmit}
+          disabled={isPendingFollow || !name.value.trim()}
           theme='primary'
+          type='submit'
         >
           <FormattedMessage id='admin.relays.new.follow' defaultMessage='Follow' />
         </Button>

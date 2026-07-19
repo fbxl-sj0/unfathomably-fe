@@ -22,6 +22,8 @@ import type { Status as LegacyStatus } from '@/types/entities.ts';
 
 const messages = defineMessages({
   cancel: { id: 'reply_indicator.cancel', defaultMessage: 'Cancel' },
+  filtered: { id: 'status.filtered_with_reasons', defaultMessage: 'Filtered: {reasons}.' },
+  showAnyway: { id: 'status.show_filter_reason', defaultMessage: 'Show anyway' },
 });
 
 interface IQuotedStatus {
@@ -43,7 +45,12 @@ const QuotedStatus: React.FC<IQuotedStatus> = ({ status, onCancel, compose }) =>
   const overlay = useRef<HTMLDivElement>(null);
 
   const [showMedia, setShowMedia] = useState<boolean>(defaultMediaVisibility(status, displayMedia));
+  const [showFiltered, setShowFiltered] = useState(false);
   const [minHeight, setMinHeight] = useState(208);
+
+  useEffect(() => {
+    setShowFiltered(false);
+  }, [status?.id]);
 
   useEffect(() => {
     if (overlay.current) {
@@ -79,6 +86,27 @@ const QuotedStatus: React.FC<IQuotedStatus> = ({ status, onCancel, compose }) =>
 
   if (!status) {
     return null;
+  }
+
+  if (status.filtered.size > 0 && !showFiltered) {
+    return (
+      <OutlineBox data-testid='quoted-status' className='text-center'>
+        <p className='text-sm text-gray-600 dark:text-gray-300'>
+          {intl.formatMessage(messages.filtered, { reasons: status.filtered.join(', ') })}
+        </p>
+        <button
+          type='button'
+          className='mt-2 text-sm text-primary-600 hover:underline dark:text-accent-blue'
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setShowFiltered(true);
+          }}
+        >
+          {intl.formatMessage(messages.showAnyway)}
+        </button>
+      </OutlineBox>
+    );
   }
 
   const account = status.account;

@@ -156,10 +156,14 @@ export const makeGetStatus = () => {
       return statusBase.withMutations((map: Status) => {
         map.set('reblog', statusReblog || null);
 
-        if ((features.filters) && account.id !== me) {
-          const filtered = checkFiltered(statusReblog?.search_index || statusBase.search_index, filters);
+        const filteredStatus = statusReblog || statusBase;
+
+        if (features.filters && filteredStatus.account.id !== me) {
+          const filtered = checkFiltered(filteredStatus.search_index, filters);
 
           map.set('filtered', filtered);
+        } else {
+          map.set('filtered', ImmutableList());
         }
       });
     },

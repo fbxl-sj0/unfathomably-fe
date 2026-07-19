@@ -9,11 +9,13 @@ import { Link, useHistory } from 'react-router-dom';
 import { openModal } from '@/actions/modals.ts';
 import { unfilterStatus } from '@/actions/statuses.ts';
 import { useFavourite } from '@/api/hooks/index.ts';
+import NativeStatusContext from '@/components/native-status-context.tsx';
 import PureEventPreview from '@/components/pure-event-preview.tsx';
 import PureStatusActionBar from '@/components/pure-status-action-bar.tsx';
 import PureStatusContent from '@/components/pure-status-content.tsx';
 import PureStatusReplyMentions from '@/components/pure-status-reply-mentions.tsx';
 import PureTranslateButton from '@/components/pure-translate-button.tsx';
+import QuoteAuthorizationControls from '@/components/quote-authorization-controls.tsx';
 import PureSensitiveContentOverlay from '@/components/statuses/pure-sensitive-content-overlay.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import Icon from '@/components/ui/icon.tsx';
@@ -363,6 +365,14 @@ const PureStatus: React.FC<IPureStatus> = (props) => {
   }
 
   let quote;
+  const quoteState = actualStatus.pleroma?.quote_state;
+  const quoteControls = quoteState ? (
+    <QuoteAuthorizationControls
+      statusId={actualStatus.id}
+      state={quoteState}
+      manageable={actualStatus.pleroma?.quote_manageable}
+    />
+  ) : null;
 
   if (actualStatus.quote) {
     if ((actualStatus?.pleroma?.quote_visible ?? true) === false) {
@@ -465,9 +475,11 @@ const PureStatus: React.FC<IPureStatus> = (props) => {
                     translatable
                   />
 
+                  <NativeStatusContext native={actualStatus.pleroma?.native} />
+
                   <PureTranslateButton status={status} />
 
-                  {(quote || actualStatus.card || actualStatus.media_attachments.length > 0) && (
+                  {(quote || quoteControls || actualStatus.card || actualStatus.media_attachments.length > 0) && (
                     <Stack space={4}>
                       <StatusMedia
                         status={status}
@@ -478,6 +490,7 @@ const PureStatus: React.FC<IPureStatus> = (props) => {
                       />
 
                       {quote}
+                      {quoteControls}
                     </Stack>
                   )}
                 </Stack>

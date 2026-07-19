@@ -17,6 +17,7 @@
 import z from 'zod';
 
 const nullableDateSchema = z.string().nullable().catch(null);
+const nullableStringSchema = z.string().nullable().catch(null);
 
 const federationHealthInstanceSummarySchema = z.object({
   total: z.number().catch(0),
@@ -45,12 +46,32 @@ const federationHealthOutgoingSchema = z.object({
   oldest_pending_scheduled_at: nullableDateSchema,
 });
 
+const federationHealthDeliveryEndpointSchema = z.object({
+  url: z.string().catch(''),
+  failure_count: z.number().catch(0),
+  last_status: nullableStringSchema,
+  last_success_at: nullableDateSchema,
+  last_failure_at: nullableDateSchema,
+  last_failure_reason: nullableStringSchema,
+  backoff_until: nullableDateSchema,
+});
+
 const federationHealthRemoteInstanceSchema = z.object({
   host: z.string().catch(''),
   unreachable_since: nullableDateSchema,
   dormant: z.boolean().catch(false),
-  software_name: z.string().nullable().catch(null),
-  software_version: z.string().nullable().catch(null),
+  software_name: nullableStringSchema,
+  software_version: nullableStringSchema,
+  last_status: nullableStringSchema,
+  failure_count: z.number().catch(0),
+  last_failure_at: nullableDateSchema,
+  last_failure_reason: nullableStringSchema,
+  last_success_at: nullableDateSchema,
+  backoff_until: nullableDateSchema,
+  probe_due: z.boolean().catch(false),
+  redirect_target: nullableStringSchema,
+  gone_at: nullableDateSchema,
+  delivery_endpoints: z.array(federationHealthDeliveryEndpointSchema).catch([]),
 });
 
 const federationHealthSchema = z.object({

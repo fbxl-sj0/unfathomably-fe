@@ -29,6 +29,8 @@ import Account from '@/components/account.tsx';
 import SiteLogo from '@/components/site-logo.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import { useStatContext } from '@/contexts/stat-context.tsx';
+import worldIcon from '@tabler/icons/outline/world.svg';
+
 import Search from '@/features/compose/components/search.tsx';
 import ComposeButton from '@/features/ui/components/compose-button.tsx';
 import ProfileDropdown from '@/features/ui/components/profile-dropdown.tsx';
@@ -193,6 +195,14 @@ const SidebarNavigation = () => {
             icon={searchIcon}
             text={<FormattedMessage id='tabs_bar.search' defaultMessage='Search' />}
           />
+
+          {features.federating && (
+            <SidebarNavigationLink
+              to='/federation'
+              icon={worldIcon}
+              text={<FormattedMessage id='tabs_bar.native_federation' defaultMessage='Worlds' />}
+            />
+          )}
 
           {features.ditto && (
             <SidebarNavigationLink

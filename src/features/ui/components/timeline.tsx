@@ -9,6 +9,8 @@ import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { setNotification } from '@/reducers/notificationsSlice.ts';
 import { makeGetStatusIds } from '@/selectors/index.ts';
 
+import type { Status } from '@/types/entities.ts';
+
 const TOP_REFRESH_INTERVAL = 30 * 1000;
 
 const isDocumentHidden = () => typeof document !== 'undefined' && document.visibilityState === 'hidden';
@@ -23,6 +25,8 @@ interface ITimeline extends Omit<IStatusList, 'statusIds' | 'isLoading' | 'hasMo
   onRefreshAtTop?: () => void;
   /** Refresh cadence for non-streamed timelines while the user is already at the top. */
   refreshAtTopInterval?: number;
+  /** Optional presentation filter. Pagination continues to use unfiltered IDs. */
+  statusFilter?: (status: Status) => boolean;
 }
 
 /** Scrollable list of statuses from a timeline in the Redux store. */
@@ -32,13 +36,23 @@ const Timeline: React.FC<ITimeline> = ({
   prefix,
   onRefreshAtTop,
   refreshAtTopInterval = TOP_REFRESH_INTERVAL,
+  statusFilter,
   ...rest
 }) => {
   const dispatch = useAppDispatch();
   const getStatusIds = useCallback(makeGetStatusIds(), []);
 
   const lastStatusId = useAppSelector(state => (state.timelines.get(timelineId)?.items || ImmutableOrderedSet()).last() as string | undefined);
-  const statusIds = useAppSelector(state => getStatusIds(state, { type: timelineId, prefix }));
+  const statusIds = useAppSelector(state => {
+    const ids = getStatusIds(state, { type: timelineId, prefix });
+
+    if (!statusFilter) return ids;
+
+    return ids.filter(id => {
+      const status = state.statuses.get(id);
+      return status ? statusFilter(status) : false;
+    });
+  });
   const isLoading = useAppSelector(state => (state.timelines.get(timelineId) || { isLoading: true }).isLoading === true);
   const isPartial = useAppSelector(state => (state.timelines.get(timelineId)?.isPartial || false) === true);
   const hasMore = useAppSelector(state => state.timelines.get(timelineId)?.hasMore === true);

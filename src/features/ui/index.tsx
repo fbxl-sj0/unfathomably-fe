@@ -54,6 +54,7 @@ import {
   Status,
   RemoteTimeline,
   PublicTimeline,
+  NativeFederationTimeline,
   BubbleTimeline,
   Catchup,
   AccountTimeline,
@@ -163,6 +164,7 @@ import {
   NostrRelays,
   Bech32Redirect,
   Relays,
+  Invites,
   ManageZapSplit,
   Rules,
   AdminNostrRelays,
@@ -238,6 +240,7 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         {features.federating && <WrappedRoute path='/timeline/local' exact page={HomePage} component={HomeTimeline} content={children} publicRoute />}
         {features.federating && <WrappedRoute path='/timeline/global' exact page={HomePage} component={PublicTimeline} content={children} publicRoute />}
         {features.federating && <WrappedRoute path='/timeline/fediverse' exact page={HomePage} component={PublicTimeline} content={children} publicRoute />}
+        {features.federating && <WrappedRoute path='/federation' exact page={HomePage} component={NativeFederationTimeline} content={children} publicRoute />}
         {features.bubbleTimeline && <WrappedRoute path='/timeline/bubble' exact page={HomePage} component={BubbleTimeline} content={children} publicRoute />}
         {features.federating && <WrappedRoute path='/timeline/:instance' exact page={RemoteInstancePage} component={RemoteTimeline} content={children} publicRoute />}
 
@@ -407,6 +410,7 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         {features.ditto && <WrappedRoute path='/soapbox/admin/ditto-server' adminOnly page={WidePage} component={ManageDittoServer} content={children} exact />}
         <WrappedRoute path='/soapbox/admin/reports' staffOnly page={AdminPage} component={Dashboard} content={children} exact />
         <WrappedRoute path='/soapbox/admin/log' staffOnly page={AdminPage} component={ModerationLog} content={children} exact />
+        <WrappedRoute path='/soapbox/admin/invites' adminOnly page={AdminPage} component={Invites} content={children} exact />
         <WrappedRoute path='/soapbox/admin/database-cleanup' adminOnly page={AdminPage} component={DatabaseCleanup} content={children} exact />
         <WrappedRoute path='/soapbox/admin/federation-health' adminOnly page={AdminPage} component={FederationHealth} content={children} exact />
         {features.ditto && <WrappedRoute path='/soapbox/admin/zap-split' staffOnly page={WidePage} component={ManageZapSplit} content={children} exact />}

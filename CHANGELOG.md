@@ -6,6 +6,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Entries before the Unfathomably FE fork are inherited from Soapbox history.
 
+## [Unreleased]
+
+### Added
+- Added a bounded Worlds composer for book reviews, software tickets, 3D
+  models, marketplace offers, games, routes, culture items, coordination
+  proposals, and publications, with explicit visibility and inert reference
+  links backed by server-owned ActivityPub templates.
+
+## [3.4.0] - 2026-07-19
+
+### Added
+- Added a discoverable Federated Worlds timeline that scans public federation
+  for rich native presentations and lets people browse books, software, 3D
+  models, markets, games, routes, culture, coordination, and publishing using
+  the existing interactive status cards.
+- Added bounded native ActivityPub context cards and platform families for
+  BookWyrm, ForgeFed, ActivityPods, Manyfold, Flohmarkt, Castling, Wanderer,
+  NeoDB, Bonfire ValueFlows, Mutual Aid, ZenPub/CommonsPub, and related extension
+  objects exposed by Unfathomably BE.
+- Added a docked-player control to individual video and audio status attachments
+  so PeerTube and other remote media can keep playing after navigation.
+
+### Fixed
+- Fixed the Federated Worlds empty state so an empty filtered timeline no
+  longer requests pages forever, removed automatic and periodic scans, and
+  added explicit-submit group/feed discovery that searches local cached actors
+  before resolving a complete remote handle or URL.
+- Classified XWiki actors and content as publishing resources when NodeInfo is
+  unavailable.
+- Added a manual Translate/Show original action when language detection hides
+  the inline translation control.
+
+## [3.3.1] - 2026-07-17
+
+### Added
+- Aligned the federation-health dashboard with Unfathomably BE's bounded
+  per-inbox delivery histories, including endpoint status, failures, timing,
+  backoff, redirect, gone, and probe-readiness details.
+- Ported AdminFE's invite workflow into the maintained frontend dashboard,
+  including bounded and expiring invite links, copyable registration URLs,
+  email invitations, usage visibility, and confirmed revocation.
+
+### Fixed
+- Fixed filtered focused-status rendering so its column title is available
+  before the filter notice is rendered, and localized all new quote-policy,
+  approval, revocation, and failure UI text.
+- Added complete quote-policy controls and quote authorization lifecycle UI,
+  including per-post automatic/manual policy selection, disabled quote actions,
+  pending and revoked state explanations, and quoted-author approval controls.
+- Refreshed open thread context periodically and when the browser regains focus,
+  while preventing overlapping refreshes and cancelling pending debounced
+  pagination callbacks when a thread or media modal unmounts.
+- Disabled touch carousel navigation while an image is pinch-zoomed, surfaced
+  zoom state through the image loader, and corrected zoom touch-listener cleanup.
+- Replaced the modal overflow toggle with an iOS-safe, position-preserving page
+  scroll lock that restores the exact prior body styles and scroll offset.
+- Applied centralized content-filter results consistently to focused threads,
+  quoted posts, reposted-status ownership checks, and filter-disabled states.
+- Made custom frontend notifications explicit screen-reader live announcements,
+  using assertive delivery for errors and polite delivery for other updates.
+- Completed and corrected the administration workflow by restoring dashboard
+  links to theme, ActivityPub relay, and backend-maintenance tools; fixing
+  relay follow/unfollow routes and validation; and making standalone AdminFE
+  and the maintained operations dashboard link back to each other.
+- Corrected the admin dashboard's monthly-active metric label, fixed CSV email
+  list exports to read text instead of JSON, surfaced export and relay errors,
+  and released temporary download URLs after use.
+- Kept replies, including reposted replies, out of the followed Groups and
+  Feeds aggregate timeline caches so internal navigation matches direct URL
+  entry.
+
 ## [3.3.0] - 2026-07-08
 
 ### Security
@@ -513,6 +584,7 @@ Entries before the Unfathomably FE fork are inherited from Soapbox history.
 ### Added
 - Initial beta release.
 
+[3.3.1]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.3.0...v3.3.1
 [3.3.0]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.1...v3.3.0
 [3.2.1]: https://github.com/fbxl-sj0/unfathomably-fe/compare/v3.2.0...v3.2.1
 [1.0.0]: https://github.com/fbxl-sj0/unfathomably-fe/releases/tag/v1.0.0

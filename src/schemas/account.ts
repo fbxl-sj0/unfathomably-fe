@@ -6,6 +6,7 @@ import headerMissing from '@/assets/images/header-missing.png';
 
 import { customEmojiSchema } from './custom-emoji.ts';
 import { federationStatusSchema, Relationship } from './relationship.ts';
+import { nativeActivityPresentationSchema } from './native-activity.ts';
 import { coerceObject, contentSchema, filteredArray, nostrIdSchema } from './utils.ts';
 
 import type { Resolve } from '@/utils/types.ts';
@@ -78,6 +79,7 @@ const baseAccountSchema = z.object({
   pleroma: coerceObject({
     accepts_chat_messages: z.boolean().catch(false),
     accepts_email_list: z.boolean().catch(false),
+    actor_types: z.array(z.string()).catch([]),
     also_known_as: z.array(z.string().url()).catch([]),
     ap_id: z.string().url().optional().catch(undefined),
     birthday: birthdaySchema.nullish().catch(undefined),
@@ -94,6 +96,7 @@ const baseAccountSchema = z.object({
     is_moderator: z.boolean().catch(false),
     is_suggested: z.boolean().catch(false),
     location: z.string().optional().catch(undefined),
+    native: nativeActivityPresentationSchema,
     notification_settings: coerceObject({
       block_from_strangers: z.boolean().catch(false),
     }),
@@ -106,6 +109,8 @@ const baseAccountSchema = z.object({
     fields: filteredArray(fieldSchema),
     note: z.string().catch(''),
     pleroma: z.object({
+      actor_type: z.string().catch('Person'),
+      actor_types: z.array(z.string()).catch([]),
       discoverable: z.boolean().catch(true),
     }).optional().catch(undefined),
     sms_verified: z.boolean().catch(false),

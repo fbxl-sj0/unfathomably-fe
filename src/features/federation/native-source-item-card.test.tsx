@@ -39,10 +39,18 @@ const families: FederationFamily[] = [
   'longform',
   'microblog',
   'photo',
+  'models',
+  'games',
+  'marketplace',
+  'culture',
   'books',
   'bookmarks',
   'groups',
   'events',
+  'development',
+  'coordination',
+  'publishing',
+  'routes',
   'local',
   'generic',
 ];
@@ -101,6 +109,104 @@ describe('NativeSourceItemCard', () => {
     expect(screen.getByRole('button', { name: 'Play docked' })).toBeInTheDocument();
   });
 
+  it('renders native Manyfold model metadata', () => {
+    renderCard(buildItem('models', {
+      native: {
+        canonical_id: 'https://manyfold.example/models/model-123',
+        class: 'resource',
+        context: 'https://manyfold.example/collections/calibration',
+        controls: ['open'],
+        fields: {
+          attributed_to: ['https://manyfold.example/creators/example-maker'],
+          collections: ['https://manyfold.example/collections/calibration'],
+          license: 'MIT',
+        },
+        type: '3DModel',
+      },
+    }));
+
+    expect(screen.getByText('manyfold.example/creators/example-maker')).toHaveAttribute(
+      'href',
+      'https://manyfold.example/creators/example-maker',
+    );
+    expect(screen.getByText('MIT')).toBeInTheDocument();
+    expect(screen.getByText('https://manyfold.example/collections/calibration')).toBeInTheDocument();
+  });
+
+  it('renders native NeoDB catalog metadata', () => {
+    renderCard(buildItem('culture', {
+      native: {
+        canonical_id: 'https://neodb.example.test/@reviewer/posts/1',
+        class: 'status',
+        context: 'https://neodb.example.test/@reviewer/posts/1',
+        controls: ['open'],
+        fields: {
+          catalog_item: 'https://neodb.example.test/movie/1',
+          catalog_type: 'Movie',
+          platform: 'neodb',
+          rating: 7,
+          rating_best: 10,
+          reading_status: 'complete',
+        },
+        type: 'Article',
+      },
+    }));
+
+    expect(screen.getByText('7/10')).toBeInTheDocument();
+    expect(screen.getByText('complete')).toBeInTheDocument();
+    expect(screen.getByText('Movie')).toBeInTheDocument();
+    expect(screen.getByText('neodb.example.test/movie/1')).toHaveAttribute('href', 'https://neodb.example.test/movie/1');
+  });
+
+  it('renders native Flohmarkt listing metadata', () => {
+    renderCard(buildItem('marketplace', {
+      native: {
+        canonical_id: 'https://market.example.test/alice/items/42',
+        class: 'status',
+        context: null,
+        controls: ['open'],
+        fields: {
+          currency: 'CAD',
+          latitude: 43.6532,
+          listing_name: 'Alien radio',
+          longitude: -79.3832,
+          platform: 'flohmarkt',
+          price: '25.00',
+        },
+        type: 'Note',
+      },
+    }));
+
+    expect(screen.getByText('Alien radio')).toBeInTheDocument();
+    expect(screen.getByText('25.00 CAD')).toBeInTheDocument();
+    expect(screen.getByText('43.6532, -79.3832')).toBeInTheDocument();
+  });
+
+  it('renders native Castling.club game metadata', () => {
+    renderCard(buildItem('games', {
+      native: {
+        canonical_id: 'https://castling.example.test/objects/22222222-2222-4222-8222-222222222222',
+        class: 'status',
+        context: null,
+        controls: ['open'],
+        fields: {
+          fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2',
+          game: 'https://castling.example.test/games/11111111-1111-4111-8111-111111111111',
+          platform: 'castling',
+          san: 'e4',
+        },
+        type: 'Note',
+      },
+    }));
+
+    expect(screen.getByText('e4')).toBeInTheDocument();
+    expect(screen.getByText('rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2')).toBeInTheDocument();
+    expect(screen.getByText('castling.example.test/games/11111111-1111-4111-8111-111111111111')).toHaveAttribute(
+      'href',
+      'https://castling.example.test/games/11111111-1111-4111-8111-111111111111',
+    );
+  });
+
   it('opens playable source items in the dock without removing the card player', async () => {
     const user = userEvent.setup();
 
@@ -142,6 +248,140 @@ describe('NativeSourceItemCard', () => {
 
     expect(screen.getByText(/bring its discussions into your timelines/i)).toBeInTheDocument();
     expect(screen.getByText('3 comments')).toBeInTheDocument();
+  });
+
+  it('renders BookWyrm metadata for book families', () => {
+    renderCard(buildItem('books', {
+      type: 'Review',
+      native: {
+        canonical_id: 'https://books.example.test/reviews/1',
+        class: 'status',
+        context: 'https://books.example.test/reviews/1',
+        controls: ['open'],
+        fields: {
+          in_reply_to_book: 'https://books.example.test/books/1',
+          rating: 4.5,
+          reading_status: 'read',
+        },
+        type: 'Review',
+      },
+    }));
+
+    expect(screen.getByText('4.5')).toBeInTheDocument();
+    expect(screen.getByText('read')).toBeInTheDocument();
+    expect(screen.getByText('books.example.test/books/1')).toHaveAttribute('href', 'https://books.example.test/books/1');
+  });
+
+  it('renders ForgeFed resources as read-only development activity', () => {
+    renderCard(buildItem('development', {
+      type: 'Ticket',
+      native: {
+        canonical_id: 'https://forge.example.test/tickets/1',
+        class: 'process',
+        context: 'https://forge.example.test/projects/1',
+        controls: ['open'],
+        fields: {
+          managed_by: 'https://forge.example.test/projects/1',
+        },
+        type: 'Ticket',
+      },
+    }));
+
+    expect(screen.getByText('Read-only federated Ticket')).toBeInTheDocument();
+    expect(screen.getByText('forge.example.test/projects/1')).toHaveAttribute('href', 'https://forge.example.test/projects/1');
+    expect(screen.queryByText(/accept ticket/i)).not.toBeInTheDocument();
+  });
+
+  it('renders Bonfire ValueFlows objects as read-only coordination activity', () => {
+    renderCard(buildItem('coordination', {
+      type: 'ValueFlows:EconomicEvent',
+      native: {
+        canonical_id: 'https://bonfire.example.test/pub/objects/event-1',
+        class: 'status',
+        context: null,
+        controls: ['open'],
+        fields: {
+          action: 'transfer',
+          platform: 'bonfire_valueflows',
+          provider: 'https://bonfire.example.test/pub/actors/alice',
+          receiver: 'https://remote.example.test/pub/actors/bob',
+          resource_quantity: 3,
+          resource_quantity_unit: 'https://units.example.test/items/radio',
+        },
+        type: 'ValueFlows:EconomicEvent',
+      },
+    }));
+
+    expect(screen.getByText('EconomicEvent')).toBeInTheDocument();
+    expect(screen.getByText('transfer')).toBeInTheDocument();
+    expect(screen.getByText('3 https://units.example.test/items/radio')).toBeInTheDocument();
+    expect(screen.getByText('bonfire.example.test/pub/actors/alice')).toHaveAttribute(
+      'href',
+      'https://bonfire.example.test/pub/actors/alice',
+    );
+  });
+
+  it('renders ZenPub Document metadata as a read-only publishing resource', () => {
+    renderCard(buildItem('publishing', {
+      type: 'Document',
+      native: {
+        canonical_id: 'https://zenpub.example.test/pub/objects/resource-1',
+        class: 'status',
+        context: 'https://zenpub.example.test/pub/actors/library',
+        controls: ['open'],
+        fields: {
+          author: 'Alien Federation Working Group',
+          language: 'en',
+          level: 'intermediate',
+          license: 'CC-BY-SA-4.0',
+          platform: 'zenpub',
+          resource_url: 'https://zenpub.example.test/uploads/resource-1.pdf',
+          subject: 'ActivityPub interoperability',
+        },
+        type: 'Document',
+      },
+    }));
+
+    expect(screen.getByText('Document')).toBeInTheDocument();
+    expect(screen.getByText('Alien Federation Working Group')).toBeInTheDocument();
+    expect(screen.getByText('ActivityPub interoperability')).toBeInTheDocument();
+    expect(screen.getByText('CC-BY-SA-4.0')).toBeInTheDocument();
+    expect(screen.getByText('zenpub.example.test/uploads/resource-1.pdf')).toHaveAttribute(
+      'href',
+      'https://zenpub.example.test/uploads/resource-1.pdf',
+    );
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('renders Wanderer route metadata and the bounded GPX link', () => {
+    renderCard(buildItem('routes', {
+      native: {
+        canonical_id: 'https://wanderer.example.test/api/v1/trail/1',
+        class: 'status',
+        context: null,
+        controls: ['open'],
+        fields: {
+          category: 'Hiking',
+          difficulty: 'hard',
+          distance: '12450.000000m',
+          duration: '240.000000m',
+          elevation_gain: '890.000000m',
+          gpx_url: 'https://wanderer.example.test/files/trail.gpx',
+          location: 'Alien Escarpment',
+          platform: 'wanderer',
+          route_kind: 'trail',
+          start_time: '2026-07-17T08:00:00Z',
+        },
+        type: 'Note',
+      },
+    }));
+
+    expect(screen.getByText('Hiking')).toBeInTheDocument();
+    expect(screen.getByText('hard')).toBeInTheDocument();
+    expect(screen.getByText('12450.000000m')).toBeInTheDocument();
+    expect(screen.getByText('890.000000m')).toBeInTheDocument();
+    expect(screen.getByText('Alien Escarpment')).toBeInTheDocument();
+    expect(screen.getByText('GPX')).toHaveAttribute('href', 'https://wanderer.example.test/files/trail.gpx');
   });
 
   it('renders source kind and capability chips', () => {
@@ -199,6 +439,7 @@ function buildItem(family: FederationFamily, overrides: Partial<SourceItem> = {}
     event_start: null,
     location: null,
     comments_count: null,
+    native: null,
     source_kind: 'actor_feed',
     source_kind_label: 'Actor feed',
     capabilities: ['follow', 'preview'],

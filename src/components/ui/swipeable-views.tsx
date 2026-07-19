@@ -29,6 +29,7 @@ interface ISwipeableViews {
   children: React.ReactNode;
   className?: string;
   containerStyle?: React.CSSProperties;
+  disabled?: boolean;
   index?: number;
   onChangeIndex?(index: number): void;
   style?: React.CSSProperties;
@@ -41,6 +42,7 @@ const SwipeableViews: React.FC<ISwipeableViews> = ({
   children,
   className,
   containerStyle,
+  disabled = false,
   index = 0,
   onChangeIndex,
   style,
@@ -55,10 +57,20 @@ const SwipeableViews: React.FC<ISwipeableViews> = ({
   };
 
   const handleTouchStart: React.TouchEventHandler<HTMLDivElement> = (event) => {
+    if (disabled) {
+      startX.current = null;
+      return;
+    }
+
     startX.current = event.touches[0]?.clientX ?? null;
   };
 
   const handleTouchEnd: React.TouchEventHandler<HTMLDivElement> = (event) => {
+    if (disabled) {
+      startX.current = null;
+      return;
+    }
+
     if (startX.current === null) return;
 
     const endX = event.changedTouches[0]?.clientX;

@@ -8,4 +8,5 @@ export const download = (data: string, filename: string): void => {
   document.body.appendChild(link);
   link.click();
   link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 };

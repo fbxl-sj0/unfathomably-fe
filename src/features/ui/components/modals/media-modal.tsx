@@ -80,6 +80,7 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
   const [index, setIndex] = useState<number | null>(null);
   const [navigationHidden, setNavigationHidden] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(!status);
+  const [zoomedImages, setZoomedImages] = useState<ReadonlySet<number>>(new Set());
 
   const hasMultipleImages = media.length > 1;
 
@@ -110,6 +111,21 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
   };
 
   const getIndex = () => index !== null ? index : props.index;
+  const activeImageZoomed = zoomedImages.has(getIndex());
+
+  const handleZoomChange = (imageIndex: number, zoomed: boolean) => {
+    setZoomedImages(current => {
+      const next = new Set(current);
+
+      if (zoomed) {
+        next.add(imageIndex);
+      } else {
+        next.delete(imageIndex);
+      }
+
+      return next;
+    });
+  };
 
   const toggleNavigation = () => {
     setNavigationHidden(value => !value && userTouching.matches);
@@ -144,6 +160,7 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
           alt={attachment.description}
           key={attachment.url}
           onClick={toggleNavigation}
+          onZoomChange={(zoomed) => handleZoomChange(i, zoomed)}
         />
       );
     } else if (attachment.type === 'video') {
@@ -204,6 +221,8 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
       }).catch(() => { });
     }
   }, 300, { edges: ['leading'] }), [next, status]);
+
+  useEffect(() => () => handleLoadMore.cancel(), [handleLoadMore]);
 
   /** Fetch the status (and context) from the API. */
   const fetchData = async () => {
@@ -321,6 +340,7 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
                   onChangeIndex={handleSwipe}
                   className='flex items-center justify-center'
                   index={getIndex()}
+                  disabled={activeImageZoomed}
                 >
                   {content}
                 </SwipeableViews>

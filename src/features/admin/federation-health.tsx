@@ -58,6 +58,17 @@ const messages = defineMessages({
   dormant: { id: 'admin.federation_health.dormant', defaultMessage: 'Dormant' },
   unreachable: { id: 'admin.federation_health.unreachable', defaultMessage: 'Unreachable' },
   unknownSoftware: { id: 'admin.federation_health.unknown_software', defaultMessage: 'Unknown software' },
+  endpointHistory: { id: 'admin.federation_health.endpoint_history', defaultMessage: 'Delivery endpoints' },
+  endpointFailures: { id: 'admin.federation_health.endpoint_failures', defaultMessage: '{count, plural, one {# failure} other {# failures}}' },
+  endpointStatus: { id: 'admin.federation_health.endpoint_status', defaultMessage: 'Status: {status}' },
+  failureReason: { id: 'admin.federation_health.failure_reason', defaultMessage: 'Reason: {reason}' },
+  lastFailure: { id: 'admin.federation_health.last_failure', defaultMessage: 'Last failure: {date}' },
+  lastSuccess: { id: 'admin.federation_health.last_success', defaultMessage: 'Last success: {date}' },
+  backoffUntil: { id: 'admin.federation_health.backoff_until', defaultMessage: 'Backoff until: {date}' },
+  probeDue: { id: 'admin.federation_health.probe_due', defaultMessage: 'Probe is due' },
+  probeWaiting: { id: 'admin.federation_health.probe_waiting', defaultMessage: 'Probe is waiting for backoff' },
+  redirectTarget: { id: 'admin.federation_health.redirect_target', defaultMessage: 'Redirects to {target}' },
+  goneAt: { id: 'admin.federation_health.gone_at', defaultMessage: 'Gone since {date}' },
 });
 
 interface IQueueCard {
@@ -66,6 +77,12 @@ interface IQueueCard {
 
 interface IRemoteInstance {
   instance: FederationHealthRemoteInstance;
+}
+
+type FederationHealthDeliveryEndpoint = FederationHealthRemoteInstance['delivery_endpoints'][number];
+
+interface IDeliveryEndpoint {
+  endpoint: FederationHealthDeliveryEndpoint;
 }
 
 const FederationHealth: React.FC = () => {
@@ -223,6 +240,11 @@ const RemoteInstance: React.FC<IRemoteInstance> = ({ instance }) => {
   const state = instance.dormant ? 'error' : 'pending';
   const stateLabel = instance.dormant ? intl.formatMessage(messages.dormant) : intl.formatMessage(messages.unreachable);
   const checkedAt = instance.unreachable_since ? intl.formatDate(instance.unreachable_since, dateFormatOptions) : intl.formatMessage(messages.never);
+  const formatDate = (value: string) => intl.formatDate(value, {
+    ...dateFormatOptions,
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 
   return (
     <div className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800'>
@@ -240,6 +262,123 @@ const RemoteInstance: React.FC<IRemoteInstance> = ({ instance }) => {
           <Text theme='muted' size='sm'>{software || intl.formatMessage(messages.unknownSoftware)}</Text>
           <Text theme={instance.dormant ? 'danger' : 'muted'} size='sm' weight='medium'>{stateLabel}</Text>
         </HStack>
+
+        <HStack alignItems='center' space={3} wrap>
+          {instance.last_status ? (
+            <Text theme='muted' size='sm'>
+              {intl.formatMessage(messages.endpointStatus, { status: instance.last_status })}
+            </Text>
+          ) : null}
+
+          <Text theme={instance.failure_count > 0 ? 'danger' : 'muted'} size='sm'>
+            {intl.formatMessage(messages.endpointFailures, { count: instance.failure_count })}
+          </Text>
+
+          <Text theme='muted' size='sm'>
+            {intl.formatMessage(instance.probe_due ? messages.probeDue : messages.probeWaiting)}
+          </Text>
+        </HStack>
+
+        {instance.last_success_at ? (
+          <Text theme='muted' size='sm'>
+            {intl.formatMessage(messages.lastSuccess, { date: formatDate(instance.last_success_at) })}
+          </Text>
+        ) : null}
+
+        {instance.last_failure_at ? (
+          <Text theme='muted' size='sm'>
+            {intl.formatMessage(messages.lastFailure, { date: formatDate(instance.last_failure_at) })}
+          </Text>
+        ) : null}
+
+        {instance.last_failure_reason ? (
+          <Text theme='muted' size='sm' className='break-words'>
+            {intl.formatMessage(messages.failureReason, { reason: instance.last_failure_reason })}
+          </Text>
+        ) : null}
+
+        {instance.backoff_until ? (
+          <Text theme='muted' size='sm'>
+            {intl.formatMessage(messages.backoffUntil, { date: formatDate(instance.backoff_until) })}
+          </Text>
+        ) : null}
+
+        {instance.redirect_target ? (
+          <Text theme='muted' size='sm' className='break-all'>
+            {intl.formatMessage(messages.redirectTarget, { target: instance.redirect_target })}
+          </Text>
+        ) : null}
+
+        {instance.gone_at ? (
+          <Text theme='danger' size='sm'>
+            {intl.formatMessage(messages.goneAt, { date: formatDate(instance.gone_at) })}
+          </Text>
+        ) : null}
+
+        {instance.delivery_endpoints.length > 0 ? (
+          <Stack space={2}>
+            <Text weight='semibold' size='sm'>
+              {intl.formatMessage(messages.endpointHistory)}
+            </Text>
+
+            {instance.delivery_endpoints.map(endpoint => (
+              <DeliveryEndpoint key={endpoint.url} endpoint={endpoint} />
+            ))}
+          </Stack>
+        ) : null}
+      </Stack>
+    </div>
+  );
+};
+
+const DeliveryEndpoint: React.FC<IDeliveryEndpoint> = ({ endpoint }) => {
+  const intl = useIntl();
+  const formatDate = (value: string) => intl.formatDate(value, {
+    ...dateFormatOptions,
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  return (
+    <div className='rounded-md border border-solid border-gray-200 bg-white p-3 dark:border-primary-700 dark:bg-primary-900'>
+      <Stack space={2}>
+        <Text weight='medium' size='sm' className='break-all'>{endpoint.url}</Text>
+
+        <HStack alignItems='center' space={3} wrap>
+          {endpoint.last_status ? (
+            <Text theme='muted' size='sm'>
+              {intl.formatMessage(messages.endpointStatus, { status: endpoint.last_status })}
+            </Text>
+          ) : null}
+
+          <Text theme={endpoint.failure_count > 0 ? 'danger' : 'muted'} size='sm'>
+            {intl.formatMessage(messages.endpointFailures, { count: endpoint.failure_count })}
+          </Text>
+        </HStack>
+
+        {endpoint.last_success_at ? (
+          <Text theme='muted' size='sm'>
+            {intl.formatMessage(messages.lastSuccess, { date: formatDate(endpoint.last_success_at) })}
+          </Text>
+        ) : null}
+
+        {endpoint.last_failure_at ? (
+          <Text theme='muted' size='sm'>
+            {intl.formatMessage(messages.lastFailure, { date: formatDate(endpoint.last_failure_at) })}
+          </Text>
+        ) : null}
+
+        {endpoint.last_failure_reason ? (
+          <Text theme='muted' size='sm' className='break-words'>
+            {intl.formatMessage(messages.failureReason, { reason: endpoint.last_failure_reason })}
+          </Text>
+        ) : null}
+
+        {endpoint.backoff_until ? (
+          <Text theme='muted' size='sm'>
+            {intl.formatMessage(messages.backoffUntil, { date: formatDate(endpoint.backoff_until) })}
+          </Text>
+        ) : null}
       </Stack>
     </div>
   );

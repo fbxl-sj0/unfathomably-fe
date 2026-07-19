@@ -11,6 +11,7 @@ import { emojiReactionSchema } from './emoji-reaction.ts';
 import { eventSchema } from './event.ts';
 import { groupSchema } from './group.ts';
 import { mentionSchema } from './mention.ts';
+import { nativeActivityPresentationSchema } from './native-activity.ts';
 import { pollSchema } from './poll.ts';
 import { tagSchema } from './tag.ts';
 import { contentSchema, dateSchema, filteredArray } from './utils.ts';
@@ -21,7 +22,14 @@ const statusPleromaSchema = z.object({
   bookmark_folder: z.string().nullable().catch(null),
   comments_enabled: z.boolean().catch(true),
   event: eventSchema.nullish().catch(undefined),
+  interaction_policy: z.any().nullable().catch(null),
+  native: nativeActivityPresentationSchema,
   quote: z.literal(null).catch(null),
+  quote_allowed: z.boolean().catch(true),
+  quote_approval_required: z.boolean().catch(false),
+  quote_authorization: z.string().nullable().catch(null),
+  quote_manageable: z.boolean().catch(false),
+  quote_state: z.enum(['pending', 'accepted', 'rejected', 'revoked']).nullable().catch(null),
   quote_visible: z.boolean().catch(true),
 });
 
