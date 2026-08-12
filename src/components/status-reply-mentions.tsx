@@ -2,9 +2,11 @@ import { FormattedList, FormattedMessage } from 'react-intl';
 import { Link } from 'react-router-dom';
 
 import { openModal } from '@/actions/modals.ts';
+import { useAccount } from '@/api/hooks/index.ts';
 import HoverRefWrapper from '@/components/hover-ref-wrapper.tsx';
 import HoverStatusWrapper from '@/components/hover-status-wrapper.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
+import { normalizeMention } from '@/normalizers/mention.ts';
 import { shortenNostr } from '@/utils/nostr.ts';
 
 import type { Status } from '@/types/entities.ts';
@@ -16,6 +18,9 @@ interface IStatusReplyMentions {
 
 const StatusReplyMentions: React.FC<IStatusReplyMentions> = ({ status, hoverable = true }) => {
   const dispatch = useAppDispatch();
+  const { account: replyAccount } = useAccount(
+    status.mentions.size === 0 ? status.in_reply_to_account_id || undefined : undefined,
+  );
 
   const handleOpenMentionsModal: React.MouseEventHandler<HTMLSpanElement> = (e) => {
     e.stopPropagation();
@@ -32,7 +37,9 @@ const StatusReplyMentions: React.FC<IStatusReplyMentions> = ({ status, hoverable
     return null;
   }
 
-  const to = status.mentions;
+  const to = status.mentions.size === 0 && replyAccount
+    ? status.mentions.push(normalizeMention(replyAccount))
+    : status.mentions;
 
   // The post is a reply, but it has no mentions.
   // Rare, but it can happen.

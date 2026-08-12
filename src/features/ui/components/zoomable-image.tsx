@@ -1,7 +1,33 @@
+/*
+  Project: Unfathomably Frontend
+  --------------------------------
+
+  File: src/features/ui/components/zoomable-image.tsx
+
+  Purpose:
+
+    Display a lightbox image with desktop click zoom and touch pinch zoom.
+
+  Responsibilities:
+
+    * keep zoom centered on the user's pointer or touch midpoint
+    * constrain zoom to safe, useful limits
+    * report zoom state so the media carousel can suspend swiping
+
+  This file intentionally does NOT contain:
+
+    * media carousel navigation
+    * attachment loading or fallback selection
+    * lightbox controls
+*/
+
 import clsx from 'clsx';
 import { PureComponent } from 'react';
 
+import { userTouching } from '@/is-mobile.ts';
+
 const MIN_SCALE = 1;
+const CLICK_SCALE = 2;
 const MAX_SCALE = 4;
 
 type Point = { x: number; y: number };
@@ -133,11 +159,27 @@ class ZoomableImage extends PureComponent<IZoomableImage> {
     });
   }
 
-  handleClick: React.MouseEventHandler = e => {
+  handleClick: React.MouseEventHandler<HTMLImageElement> = e => {
     // don't propagate event to MediaModal
     e.stopPropagation();
-    const handler = this.props.onClick;
-    if (handler) handler(e);
+
+    /*
+      Touch users need a single tap to retain the lightbox control toggle.
+      Pinch gestures already provide precise zoom on those devices. Desktop
+      users otherwise have no discoverable way to enlarge an individual image.
+    */
+    if (!userTouching.matches && this.container) {
+      const bounds = this.container.getBoundingClientRect();
+      const midpoint = {
+        x: e.clientX - bounds.left,
+        y: e.clientY - bounds.top,
+      };
+      const nextScale = this.state.scale === MIN_SCALE ? CLICK_SCALE : MIN_SCALE;
+
+      this.zoom(nextScale, midpoint);
+    }
+
+    this.props.onClick?.(e);
   };
 
   setContainerRef = (c: HTMLDivElement) => {
@@ -163,7 +205,10 @@ class ZoomableImage extends PureComponent<IZoomableImage> {
           role='presentation'
           ref={this.setImageRef}
           alt={alt}
-          className={clsx('size-auto max-h-[80%] max-w-full object-contain', { 'size-full max-h-full': scale !== 1 })}
+          className={clsx('size-auto max-h-[80%] max-w-full object-contain', {
+            'cursor-zoom-in': scale === MIN_SCALE,
+            'size-full max-h-full cursor-zoom-out': scale !== MIN_SCALE,
+          })}
           title={alt}
           src={src}
           onError={onError}
@@ -180,3 +225,5 @@ class ZoomableImage extends PureComponent<IZoomableImage> {
 }
 
 export default ZoomableImage;
+
+/* end of src/features/ui/components/zoomable-image.tsx */

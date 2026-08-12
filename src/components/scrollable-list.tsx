@@ -105,6 +105,7 @@ const ScrollableList = forwardRef<VirtuosoHandle, IScrollableList>(({
   hasMore,
   placeholderComponent: Placeholder,
   placeholderCount = 0,
+  initialItemCount = 1,
   initialTopMostItemIndex = 0,
   style = {},
   useWindowScroll = true,
@@ -126,6 +127,14 @@ const ScrollableList = forwardRef<VirtuosoHandle, IScrollableList>(({
   // NOTE: We are doing some trickery to load a feed of placeholders
   // Virtuoso's `EmptyPlaceholder` unfortunately doesn't work for our use-case
   const data = showPlaceholder ? Array(placeholderCount).fill('') : elements;
+
+  /*
+   * Window-scrolling Virtuoso lists can begin below a tall page header. Without
+   * one measured row, the document has no list height and no scroll event can
+   * bring the first row into range. Seed a bounded initial row while preserving
+   * an explicit caller override.
+   */
+  const measuredInitialItemCount = Math.min(initialItemCount, data.length);
 
   // Add a placeholder at the bottom for loading
   // (Don't use Virtuoso's `Footer` component because it doesn't preserve its height)
@@ -235,6 +244,7 @@ const ScrollableList = forwardRef<VirtuosoHandle, IScrollableList>(({
       endReached={handleEndReached}
       isScrolling={isScrolling => isScrolling && onScroll && onScroll()}
       itemContent={renderItem}
+      initialItemCount={measuredInitialItemCount}
       initialTopMostItemIndex={initialIndex}
       rangeChanged={handleRangeChange}
       className={className}

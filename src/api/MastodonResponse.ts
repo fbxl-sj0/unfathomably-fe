@@ -1,5 +1,5 @@
 import LinkHeader from 'http-link-header';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 /** Mastodon JSON error response. */
 export interface MastodonError {

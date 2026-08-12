@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 import { HTTPError } from '@/api/HTTPError.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';

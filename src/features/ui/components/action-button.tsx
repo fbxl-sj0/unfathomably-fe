@@ -29,6 +29,9 @@ const messages = defineMessages({
   remote_follow: { id: 'account.remote_follow', defaultMessage: 'Remote follow' },
   requested: { id: 'account.requested', defaultMessage: 'Awaiting approval. Click to cancel follow request' },
   requested_small: { id: 'account.requested_small', defaultMessage: 'Awaiting approval' },
+  cancelFollowRequestHeading: { id: 'confirmations.cancel_follow_request.heading', defaultMessage: 'Cancel follow request?' },
+  cancelFollowRequestMessage: { id: 'confirmations.cancel_follow_request.message', defaultMessage: 'This will withdraw your pending follow request.' },
+  cancelFollowRequestConfirm: { id: 'confirmations.cancel_follow_request.confirm', defaultMessage: 'Cancel request' },
   federation_blocked: { id: 'account.federation_blocked', defaultMessage: 'Federation blocked' },
   unblock: { id: 'account.unblock', defaultMessage: 'Unblock @{name}' },
   unfollow: { id: 'account.unfollow', defaultMessage: 'Unfollow' },
@@ -60,8 +63,15 @@ const ActionButton: React.FC<IActionButton> = ({ account, actionType, small }) =
   const { follow, unfollow } = useFollow();
 
   const handleFollow = () => {
-    if (account.relationship?.following || account.relationship?.requested) {
-      unfollow(account.id);
+    if (account.relationship?.following) {
+      unfollow(account.id, { wasFollowing: true, wasRequested: false });
+    } else if (account.relationship?.requested) {
+      dispatch(openModal('CONFIRM', {
+        heading: intl.formatMessage(messages.cancelFollowRequestHeading),
+        message: intl.formatMessage(messages.cancelFollowRequestMessage),
+        confirm: intl.formatMessage(messages.cancelFollowRequestConfirm),
+        onConfirm: () => unfollow(account.id, { wasFollowing: false, wasRequested: true }),
+      }));
     } else {
       follow(account.id);
     }

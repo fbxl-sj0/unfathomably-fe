@@ -1,5 +1,6 @@
 import lockIcon from '@tabler/icons/outline/lock.svg';
 import mailIcon from '@tabler/icons/outline/mail.svg';
+import trashIcon from '@tabler/icons/outline/trash.svg';
 import clsx from 'clsx';
 import { CLEAR_EDITOR_COMMAND, TextNode, type LexicalEditor, $getRoot } from 'lexical';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
@@ -9,6 +10,7 @@ import { length } from 'stringz';
 
 import {
   changeCompose,
+  clearComposeDraft,
   submitCompose,
   clearComposeSuggestions,
   fetchComposeSuggestions,
@@ -65,6 +67,7 @@ const messages = defineMessages({
   message: { id: 'compose_form.message', defaultMessage: 'Message' },
   schedule: { id: 'compose_form.schedule', defaultMessage: 'Schedule' },
   saveChanges: { id: 'compose_form.save_changes', defaultMessage: 'Save changes' },
+  clearDraft: { id: 'compose_form.clear_draft', defaultMessage: 'Clear draft' },
 });
 
 interface IComposeForm<ID extends string> {
@@ -108,6 +111,7 @@ const ComposeForm = <ID extends string>({ id, shouldCondense, autoFocus, clickab
   const hasPoll = !!compose.poll;
   const isEditing = compose.id !== null;
   const anyMedia = compose.media_attachments.size > 0;
+  const hasStructuredContent = hasPoll || !!compose.quote;
 
   const [composeFocused, setComposeFocused] = useState(false);
 
@@ -121,10 +125,11 @@ const ComposeForm = <ID extends string>({ id, shouldCondense, autoFocus, clickab
   const text = editorRef.current?.getEditorState().read(() => $getRoot().getTextContent()) ?? '';
   const fulltext = [spoilerText, countableText(text)].join('');
 
-  const isEmpty = !(fulltext.trim() || anyMedia);
+  const isEmpty = !(fulltext.trim() || anyMedia || hasStructuredContent);
   const condensed = shouldCondense && !isDraggedOver && !composeFocused && isEmpty && !isUploading;
   const shouldAutoFocus = autoFocus && !showSearch;
   const canSubmit = !!editorRef.current && !isSubmitting && !isUploading && !isChangingUpload && !isEmpty && length(fulltext) <= maxTootChars;
+  const hasDraft = Boolean(!isEmpty || hasPoll || scheduledAt || compose.in_reply_to || compose.quote);
 
   const getClickableArea = () => {
     return clickableAreaRef ? clickableAreaRef.current : formRef.current;
@@ -160,13 +165,22 @@ const ComposeForm = <ID extends string>({ id, shouldCondense, autoFocus, clickab
     e?.preventDefault();
 
     dispatch(changeCompose(id, text));
-    dispatch(submitCompose(id, { history }));
+    void dispatch(submitCompose(id, { history })).then((published) => {
+      if (published) {
+        editorRef.current?.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+      }
+    });
 
     if (userStreak === 0 && features.streak) {
       dispatch(openModal('STREAK'));
     }
 
+  };
+
+  const handleClearDraft = () => {
+    dispatch(clearComposeDraft(id));
     editorRef.current?.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+    setComposeFocused(false);
   };
 
   const onSuggestionsClearRequested = () => {
@@ -221,7 +235,7 @@ const ComposeForm = <ID extends string>({ id, shouldCondense, autoFocus, clickab
       {features.media && <UploadButtonContainer composeId={id} />}
       <EmojiPickerDropdown onPickEmoji={handleEmojiPick} condensed={shouldCondense} />
       {features.polls && <PollButton composeId={id} />}
-      {features.privacyScopes && !group && !groupId && <PrivacyDropdown composeId={id} />}
+      {features.privacyScopes && !isEditing && !group && !groupId && <PrivacyDropdown composeId={id} />}
       {features.scheduledStatuses && <ScheduleButton composeId={id} />}
       {features.spoilers && <SpoilerButton composeId={id} />}
       {features.richText && <MarkdownButton composeId={id} />}
@@ -306,6 +320,16 @@ const ComposeForm = <ID extends string>({ id, shouldCondense, autoFocus, clickab
         {renderButtons()}
 
         <HStack space={4} alignItems='center' className='ml-auto rtl:ml-0 rtl:mr-auto'>
+          {hasDraft && (
+            <Button
+              type='button'
+              theme='tertiary'
+              icon={trashIcon}
+              text={intl.formatMessage(messages.clearDraft)}
+              onClick={handleClearDraft}
+            />
+          )}
+
           {maxTootChars && (
             <HStack space={1} alignItems='center'>
               <TextCharacterCounter max={maxTootChars} text={text} />

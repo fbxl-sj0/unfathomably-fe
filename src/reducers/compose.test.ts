@@ -96,6 +96,48 @@ describe('compose reducer', () => {
       const result = reducer(undefined, action as any);
       expect(result.get('compose-modal')!.id).toEqual(null);
     });
+
+    it('loads the existing quote policy when editing a post', async () => {
+      const { default: status } = await import('@/__fixtures__/pleroma-status-deleted.json');
+      const normalized = normalizeStatus(
+        fromJS(status).setIn(['pleroma', 'quote_approval_policy'], 'nobody'),
+      );
+
+      const action = {
+        id: 'compose-modal',
+        withRedraft: false,
+        type: COMPOSE_SET_STATUS,
+        status: normalized,
+      };
+
+      const result = reducer(undefined, action as any);
+      expect(result.get('compose-modal')!.quote_approval_policy).toEqual('nobody');
+    });
+  });
+
+  it('does not attach a quote while editing a post', () => {
+    const editing = ReducerCompose({ id: 'existing-status', text: 'edited text' });
+    const state = initialState.set('compose-modal', editing);
+    const status = ImmutableRecord({
+      id: 'quoted-status',
+      visibility: 'public',
+      spoiler_text: '',
+      account: ImmutableRecord({ acct: 'author@example.com' })(),
+    })();
+
+    const action = {
+      type: actions.COMPOSE_QUOTE,
+      id: 'compose-modal',
+      status,
+      account: undefined,
+      explicitAddressing: false,
+    };
+
+    const result = reducer(state, action as any).get('compose-modal')!;
+
+    expect(result.id).toEqual('existing-status');
+    expect(result.quote).toEqual(null);
+    expect(result.text).toEqual('edited text');
   });
 
   it('uses \'public\' scope as default', () => {
@@ -161,6 +203,65 @@ describe('compose reducer', () => {
       account: ImmutableRecord({})(),
     };
     expect(reducer(state, action as any).toJS()['compose-modal']).toMatchObject({ privacy: 'unlisted' });
+  });
+
+  it('preserves the current content warning when adding a quote', () => {
+    const state = initialState.set('compose-modal', ReducerCompose({
+      sensitive: true,
+      spoiler: true,
+      spoiler_text: 'Current warning',
+    }));
+    const action = {
+      type: actions.COMPOSE_QUOTE,
+      status: ImmutableRecord({
+        id: 'quoted-status',
+        visibility: 'public',
+        spoiler_text: 'Quoted warning',
+        account: ImmutableRecord({ acct: 'alice@example.org' })(),
+      })(),
+    };
+
+    expect(reducer(state, action as any).toJS()['compose-modal']).toMatchObject({
+      sensitive: true,
+      spoiler: true,
+      spoiler_text: 'Current warning',
+    });
+  });
+
+  it('inherits a quoted post content warning when the composer has none', () => {
+    const action = {
+      type: actions.COMPOSE_QUOTE,
+      status: ImmutableRecord({
+        id: 'quoted-status',
+        visibility: 'public',
+        spoiler_text: 'Quoted warning',
+        account: ImmutableRecord({ acct: 'alice@example.org' })(),
+      })(),
+    };
+
+    expect(reducer(undefined, action as any).toJS()['compose-modal']).toMatchObject({
+      sensitive: true,
+      spoiler: true,
+      spoiler_text: 'Quoted warning',
+    });
+  });
+
+  it('clears a stale quote when switching the composer to a reply', () => {
+    const state = initialState.set('compose-modal', ReducerCompose({ quote: 'quoted-status' }));
+    const action = {
+      type: actions.COMPOSE_REPLY,
+      id: 'compose-modal',
+      status: ImmutableRecord({
+        id: 'reply-status',
+        visibility: 'public',
+        account: ImmutableRecord({ acct: 'alice@example.org' })(),
+        mentions: ImmutableList(),
+      })(),
+      account: ImmutableRecord({ acct: 'me@example.org' })(),
+      explicitAddressing: true,
+    };
+
+    expect(reducer(state, action as any).get('compose-modal')!.quote).toBeNull();
   });
 
   it('keeps reply mentions out of the text when explicit addressing is supported', () => {
@@ -319,6 +420,33 @@ describe('compose reducer', () => {
     expect(reducer(state, action as any).toJS().home).toMatchObject({
       privacy: 'public',
     });
+  });
+
+  it('clears submitted content instead of copying stale default content', () => {
+    const state = initialState
+      .set('default', ReducerCompose({ text: 'legacy persisted draft' }))
+      .set('home', ReducerCompose({ text: 'published post' }));
+    const action = {
+      type: actions.COMPOSE_SUBMIT_SUCCESS,
+      id: 'home',
+    };
+    const nextState = reducer(state, action as any);
+
+    expect(nextState.get('home')?.text).toBe('');
+  });
+
+  it('does not hydrate the reducer template as a visible draft', () => {
+    const action = {
+      type: actions.COMPOSE_DRAFTS_HYDRATE,
+      drafts: {
+        default: { text: 'legacy template draft' },
+        home: { text: 'recoverable home draft' },
+      },
+    };
+    const nextState = reducer(initialState, action as any);
+
+    expect(nextState.get('default')?.text).toBe('');
+    expect(nextState.get('home')?.text).toBe('recoverable home draft');
   });
 
   it('should handle COMPOSE_SUBMIT_FAIL', () => {

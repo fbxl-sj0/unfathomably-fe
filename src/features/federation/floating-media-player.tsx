@@ -61,19 +61,19 @@ const FloatingMediaPlayer: React.FC = () => {
     <aside
       aria-label={intl.formatMessage(messages.dockLabel)}
       className={clsx(
-        'fixed bottom-20 left-3 right-3 z-[98] overflow-hidden rounded-lg border border-solid border-gray-200 bg-white shadow-3xl dark:border-gray-800 dark:bg-gray-900',
+        'fixed bottom-20 left-3 right-3 z-[98] overflow-hidden rounded-lg border border-solid border-gray-200 bg-white shadow-3xl black:border-gray-800 black:bg-black dark:border-gray-800 dark:bg-gray-900',
         'sm:left-auto sm:right-5 sm:w-96 rtl:sm:left-5 rtl:sm:right-auto',
         'xl:bottom-5 ltr:xl:right-[27rem] rtl:xl:left-[27rem]',
         isMinimized && 'sm:w-80',
       )}
       data-testid='floating-media-player'
     >
-      <div className='flex min-w-0 items-center gap-2 border-b border-solid border-gray-200 px-3 py-2 dark:border-gray-800'>
+      <div className='flex min-w-0 items-center gap-2 border-b border-solid border-gray-200 px-3 py-2 black:border-gray-800 dark:border-gray-800'>
         <SvgIcon className='size-5 flex-none text-primary-600 dark:text-primary-400' src={playerPlayIcon} />
 
         <div className='min-w-0 flex-1'>
           <a
-            className='block truncate text-sm font-semibold text-gray-900 hover:underline dark:text-gray-100'
+            className='block truncate text-sm font-semibold text-gray-900 hover:underline black:text-white dark:text-gray-100'
             href={item.url}
             target='_blank'
             rel='noopener'
@@ -86,7 +86,7 @@ const FloatingMediaPlayer: React.FC = () => {
 
         <a
           aria-label={intl.formatMessage(messages.openOriginal)}
-          className='inline-flex size-8 flex-none items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+          className='inline-flex size-8 flex-none items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 black:text-gray-400 black:hover:bg-primary-900/50 black:hover:text-white dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
           href={item.url}
           target='_blank'
           rel='noopener'
@@ -97,7 +97,7 @@ const FloatingMediaPlayer: React.FC = () => {
 
         <button
           aria-label={minimizeLabel}
-          className='inline-flex size-8 flex-none items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+          className='inline-flex size-8 flex-none items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 black:text-gray-400 black:hover:bg-primary-900/50 black:hover:text-white dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
           onClick={toggleMinimized}
           title={minimizeLabel}
           type='button'
@@ -107,7 +107,7 @@ const FloatingMediaPlayer: React.FC = () => {
 
         <button
           aria-label={intl.formatMessage(messages.close)}
-          className='inline-flex size-8 flex-none items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+          className='inline-flex size-8 flex-none items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 black:text-gray-400 black:hover:bg-primary-900/50 black:hover:text-white dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
           onClick={close}
           title={intl.formatMessage(messages.close)}
           type='button'
@@ -116,7 +116,7 @@ const FloatingMediaPlayer: React.FC = () => {
         </button>
       </div>
 
-      <div className='bg-gray-50 p-3 dark:bg-gray-950/70'>
+      <div className='bg-gray-50 p-3 black:bg-black dark:bg-gray-950/70'>
         {renderMedia(item, isMinimized, intl.formatMessage(messages.mediaFallback))}
       </div>
     </aside>
@@ -131,8 +131,8 @@ function renderSubtitle(item: FloatingMediaItem) {
   }
 
   return (
-    <p className='truncate text-xs text-gray-500 dark:text-gray-400'>
-      {labels.join(' · ')}
+    <p className='truncate text-xs text-gray-500 black:text-gray-400 dark:text-gray-400'>
+      {labels.join(' / ')}
     </p>
   );
 }

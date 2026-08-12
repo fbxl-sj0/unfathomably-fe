@@ -1,8 +1,7 @@
 import { produce } from 'immer';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { HTTPError } from '@/api/HTTPError.ts';
-import { keyring } from '@/features/nostr/keyring.ts';
 import { useBunkerStore } from '@/hooks/nostr/useBunkerStore.ts';
 import { Application, applicationSchema } from '@/schemas/application.ts';
 import { accountSchema } from '@/schemas/index.ts';
@@ -19,7 +18,7 @@ import {
   VERIFY_CREDENTIALS_FAIL,
   AUTH_APP_AUTHORIZED,
   AUTH_ACCOUNT_REMEMBER_SUCCESS,
-} from '../actions/auth.ts';
+} from '@/action-types/auth.ts';
 import { ME_FETCH_SKIP } from '../actions/me.ts';
 
 import type { UnknownAction } from 'redux';
@@ -208,9 +207,9 @@ function revokeNostr(accessToken: string): void {
       // Revoke the Bunker connection.
       revoke(accessToken);
       // Revoke the user's private key.
-      keyring.delete(conn.pubkey);
+      void import('@/features/nostr/keyring.ts').then(({ keyring }) => keyring.delete(conn.pubkey));
       // Revoke the bunker's private key.
-      keyring.delete(conn.bunkerPubkey);
+      void import('@/features/nostr/keyring.ts').then(({ keyring }) => keyring.delete(conn.bunkerPubkey));
     }
   }
 }

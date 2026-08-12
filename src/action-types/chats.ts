@@ -1,0 +1,36 @@
+/**
+ * Unfathomably frontend Chats action identities.
+ *
+ * This module keeps Redux reducers independent from optional API request
+ * implementations. It intentionally contains no network or state behavior.
+ */
+
+export const CHATS_FETCH_REQUEST = 'CHATS_FETCH_REQUEST';
+export const CHATS_FETCH_SUCCESS = 'CHATS_FETCH_SUCCESS';
+export const CHATS_FETCH_FAIL    = 'CHATS_FETCH_FAIL';
+
+export const CHATS_EXPAND_REQUEST = 'CHATS_EXPAND_REQUEST';
+export const CHATS_EXPAND_SUCCESS = 'CHATS_EXPAND_SUCCESS';
+export const CHATS_EXPAND_FAIL    = 'CHATS_EXPAND_FAIL';
+
+export const CHAT_MESSAGES_FETCH_REQUEST = 'CHAT_MESSAGES_FETCH_REQUEST';
+export const CHAT_MESSAGES_FETCH_SUCCESS = 'CHAT_MESSAGES_FETCH_SUCCESS';
+export const CHAT_MESSAGES_FETCH_FAIL    = 'CHAT_MESSAGES_FETCH_FAIL';
+
+export const CHAT_MESSAGE_SEND_REQUEST = 'CHAT_MESSAGE_SEND_REQUEST';
+export const CHAT_MESSAGE_SEND_SUCCESS = 'CHAT_MESSAGE_SEND_SUCCESS';
+export const CHAT_MESSAGE_SEND_FAIL    = 'CHAT_MESSAGE_SEND_FAIL';
+
+export const CHAT_FETCH_REQUEST = 'CHAT_FETCH_REQUEST';
+export const CHAT_FETCH_SUCCESS = 'CHAT_FETCH_SUCCESS';
+export const CHAT_FETCH_FAIL    = 'CHAT_FETCH_FAIL';
+
+export const CHAT_READ_REQUEST = 'CHAT_READ_REQUEST';
+export const CHAT_READ_SUCCESS = 'CHAT_READ_SUCCESS';
+export const CHAT_READ_FAIL    = 'CHAT_READ_FAIL';
+
+export const CHAT_MESSAGE_DELETE_REQUEST = 'CHAT_MESSAGE_DELETE_REQUEST';
+export const CHAT_MESSAGE_DELETE_SUCCESS = 'CHAT_MESSAGE_DELETE_SUCCESS';
+export const CHAT_MESSAGE_DELETE_FAIL    = 'CHAT_MESSAGE_DELETE_FAIL';
+
+/* end of chats.ts */

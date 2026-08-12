@@ -9,6 +9,10 @@ import { Column } from '@/components/ui/column.tsx';
 import Spinner from '@/components/ui/spinner.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
+import domainListsReducer from '@/reducers/domain-lists.ts';
+import { injectReducer } from '@/store.ts';
+
+injectReducer('domain_lists', domainListsReducer);
 
 const messages = defineMessages({
   heading: { id: 'column.domain_blocks', defaultMessage: 'Hidden domains' },

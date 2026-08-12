@@ -29,6 +29,7 @@ const messages = defineMessages({
   reportClosed: { id: 'admin.reports.report_closed_message', defaultMessage: 'Report on @{name} was closed' },
   deactivateUser: { id: 'admin.users.actions.deactivate_user', defaultMessage: 'Deactivate @{name}' },
   deleteUser: { id: 'admin.users.actions.delete_user', defaultMessage: 'Delete @{name}' },
+  unavailableAccount: { id: 'admin.reports.unavailable_account', defaultMessage: 'Deleted or unavailable account' },
 });
 
 interface IReport {
@@ -47,16 +48,26 @@ const Report: React.FC<IReport> = ({ id }) => {
 
   if (!report) return null;
 
-  const account = report.account as Account;
-  const targetAccount = report.target_account as Account;
+  const account = report.account as Account | null;
+  const targetAccount = report.target_account as Account | null;
+  const accountId = account?.id;
+  const targetAccountId = targetAccount?.id;
+  const targetAcct = targetAccount?.acct;
+  const reporterAcct = account?.acct;
+  const unavailableAccount = intl.formatMessage(messages.unavailableAccount);
+  const targetLabel = targetAcct ? `@${targetAcct}` : report.account_ap_id || unavailableAccount;
+  const targetName = targetAccount?.username || targetAcct || report.account_ap_id || unavailableAccount;
+  const reporterLabel = reporterAcct ? `@${reporterAcct}` : report.actor_ap_id || unavailableAccount;
 
   const makeMenu = () => {
+    if (!targetAccountId || !targetAcct) return [];
+
     return [{
-      text: intl.formatMessage(messages.deactivateUser, { name: targetAccount.username }),
+      text: intl.formatMessage(messages.deactivateUser, { name: targetAcct }),
       action: handleDeactivateUser,
       icon: hourglassEmptyIcon,
     }, {
-      text: intl.formatMessage(messages.deleteUser, { name: targetAccount.username }),
+      text: intl.formatMessage(messages.deleteUser, { name: targetAcct }),
       action: handleDeleteUser,
       icon: trashIcon,
       destructive: true,
@@ -65,19 +76,21 @@ const Report: React.FC<IReport> = ({ id }) => {
 
   const handleCloseReport = () => {
     dispatch(closeReports([report.id])).then(() => {
-      const message = intl.formatMessage(messages.reportClosed, { name: targetAccount.username as string });
+      const message = intl.formatMessage(messages.reportClosed, { name: targetName });
       toast.success(message);
     }).catch(() => {});
   };
 
   const handleDeactivateUser = () => {
-    const accountId = targetAccount.id;
-    dispatch(deactivateUserModal(intl, accountId, () => handleCloseReport()));
+    if (!targetAccountId) return;
+
+    dispatch(deactivateUserModal(intl, targetAccountId, () => handleCloseReport()));
   };
 
   const handleDeleteUser = () => {
-    const accountId = targetAccount.id as string;
-    dispatch(deleteUserModal(intl, accountId, () => handleCloseReport()));
+    if (!targetAccountId) return;
+
+    dispatch(deleteUserModal(intl, targetAccountId, () => handleCloseReport()));
   };
 
   const handleAccordionToggle = (setting: boolean) => {
@@ -87,27 +100,29 @@ const Report: React.FC<IReport> = ({ id }) => {
   const menu = makeMenu();
   const statuses = report.statuses as ImmutableList<Status>;
   const statusCount = statuses.count();
-  const acct = targetAccount.acct as string;
-  const reporterAcct = account.acct as string;
 
   return (
     <HStack space={3} className='p-3' key={report.id}>
-      <HoverRefWrapper accountId={targetAccount.id} inline>
-        <Link to={`/@${acct}`} title={acct}>
-          <Avatar src={targetAccount.avatar} size={32} className='overflow-hidden' />
-        </Link>
-      </HoverRefWrapper>
+      {targetAccountId && targetAcct ? (
+        <HoverRefWrapper accountId={targetAccountId} inline>
+          <Link to={`/@${targetAcct}`} title={targetAcct}>
+            <Avatar src={targetAccount.avatar} size={32} className='overflow-hidden' />
+          </Link>
+        </HoverRefWrapper>
+      ) : (
+        <Avatar src='' size={32} className='overflow-hidden opacity-50' />
+      )}
 
       <Stack space={3} className='overflow-hidden' grow>
         <Text tag='h4' weight='bold'>
           <FormattedMessage
             id='admin.reports.report_title'
             defaultMessage='Report on {acct}'
-            values={{ acct: (
-              <HoverRefWrapper accountId={targetAccount.id} inline>
-                <Link to={`/@${acct}`} title={acct}>@{acct}</Link> {/* eslint-disable-line formatjs/no-literal-string-in-jsx */}
+            values={{ acct: targetAccountId && targetAcct ? (
+              <HoverRefWrapper accountId={targetAccountId} inline>
+                <Link to={`/@${targetAcct}`} title={targetAcct}>@{targetAcct}</Link> {/* eslint-disable-line formatjs/no-literal-string-in-jsx */}
               </HoverRefWrapper>
-            ) }}
+            ) : targetLabel }}
           />
         </Text>
 
@@ -140,15 +155,19 @@ const Report: React.FC<IReport> = ({ id }) => {
           <HStack space={1}>
             <Text theme='muted' tag='span'>&mdash;</Text> {/* eslint-disable-line formatjs/no-literal-string-in-jsx */}
 
-            <HoverRefWrapper accountId={account.id} inline>
-              <Link
-                to={`/@${reporterAcct}`}
-                title={reporterAcct}
-                className='text-primary-600 hover:underline dark:text-accent-blue'
-              > {/* eslint-disable-line formatjs/no-literal-string-in-jsx */}
-                @{reporterAcct}
-              </Link>
-            </HoverRefWrapper>
+            {accountId && reporterAcct ? (
+              <HoverRefWrapper accountId={accountId} inline>
+                <Link
+                  to={`/@${reporterAcct}`}
+                  title={reporterAcct}
+                  className='text-primary-600 hover:underline dark:text-accent-blue'
+                > {/* eslint-disable-line formatjs/no-literal-string-in-jsx */}
+                  @{reporterAcct}
+                </Link>
+              </HoverRefWrapper>
+            ) : (
+              <Text theme='muted' tag='span'>{reporterLabel}</Text>
+            )}
           </HStack>
         </Stack>
       </Stack>
@@ -158,7 +177,7 @@ const Report: React.FC<IReport> = ({ id }) => {
           <FormattedMessage id='admin.reports.actions.close' defaultMessage='Close' />
         </Button>
 
-        <DropdownMenu items={menu} src={dotsVerticalIcon} />
+        {menu.length > 0 && <DropdownMenu items={menu} src={dotsVerticalIcon} />}
       </HStack>
     </HStack>
   );

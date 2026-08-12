@@ -24,6 +24,26 @@ const SEARCH_EXPAND_FAIL    = 'SEARCH_EXPAND_FAIL';
 
 const SEARCH_ACCOUNT_SET = 'SEARCH_ACCOUNT_SET';
 
+interface SearchParamsOptions {
+  accountId?: string | null;
+  offset?: number;
+  shortVideosOnly?: boolean;
+}
+
+export const buildSearchParams = (
+  value: string,
+  type: SearchFilter,
+  { accountId, offset, shortVideosOnly }: SearchParamsOptions = {},
+): Record<string, any> => {
+  const params: Record<string, any> = { q: value, resolve: true, limit: 20, type };
+
+  if (accountId) params.account_id = accountId;
+  if (offset !== undefined) params.offset = offset;
+  if (shortVideosOnly) params.short_videos_only = true;
+
+  return params;
+};
+
 const changeSearch = (value: string) =>
   (dispatch: AppDispatch) => {
     // If backspaced all the way, clear the search
@@ -68,17 +88,9 @@ const submitSearch = (filter?: SearchFilter, newValue?: string, shortVideosOnly?
       });
     }
 
-    dispatch(fetchSearchRequest(value));
+    dispatch(fetchSearchRequest(value, shortVideosOnly));
 
-    const params: Record<string, any> = {
-      q: value,
-      resolve: true,
-      limit: 20,
-      type,
-    };
-
-    if (accountId) params.account_id = accountId;
-    if (shortVideosOnly) params.short_videos_only = true;
+    const params = buildSearchParams(value, type, { accountId, shortVideosOnly });
 
     api(getState).get('/api/v2/search', {
       searchParams: params,
@@ -101,9 +113,10 @@ const submitSearch = (filter?: SearchFilter, newValue?: string, shortVideosOnly?
     });
   };
 
-const fetchSearchRequest = (value: string) => ({
+const fetchSearchRequest = (value: string, shortVideosOnly = false) => ({
   type: SEARCH_FETCH_REQUEST,
   value,
+  shortVideosOnly,
 });
 
 const fetchSearchSuccess = (results: APIEntity[], searchTerm: string, searchType: SearchFilter, next: string | null) => ({
@@ -134,6 +147,7 @@ const expandSearch = (type: SearchFilter) => (dispatch: AppDispatch, getState: (
   const value     = getState().search.value;
   const offset    = getState().search.results[type].size;
   const accountId = getState().search.accountId;
+  const shortVideosOnly = getState().search.shortVideosOnly;
 
   dispatch(expandSearchRequest(type));
 
@@ -144,12 +158,7 @@ const expandSearch = (type: SearchFilter) => (dispatch: AppDispatch, getState: (
   // fall back on querying with the offset
   if (!url) {
     url = '/api/v2/search';
-    params = {
-      q: value,
-      type,
-      offset,
-    };
-    if (accountId) params.account_id = accountId;
+    params = buildSearchParams(value, type, { accountId, offset, shortVideosOnly });
   }
 
   api(getState).get(url, {

@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
 
 import { fetchJoinedEvents, fetchRecentEvents } from '@/actions/events.ts';
 import { openModal } from '@/actions/modals.ts';
+import { isEventStatus } from '@/api/hooks/streaming/stream-filters.ts';
+import { useTimelineStream } from '@/api/hooks/streaming/useTimelineStream.ts';
 import Button from '@/components/ui/button.tsx';
 import { CardBody, CardHeader, CardTitle } from '@/components/ui/card.tsx';
 import { Column } from '@/components/ui/column.tsx';
@@ -20,6 +22,11 @@ const Events = () => {
   const intl = useIntl();
 
   const dispatch = useAppDispatch();
+  const refreshEvents = useCallback(() => {
+    dispatch(fetchRecentEvents());
+  }, [dispatch]);
+
+  useTimelineStream('events', 'public', isEventStatus, { onUpdate: refreshEvents });
 
   const recentEvents = useAppSelector((state) => state.status_lists.get('recent_events')!.items);
   const recentEventsLoading = useAppSelector((state) => state.status_lists.get('recent_events')!.isLoading);

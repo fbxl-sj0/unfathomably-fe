@@ -124,6 +124,7 @@ interface ISelectDropdown {
   /** @deprecated FIXME: JavaScript does not guarantee key ordering of objects. This should be turned into an array of tuples. */
   items: Record<string, string>;
   defaultValue?: string;
+  value?: string;
   onChange?: React.ChangeEventHandler;
 }
 

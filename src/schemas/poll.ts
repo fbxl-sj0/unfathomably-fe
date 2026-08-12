@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { customEmojiSchema } from './custom-emoji.ts';
 import { filteredArray } from './utils.ts';
@@ -23,6 +23,17 @@ const pollSchema = z.object({
     non_anonymous: z.boolean().catch(false),
   }).optional().catch(undefined),
 }).transform((poll) => {
+  // A remote poll may pass its known closing time before its final ActivityPub
+  // Update arrives. Do not leave voting controls active solely because the
+  // cached `expired` flag is stale.
+  if (!poll.expired && poll.expires_at) {
+    const expiresAt = Date.parse(poll.expires_at);
+
+    if (!Number.isNaN(expiresAt) && expiresAt <= Date.now()) {
+      poll.expired = true;
+    }
+  }
+
   // If the user has votes, they have certainly voted.
   if (poll.own_votes?.length) {
     poll.voted = true;

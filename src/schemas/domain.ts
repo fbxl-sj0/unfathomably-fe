@@ -1,4 +1,4 @@
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 const domainSchema = z.object({
   id: z.coerce.string(),

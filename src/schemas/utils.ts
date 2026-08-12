@@ -1,4 +1,4 @@
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 /** Ensure HTML content is a string, and drop empty `<p>` tags. */
 const contentSchema = z.string().catch('').transform((value) => value === '<p></p>' ? '' : value);

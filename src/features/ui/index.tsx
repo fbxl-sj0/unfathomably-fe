@@ -58,6 +58,7 @@ import {
   BubbleTimeline,
   Catchup,
   AccountTimeline,
+  AccountWorlds,
   AccountGallery,
   HomeTimeline,
   Followers,
@@ -81,6 +82,7 @@ import {
   Lists,
   Bookmarks,
   Settings,
+  ATProtoLink,
   Wallet,
   WalletRelays,
   WalletMints,
@@ -240,7 +242,9 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         {features.federating && <WrappedRoute path='/timeline/local' exact page={HomePage} component={HomeTimeline} content={children} publicRoute />}
         {features.federating && <WrappedRoute path='/timeline/global' exact page={HomePage} component={PublicTimeline} content={children} publicRoute />}
         {features.federating && <WrappedRoute path='/timeline/fediverse' exact page={HomePage} component={PublicTimeline} content={children} publicRoute />}
+        {features.federating && <WrappedRoute path='/worlds' exact page={HomePage} component={NativeFederationTimeline} content={children} publicRoute />}
         {features.federating && <WrappedRoute path='/federation' exact page={HomePage} component={NativeFederationTimeline} content={children} publicRoute />}
+        {features.federating && <WrappedRoute path='/worlds/:family' exact page={HomePage} component={NativeFederationTimeline} content={children} publicRoute />}
         {features.bubbleTimeline && <WrappedRoute path='/timeline/bubble' exact page={HomePage} component={BubbleTimeline} content={children} publicRoute />}
         {features.federating && <WrappedRoute path='/timeline/:instance' exact page={RemoteInstancePage} component={RemoteTimeline} content={children} publicRoute />}
 
@@ -334,6 +338,7 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         <WrappedRoute path='/@:username/followers' publicRoute={!authenticatedProfile} component={Followers} page={ProfilePage} content={children} />
         <WrappedRoute path='/@:username/following' publicRoute={!authenticatedProfile} component={Following} page={ProfilePage} content={children} />
         <WrappedRoute path='/@:username/media' publicRoute={!authenticatedProfile} component={AccountGallery} page={ProfilePage} content={children} />
+        <WrappedRoute path='/@:username/worlds/:family' publicRoute={!authenticatedProfile} component={AccountWorlds} page={ProfilePage} content={children} />
         <WrappedRoute path='/@:username/tagged/:tag' exact component={AccountTimeline} page={ProfilePage} content={children} />
         <WrappedRoute path='/@:username/favorites' component={FavouritedStatuses} page={ProfilePage} content={children} />
         <WrappedRoute path='/@:username/pins' component={PinnedStatuses} page={ProfilePage} content={children} />
@@ -359,6 +364,10 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         {features.groupsTags && <WrappedRoute path='/groups/tags' exact page={GroupsPendingPage} component={GroupsTags} content={children} />}
         {features.groupsTags && <WrappedRoute path='/groups/discover/tags/:id' exact page={GroupsPendingPage} component={GroupsTag} content={children} />}
         {features.groupsPending && <WrappedRoute path='/groups/pending-requests' exact page={GroupsPendingPage} component={PendingGroupRequests} content={children} />}
+        {!features.groupsRecommendations && <Redirect from='/groups/popular' to={features.groupsDiscovery ? '/groups/discover' : '/groups'} exact />}
+        {!features.groupsRecommendations && <Redirect from='/groups/suggested' to={features.groupsDiscovery ? '/groups/discover' : '/groups'} exact />}
+        {!features.groupsTags && <Redirect from='/groups/tags' to={features.groupsDiscovery ? '/groups/discover' : '/groups'} exact />}
+        {!features.groupsPending && <Redirect from='/groups/pending-requests' to='/groups/my' exact />}
         {features.groupsTags && <WrappedRoute path='/groups/:groupId/tags' exact page={GroupPage} component={GroupTags} content={children} />}
         {features.groupsTags && <WrappedRoute path='/groups/:groupId/tag/:tagId' exact page={GroupsPendingPage} component={GroupTagTimeline} content={children} />}
         {features.groups && <WrappedRoute path='/groups/:groupId' exact page={GroupPage} component={GroupTimeline} content={children} />}
@@ -393,6 +402,7 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         {features.accountMoving && <WrappedRoute path='/settings/migration' page={DefaultPage} component={Migration} content={children} />}
         {features.backups && <WrappedRoute path='/settings/backups' page={DefaultPage} component={Backups} content={children} />}
         {features.nostr && <WrappedRoute path='/settings/relays' page={DefaultPage} component={NostrRelays} content={children} />}
+        {features.atproto && <WrappedRoute path='/settings/atproto' page={DefaultPage} component={ATProtoLink} content={children} />}
         <WrappedRoute path='/settings/email' page={DefaultPage} component={EditEmail} content={children} />
         <WrappedRoute path='/settings/password' page={DefaultPage} component={EditPassword} content={children} />
         <WrappedRoute path='/settings/account' page={DefaultPage} component={DeleteAccount} content={children} />
@@ -407,6 +417,8 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
 
         <WrappedRoute path='/soapbox/admin' staffOnly page={AdminPage} component={Dashboard} content={children} exact />
         <WrappedRoute path='/soapbox/admin/approval' staffOnly page={AdminPage} component={Dashboard} content={children} exact />
+        <WrappedRoute path='/soapbox/admin/federation-connectors' staffOnly page={AdminPage} component={Dashboard} content={children} exact />
+        <WrappedRoute path='/soapbox/admin/fasps' adminOnly page={AdminPage} component={Dashboard} content={children} exact />
         {features.ditto && <WrappedRoute path='/soapbox/admin/ditto-server' adminOnly page={WidePage} component={ManageDittoServer} content={children} exact />}
         <WrappedRoute path='/soapbox/admin/reports' staffOnly page={AdminPage} component={Dashboard} content={children} exact />
         <WrappedRoute path='/soapbox/admin/log' staffOnly page={AdminPage} component={ModerationLog} content={children} exact />
@@ -419,7 +431,9 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         <WrappedRoute path='/soapbox/admin/relays' staffOnly page={AdminPage} component={Relays} content={children} exact />
         {features.ditto && <WrappedRoute path='/soapbox/admin/nostr/relays' staffOnly page={AdminPage} component={AdminNostrRelays} content={children} exact />}
         {features.adminAnnouncements && <WrappedRoute path='/soapbox/admin/announcements' staffOnly page={AdminPage} component={Announcements} content={children} exact />}
-        {features.domains && <WrappedRoute path='/soapbox/admin/domains' staffOnly page={AdminPage} component={Domains} content={children} exact />}
+        {features.domains
+          ? <WrappedRoute path='/soapbox/admin/domains' staffOnly page={AdminPage} component={Domains} content={children} exact />
+          : <Redirect exact from='/soapbox/admin/domains' to='/soapbox/admin' />}
         {features.adminRules && <WrappedRoute path='/soapbox/admin/rules' staffOnly page={AdminPage} component={Rules} content={children} exact />}
         <WrappedRoute path='/info' page={EmptyPage} component={ServerInfo} content={children} />
 
@@ -510,7 +524,7 @@ const UI: React.FC<IUI> = ({ children }) => {
 
     if (account.staff) {
       dispatch(fetchReports({ resolved: false }));
-      dispatch(fetchUsers({ pending: true }));
+      dispatch(fetchUsers({ pending: true, local: true }));
     }
 
     setTimeout(() => dispatch(fetchFilters()), 500);

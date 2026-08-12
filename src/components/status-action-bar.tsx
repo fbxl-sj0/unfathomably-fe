@@ -118,6 +118,7 @@ const messages = defineMessages({
   pinToGroup: { id: 'status.pin_to_group', defaultMessage: 'Pin to Group' },
   pinToGroupSuccess: { id: 'status.pin_to_group.success', defaultMessage: 'Pinned to Group!' },
   quotePost: { id: 'status.quote', defaultMessage: 'Quote post' },
+  quoteNostr: { id: 'status.quote_nostr', defaultMessage: 'Quote Nostr post' },
   reactionCry: { id: 'status.reactions.cry', defaultMessage: 'Sad' },
   reactionAngry: { id: 'status.reactions.angry', defaultMessage: 'Angry' },
   reactionF: { id: 'status.reactions.f', defaultMessage: 'F' },
@@ -136,16 +137,19 @@ const messages = defineMessages({
   redraftMessage: { id: 'confirmations.redraft.message', defaultMessage: 'Are you sure you want to delete this post and re-draft it? Favorites and reposts will be lost, and replies to the original post will be orphaned.' },
   replies_disabled_group: { id: 'status.disabled_replies.group_membership', defaultMessage: 'Only group members can reply' },
   replies_disabled_locked: { id: 'status.disabled_replies.locked', defaultMessage: 'Replies are closed' },
+  federationBlocked: { id: 'status.interactions_disabled.federation', defaultMessage: 'Interactions are disabled by this server\'s federation policy' },
   reply: { id: 'status.reply', defaultMessage: 'Reply' },
   replyAll: { id: 'status.reply_all', defaultMessage: 'Reply to thread' },
   replyConfirm: { id: 'confirmations.reply.confirm', defaultMessage: 'Reply' },
   replyMessage: { id: 'confirmations.reply.message', defaultMessage: 'Replying now will overwrite the message you are currently composing. Are you sure you want to proceed?' },
   report: { id: 'status.report', defaultMessage: 'Report @{name}' },
   share: { id: 'status.share', defaultMessage: 'Share' },
+  shareNostr: { id: 'status.share_nostr', defaultMessage: 'Share Nostr post with your followers' },
   showOriginal: { id: 'status.show_original', defaultMessage: 'Show original' },
   translate: { id: 'status.translate', defaultMessage: 'Translate' },
   translating: { id: 'status.translating', defaultMessage: 'Translating...' },
   unbookmark: { id: 'status.unbookmark', defaultMessage: 'Remove bookmark' },
+  unshareNostr: { id: 'status.unshare_nostr', defaultMessage: 'Remove Nostr post from your followers' },
   unmuteConversation: { id: 'status.unmute_conversation', defaultMessage: 'Unmute Conversation' },
   unmuteGroup: { id: 'group.unmute.long_label', defaultMessage: 'Unmute Group' },
   unmuteSuccess: { id: 'group.unmute.success', defaultMessage: 'Unmuted the group' },
@@ -181,6 +185,7 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
   const blockGroupMember = useBlockGroupMember(group as Group, status.account);
 
   const me = useAppSelector(state => state.me);
+  const accountRelationship = useAppSelector(state => state.relationships.get(status.account.id));
   const { groupRelationship } = useGroupRelationship(status.group?.id);
   const features = useFeatures();
   const { instance } = useInstance();
@@ -766,6 +771,10 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
   const meEmojiTitle = intl.formatMessage(reactMessages[meEmojiName || ''] || messages.favourite);
 
   const menu = _makeMenu(publicStatus);
+  const federationBlocked = Boolean(
+    accountRelationship?.federation_blocked || accountRelationship?.federation?.defederated,
+  );
+  const federationBlockedTitle = intl.formatMessage(messages.federationBlocked);
   let reblogIcon = repeatIcon;
   let replyTitle = status.in_reply_to_id ? intl.formatMessage(messages.replyAll) : intl.formatMessage(messages.reply);
   let replyMembershipDisabled = false;
@@ -789,24 +798,43 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
     replyTitle = intl.formatMessage(messages.replies_disabled_locked);
   }
 
+  if (federationBlocked) {
+    replyMembershipDisabled = false;
+    replyDisabled = true;
+    replyTitle = federationBlockedTitle;
+  }
+
+  const isNostrStatus = Boolean(status.pleroma?.get?.('nostr'));
+  let reblogMessage = status.reblogged ? messages.cancel_reblog_private : messages.reblog;
+
+  if (isNostrStatus) {
+    reblogMessage = status.reblogged ? messages.unshareNostr : messages.shareNostr;
+  }
+
   const reblogMenu = [{
-    text: intl.formatMessage(status.reblogged ? messages.cancel_reblog_private : messages.reblog),
+    text: intl.formatMessage(reblogMessage),
     action: handleReblogClick,
     icon: repeatIcon,
-    disabled: !publicStatus,
+    disabled: !publicStatus || federationBlocked,
   }, {
-    text: intl.formatMessage(messages.quotePost),
+    text: intl.formatMessage(isNostrStatus ? messages.quoteNostr : messages.quotePost),
     action: handleQuoteClick,
     icon: quoteIcon,
-    disabled: !quoteAllowed,
+    disabled: !quoteAllowed || federationBlocked,
   }];
+
+  let reblogTitle = publicStatus
+    ? intl.formatMessage(reblogMessage)
+    : intl.formatMessage(messages.cannot_reblog);
+
+  if (federationBlocked) reblogTitle = federationBlockedTitle;
 
   const reblogButton = (
     <StatusActionButton
       icon={reblogIcon}
       color='success'
-      disabled={!publicStatus}
-      title={!publicStatus ? intl.formatMessage(messages.cannot_reblog) : intl.formatMessage(messages.reblog)}
+      disabled={!publicStatus || federationBlocked}
+      title={reblogTitle}
       active={status.reblogged}
       onClick={handleReblogClick}
       count={reblogCount}
@@ -852,7 +880,7 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
         {(features.quotePosts && me) ? (
           <DropdownMenu
             items={reblogMenu}
-            disabled={!publicStatus && !quoteAllowed}
+            disabled={federationBlocked || (!publicStatus && !quoteAllowed)}
             onShiftClick={handleReblogClick}
           >
             {reblogButton}
@@ -862,40 +890,43 @@ const StatusActionBar: React.FC<IStatusActionBar> = ({
         )}
 
         {features.emojiReacts ? (
-          <StatusReactionWrapper statusId={status.id}>
+          <StatusReactionWrapper statusId={status.id} disabled={federationBlocked}>
             <StatusActionButton
-              title={meEmojiTitle}
+              title={federationBlocked ? federationBlockedTitle : meEmojiTitle}
               icon={heartIcon}
               filled
               color='accent'
               active={Boolean(meEmojiName)}
               count={emojiReactCount + favouriteCount}
               emoji={meEmojiReact}
+              disabled={federationBlocked}
               theme={statusActionButtonTheme}
             />
           </StatusReactionWrapper>
         ) : (
           <StatusActionButton
-            title={intl.formatMessage(messages.favourite)}
+            title={federationBlocked ? federationBlockedTitle : intl.formatMessage(messages.favourite)}
             icon={features.dislikes ? thumbUpIcon : heartIcon}
             color='accent'
             filled
             onClick={handleFavouriteClick}
             active={Boolean(meEmojiName)}
             count={favouriteCount}
+            disabled={federationBlocked}
             theme={statusActionButtonTheme}
           />
         )}
 
         {features.dislikes && (
           <StatusActionButton
-            title={intl.formatMessage(messages.disfavourite)}
+            title={federationBlocked ? federationBlockedTitle : intl.formatMessage(messages.disfavourite)}
             icon={thumbDownIcon}
             color='accent'
             filled
             onClick={handleDislikeClick}
             active={status.disliked}
             count={status.dislikes_count}
+            disabled={federationBlocked}
             theme={statusActionButtonTheme}
           />
         )}

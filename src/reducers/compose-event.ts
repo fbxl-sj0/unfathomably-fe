@@ -19,7 +19,7 @@ import {
   EVENT_SUBMIT_FAIL,
   EVENT_COMPOSE_CANCEL,
   EVENT_FORM_SET,
-} from '@/actions/events.ts';
+} from '@/action-types/events.ts';
 import { normalizeAttachment, normalizeLocation } from '@/normalizers/index.ts';
 
 import type {

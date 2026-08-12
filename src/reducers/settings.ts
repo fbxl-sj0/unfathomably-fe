@@ -23,14 +23,16 @@ const updateFrequentEmojis = (state: State, emoji: Emoji) => state.update('frequ
 const importSettings = (state: State, account: APIEntity) => {
   account = fromJS(account);
   const prefs = account.getIn(['pleroma', 'settings_store', FE_NAME], ImmutableMap());
-  return state.merge(prefs) as State;
+  return ImmutableMap<string, any>(prefs)
+    .set('loaded', true)
+    .set('saved', true);
 };
 
 // Default settings are in action/settings.js
 //
 // Settings should be accessed with `getSettings(getState()).getIn(...)`
 // instead of directly from the state.
-export default function settings(state: State = ImmutableMap<string, any>({ saved: true }), action: AnyAction): State {
+export default function settings(state: State = ImmutableMap<string, any>({ loaded: false, saved: true }), action: AnyAction): State {
   switch (action.type) {
     case ME_FETCH_SUCCESS:
       return importSettings(state, action.me);
@@ -46,7 +48,9 @@ export default function settings(state: State = ImmutableMap<string, any>({ save
     case SETTING_SAVE:
       return state.set('saved', true);
     case SETTINGS_UPDATE:
-      return ImmutableMap<string, any>(fromJS(action.settings));
+      return ImmutableMap<string, any>(fromJS(action.settings))
+        .set('loaded', true)
+        .set('saved', true);
     default:
       return state;
   }

@@ -7,9 +7,8 @@ import { useBunkerStore } from '@/hooks/nostr/useBunkerStore.ts';
 import { type AppDispatch } from '@/store.ts';
 
 import { authLoggedIn, verifyCredentials } from './auth.ts';
+import { NOSTR_PUBKEY_SET } from './nostr-types.ts';
 import { obtainOAuthToken } from './oauth.ts';
-
-const NOSTR_PUBKEY_SET = 'NOSTR_PUBKEY_SET';
 
 /** Log in with a Nostr pubkey. */
 function logInNostr(signer: NostrSigner, relay: NRelay1) {

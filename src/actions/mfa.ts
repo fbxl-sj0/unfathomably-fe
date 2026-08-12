@@ -27,8 +27,9 @@ const fetchMfa = () =>
     dispatch({ type: MFA_FETCH_REQUEST });
     return api(getState).get('/api/pleroma/accounts/mfa').then((response) => response.json()).then((data) => {
       dispatch({ type: MFA_FETCH_SUCCESS, data });
-    }).catch(() => {
+    }).catch((error: unknown) => {
       dispatch({ type: MFA_FETCH_FAIL });
+      throw error;
     });
   };
 

@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import { Map as ImmutableMap, List as ImmutableList, fromJS } from 'immutable';
 
-import { ADMIN_CONFIG_UPDATE_REQUEST, ADMIN_CONFIG_UPDATE_SUCCESS } from '@/actions/admin.ts';
+import { ADMIN_CONFIG_UPDATE_REQUEST, ADMIN_CONFIG_UPDATE_SUCCESS } from '@/action-types/admin.ts';
 import { InstanceV2, instanceV2Schema } from '@/schemas/instance.ts';
 import { ConfigDB } from '@/utils/config-db.ts';
 

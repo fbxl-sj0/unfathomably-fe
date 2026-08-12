@@ -3,7 +3,7 @@ import { List as ImmutableList, Map as ImmutableMap, fromJS } from 'immutable';
 import { PLEROMA_PRELOAD_IMPORT } from '@/actions/preload.ts';
 import { ConfigDB } from '@/utils/config-db.ts';
 
-import { ADMIN_CONFIG_UPDATE_SUCCESS } from '../actions/admin.ts';
+import { ADMIN_CONFIG_UPDATE_SUCCESS } from '@/action-types/admin.ts';
 import {
   SOAPBOX_CONFIG_REMEMBER_SUCCESS,
   SOAPBOX_CONFIG_REQUEST_SUCCESS,

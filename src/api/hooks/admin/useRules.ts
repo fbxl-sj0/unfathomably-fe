@@ -42,7 +42,7 @@ const useRules = () => {
     retry: false,
     onSuccess: async (response: Response) => {
       const data = await response.json();
-      return queryClient.setQueryData(['admin', 'rules'], (prevResult: ReadonlyArray<AdminRule>) =>
+      return queryClient.setQueryData(['admin', 'rules'], (prevResult: ReadonlyArray<AdminRule> = []) =>
         [...prevResult, adminRuleSchema.parse(data)],
       );
     },
@@ -56,7 +56,7 @@ const useRules = () => {
     retry: false,
     onSuccess: async (response: Response) => {
       const data = await response.json();
-      return queryClient.setQueryData(['admin', 'rules'], (prevResult: ReadonlyArray<AdminRule>) =>
+      return queryClient.setQueryData(['admin', 'rules'], (prevResult: ReadonlyArray<AdminRule> = []) =>
         prevResult.map((rule) => rule.id === data.id ? adminRuleSchema.parse(data) : rule),
       );
     },
@@ -69,7 +69,7 @@ const useRules = () => {
     mutationFn: (id: string) => api.delete(`/api/v1/pleroma/admin/rules/${id}`),
     retry: false,
     onSuccess: (_, id) =>
-      queryClient.setQueryData(['admin', 'rules'], (prevResult: ReadonlyArray<AdminRule>) =>
+      queryClient.setQueryData(['admin', 'rules'], (prevResult: ReadonlyArray<AdminRule> = []) =>
         prevResult.filter(({ id: ruleId }) => ruleId !== id),
       ),
   });

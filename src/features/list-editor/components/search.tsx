@@ -1,5 +1,6 @@
 import backspaceIcon from '@tabler/icons/outline/backspace.svg';
 import clsx from 'clsx';
+import { useId } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 
 import { fetchListSuggestions, clearListSuggestions, changeListSuggestions } from '@/actions/lists.ts';
@@ -14,11 +15,13 @@ import { useAppSelector } from '@/hooks/useAppSelector.ts';
 const messages = defineMessages({
   search: { id: 'lists.search', defaultMessage: 'Search among people you follow' },
   searchTitle: { id: 'tabs_bar.search', defaultMessage: 'Search' },
+  clear: { id: 'search.clear', defaultMessage: 'Clear search' },
 });
 
 const Search = () => {
   const intl = useIntl();
   const dispatch = useAppDispatch();
+  const inputId = `list-search-${useId()}`;
 
   const value = useAppSelector((state) => state.listEditor.suggestions.value);
   const hasValue = value.trim().length > 0;
@@ -40,19 +43,26 @@ const Search = () => {
   return (
     <Form onSubmit={handleSubmit}>
       <HStack space={2}>
-        <label className='relative grow'>
-          <span style={{ display: 'none' }}>{intl.formatMessage(messages.search)}</span>
+        <div className='relative grow'>
+          <label htmlFor={inputId} className='sr-only'>{intl.formatMessage(messages.search)}</label>
 
           <Input
+            id={inputId}
             type='text'
             value={value}
             onChange={handleChange}
             placeholder={intl.formatMessage(messages.search)}
           />
-          <div role='button' tabIndex={0} className='search__icon' onClick={handleClear}>
-            <SvgIcon src={backspaceIcon} aria-label={intl.formatMessage(messages.search)} className={clsx('pointer-events-none absolute right-4 top-1/2 z-20 inline-block size-4.5 -translate-y-1/2 cursor-pointer text-[16px] text-gray-400 opacity-0 rtl:left-4 rtl:right-auto', { 'pointer-events-auto opacity-100': hasValue })} />
-          </div>
-        </label>
+          <button
+            type='button'
+            aria-label={intl.formatMessage(messages.clear)}
+            disabled={!hasValue}
+            className={clsx('search__icon pointer-events-none absolute right-4 top-1/2 z-20 -translate-y-1/2 text-gray-400 opacity-0 rtl:left-4 rtl:right-auto', { 'pointer-events-auto opacity-100': hasValue })}
+            onClick={handleClear}
+          >
+            <SvgIcon src={backspaceIcon} aria-hidden='true' className='size-4.5 text-[16px]' />
+          </button>
+        </div>
 
         <Button disabled={!hasValue} onClick={handleSubmit}>{intl.formatMessage(messages.searchTitle)}</Button>
       </HStack>

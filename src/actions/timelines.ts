@@ -30,8 +30,21 @@ const TIMELINE_INSERT = 'TIMELINE_INSERT' as const;
 
 const MAX_QUEUED_ITEMS = 40;
 
+const timelineAcceptsStatus = (status: APIEntity, accept: ((status: APIEntity) => boolean) | null): boolean => {
+  if (typeof accept !== 'function') return true;
+
+  try {
+    return accept(status);
+  } catch (error) {
+    console.error('Timeline stream predicate failed', error);
+    return false;
+  }
+};
+
 const processTimelineUpdate = (timeline: string, status: APIEntity, accept: ((status: APIEntity) => boolean) | null) =>
   (dispatch: AppDispatch, getState: () => RootState) => {
+    if (!timelineAcceptsStatus(status, accept)) return;
+
     const me = getState().me;
     const ownStatus = status.account?.id === me;
     const hasPendingStatuses = !getState().pending_statuses.isEmpty();
@@ -57,10 +70,6 @@ const processTimelineUpdate = (timeline: string, status: APIEntity, accept: ((st
 
 const updateTimeline = (timeline: string, statusId: string, accept: ((status: APIEntity) => boolean) | null) =>
   (dispatch: AppDispatch) => {
-    // if (typeof accept === 'function' && !accept(status)) {
-    //   return;
-    // }
-
     dispatch({
       type: TIMELINE_UPDATE,
       timeline,
@@ -70,10 +79,6 @@ const updateTimeline = (timeline: string, statusId: string, accept: ((status: AP
 
 const updateTimelineQueue = (timeline: string, statusId: string, accept: ((status: APIEntity) => boolean) | null) =>
   (dispatch: AppDispatch) => {
-    // if (typeof accept === 'function' && !accept(status)) {
-    //   return;
-    // }
-
     dispatch({
       type: TIMELINE_UPDATE_QUEUE,
       timeline,
@@ -219,8 +224,34 @@ const expandFollowsTimeline = ({ url, maxId }: ExpandFollowsTimelineOpts = {}, d
 const expandPublicTimeline = ({ url, maxId, onlyMedia, language }: Record<string, any> = {}, done = noOp) =>
   expandTimeline(`public${onlyMedia ? ':media' : ''}`, url || '/api/v1/timelines/public', url ? {} : { max_id: maxId, only_media: !!onlyMedia, language: language || undefined }, done);
 
-const expandNativeFederationTimeline = ({ url, maxId }: Record<string, any> = {}, done = noOp) =>
-  expandTimeline('native-federation', url || '/api/v1/timelines/public', url ? {} : { max_id: maxId, limit: 40 }, done);
+// Native status cards may carry rich media and structured metadata. Keeping
+// each page at the standard incremental size makes Worlds responsive without
+// changing its normal infinite-scroll workflow.
+const NATIVE_TIMELINE_PAGE_SIZE = 20;
+
+const expandNativeFederationTimeline = ({ url, maxId, family, query, timelineId: requestedTimelineId }: Record<string, any> = {}, done = noOp) => {
+  const nativeFamily = family && family !== 'all' ? family : undefined;
+  const nativeQuery = typeof query === 'string' && query.trim() ? query.trim() : undefined;
+  const timelineId = requestedTimelineId || (nativeFamily ? `native-federation:${nativeFamily}` : 'native-federation');
+  const groupsTimeline = nativeFamily === 'groups';
+  const params: Record<string, any> = {
+    limit: NATIVE_TIMELINE_PAGE_SIZE,
+  };
+
+  if (maxId) params.max_id = maxId;
+
+  if (groupsTimeline) {
+    params.discover = true;
+  } else {
+    params.only_native = true;
+    if (nativeFamily) params.native_family = nativeFamily;
+    if (nativeQuery) params.native_query = nativeQuery;
+  }
+
+  const endpoint = groupsTimeline ? '/api/v1/timelines/groups' : '/api/v1/timelines/public';
+
+  return expandTimeline(timelineId, url || endpoint, url ? {} : params, done);
+};
 
 const expandBubbleTimeline = ({ url, maxId, onlyMedia }: Record<string, any> = {}, done = noOp) =>
   expandTimeline(`bubble${onlyMedia ? ':media' : ''}`, url || '/api/v1/timelines/bubble', url ? {} : { max_id: maxId, only_media: !!onlyMedia }, done);
@@ -234,8 +265,22 @@ const expandCommunityTimeline = ({ url, maxId, onlyMedia }: Record<string, any> 
 const expandDirectTimeline = ({ url, maxId }: Record<string, any> = {}, done = noOp) =>
   expandTimeline('direct', url || '/api/v1/timelines/direct', url ? {} : { max_id: maxId }, done);
 
-const expandAccountTimeline = (accountId: string, { url, maxId, withReplies }: Record<string, any> = {}) =>
-  expandTimeline(`account:${accountId}${withReplies ? ':with_replies' : ''}`, url || `/api/v1/accounts/${accountId}/statuses`, url ? {} : { exclude_replies: !withReplies, max_id: maxId, with_muted: true });
+const expandAccountTimeline = (accountId: string, { url, maxId, withReplies, nativeFamily }: Record<string, any> = {}) => {
+  let suffix = '';
+
+  if (nativeFamily) {
+    suffix = `:worlds:${nativeFamily}`;
+  } else if (withReplies) {
+    suffix = ':with_replies';
+  }
+
+  return expandTimeline(`account:${accountId}${suffix}`, url || `/api/v1/accounts/${accountId}/statuses`, url ? {} : {
+    exclude_replies: nativeFamily ? false : !withReplies,
+    max_id: maxId,
+    native_family: nativeFamily,
+    with_muted: true,
+  });
+};
 
 const expandAccountFeaturedTimeline = (accountId: string) =>
   expandTimeline(`account:${accountId}:pinned`, `/api/v1/accounts/${accountId}/statuses`, { pinned: true, with_muted: true });
@@ -343,6 +388,7 @@ export {
   TIMELINE_INSERT,
   MAX_QUEUED_ITEMS,
   processTimelineUpdate,
+  timelineAcceptsStatus,
   updateTimeline,
   updateTimelineQueue,
   dequeueTimeline,

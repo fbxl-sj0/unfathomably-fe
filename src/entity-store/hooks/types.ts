@@ -1,5 +1,5 @@
 import type { Entity } from '../types.ts';
-import type z from 'zod';
+import type * as z from '@/zod.ts';
 
 type EntitySchema<TEntity extends Entity = Entity> = z.ZodType<TEntity>;
 

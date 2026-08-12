@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 const tokenSchema = z.object({
   access_token: z.string(),

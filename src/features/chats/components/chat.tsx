@@ -108,6 +108,10 @@ const Chat: React.FC<ChatInterface> = ({ chat, inputRef, className }) => {
   const insertLine = () => setContent(content + '\n');
 
   const handleKeyDown: React.KeyboardEventHandler = (event) => {
+    if (event.nativeEvent.isComposing || event.key === 'Process' || event.keyCode === 229) {
+      return;
+    }
+
     markRead();
 
     if (event.key === 'Enter' && event.shiftKey) {

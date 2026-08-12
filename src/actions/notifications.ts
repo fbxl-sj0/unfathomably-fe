@@ -1,5 +1,4 @@
 import IntlMessageFormat from 'intl-messageformat';
-import '@formatjs/intl-pluralrules/polyfill.js';
 import { defineMessages } from 'react-intl';
 
 import api from '@/api/index.ts';

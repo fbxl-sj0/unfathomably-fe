@@ -1,6 +1,6 @@
 import { forwardRef, useId } from 'react';
 
-interface IFileInput extends Pick<React.InputHTMLAttributes<HTMLInputElement>, 'id' | 'onChange' | 'required' | 'disabled' | 'name' | 'accept'> { }
+interface IFileInput extends Pick<React.InputHTMLAttributes<HTMLInputElement>, 'id' | 'onChange' | 'required' | 'disabled' | 'name' | 'accept' | 'multiple'> { }
 
 const FileInput = forwardRef<HTMLInputElement, IFileInput>((props, ref) => {
   const generatedId = useId();

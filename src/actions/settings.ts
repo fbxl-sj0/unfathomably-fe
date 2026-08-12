@@ -230,9 +230,13 @@ const saveSettingsImmediate = (opts?: SettingOpts) =>
     if (!isLoggedIn(getState)) return;
 
     const state = getState();
+    if (!state.settings.get('loaded', false)) return;
     if (getSettings(state).getIn(['saved'])) return;
 
-    const data = state.settings.delete('saved').toJS();
+    const data = state.settings
+      .delete('loaded')
+      .delete('saved')
+      .toJS();
 
     dispatch(patchMe({
       pleroma_settings_store: {

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 const patronUserSchema = z.object({
   is_patron: z.boolean().catch(false),

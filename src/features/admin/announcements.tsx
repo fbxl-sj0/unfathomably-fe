@@ -47,7 +47,7 @@ const Announcement: React.FC<IAnnouncement> = ({ announcement }) => {
   };
 
   return (
-    <div key={announcement.id} className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800'>
+    <div key={announcement.id} className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800 black:bg-primary-900/20'>
       <Stack space={2}>
         <Markup emojis={announcement.emojis} html={{ __html: announcement.content }} />
         {(announcement.starts_at || announcement.ends_at || announcement.all_day) && (
@@ -94,7 +94,7 @@ const Announcements: React.FC = () => {
   const intl = useIntl();
   const dispatch = useAppDispatch();
 
-  const { data: announcements, isLoading } = useAnnouncements();
+  const { data: announcements = [], isLoading } = useAnnouncements();
 
 
   const handleCreateAnnouncement = () => {
@@ -122,7 +122,7 @@ const Announcements: React.FC = () => {
           isLoading={isLoading}
           showLoading={isLoading}
         >
-          {announcements!.map((announcement) => (
+          {announcements.map((announcement) => (
             <Announcement key={announcement.id} announcement={announcement} />
           ))}
         </ScrollableList>

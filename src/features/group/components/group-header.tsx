@@ -1,10 +1,12 @@
 import photoOffIcon from '@tabler/icons/outline/photo-off.svg';
 import { List as ImmutableList } from 'immutable';
 import { useState } from 'react';
-import { defineMessages, useIntl } from 'react-intl';
+import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
 
 import { openModal } from '@/actions/modals.ts';
+import Account from '@/components/account.tsx';
 import GroupAvatar from '@/components/groups/group-avatar.tsx';
+import Markup from '@/components/markup.tsx';
 import StillImage from '@/components/still-image.tsx';
 import HStack from '@/components/ui/hstack.tsx';
 import Icon from '@/components/ui/icon.tsx';
@@ -24,6 +26,15 @@ import type { Group } from '@/types/entities.ts';
 
 const messages = defineMessages({
   header: { id: 'group.header.alt', defaultMessage: 'Group header' },
+  moderators: {
+    id: 'group.header.moderators',
+    defaultMessage: '{count, plural, one {# moderator} other {# moderators}}',
+  },
+  owner: { id: 'group.header.owner', defaultMessage: 'Group owner' },
+  posts: {
+    id: 'group.header.posts',
+    defaultMessage: '{count, plural, one {# post} other {# posts}}',
+  },
 });
 
 interface IGroupHeader {
@@ -133,6 +144,7 @@ const GroupHeader: React.FC<IGroupHeader> = ({ group }) => {
               group={group}
               size={80}
               withRing
+              fallbackSrc={group.owner_account?.avatar}
             />
           </a>
         </div>
@@ -152,13 +164,45 @@ const GroupHeader: React.FC<IGroupHeader> = ({ group }) => {
                 <GroupMemberCount group={group} />
               </HStack>
 
-              <Text
+              {group.nostr && (
+                <HStack justifyContent='center' space={2} wrap>
+                  <Text size='sm' theme='muted'>{group.platform_label}</Text>
+                  {group.domain && <Text size='sm' theme='muted'>{group.domain}</Text>}
+                  {group.moderators_count > 0 && (
+                    <Text size='sm' theme='muted'>
+                      <FormattedMessage {...messages.moderators} values={{ count: group.moderators_count }} />
+                    </Text>
+                  )}
+                  {group.statuses_count > 0 && (
+                    <Text size='sm' theme='muted'>
+                      <FormattedMessage {...messages.posts} values={{ count: group.statuses_count }} />
+                    </Text>
+                  )}
+                </HStack>
+              )}
+
+              <Markup
                 theme='muted'
                 align='center'
-                dangerouslySetInnerHTML={{ __html: group.note }}
-                className='[&_a]:text-primary-600 [&_a]:hover:underline [&_a]:dark:text-accent-blue'
+                html={{ __html: group.note }}
+                emojis={group.emojis}
+                className='min-w-0 max-w-full whitespace-pre-wrap [overflow-wrap:anywhere] [&_a]:text-primary-600 [&_a]:hover:underline [&_a]:dark:text-accent-blue'
               />
             </Stack>
+
+            {group.owner_account && (
+              <Stack space={1} className='w-full max-w-sm'>
+                <Text size='xs' theme='muted' weight='medium'>
+                  <FormattedMessage {...messages.owner} />
+                </Text>
+                <Account
+                  account={group.owner_account}
+                  avatarSize={32}
+                  hideActions
+                  withRelationship={false}
+                />
+              </Stack>
+            )}
 
             <HStack alignItems='center' space={2} data-testid='group-actions'>
               <GroupOptionsButton group={group} />

@@ -32,10 +32,10 @@ const ProfileFamiliarFollowers: React.FC<IProfileFamiliarFollowers> = ({ account
   const familiarFollowers: ImmutableOrderedSet<Account | null> = useAppSelector(state => familiarFollowerIds.slice(0, 2).map(accountId => getAccount(state, accountId)));
 
   useEffect(() => {
-    if (me && features.familiarFollowers) {
+    if (me && features.familiarFollowers && !account.suspended) {
       dispatch(fetchAccountFamiliarFollowers(account.id));
     }
-  }, [account.id]);
+  }, [account.id, account.suspended]);
 
   const openFamiliarFollowersModal = () => {
     dispatch(openModal('FAMILIAR_FOLLOWERS', {
@@ -43,7 +43,7 @@ const ProfileFamiliarFollowers: React.FC<IProfileFamiliarFollowers> = ({ account
     }));
   };
 
-  if (familiarFollowerIds.size === 0) {
+  if (account.suspended || familiarFollowerIds.size === 0) {
     return null;
   }
 

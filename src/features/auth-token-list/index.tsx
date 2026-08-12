@@ -1,6 +1,6 @@
 import alertTriangleIcon from '@tabler/icons/outline/alert-triangle.svg';
 import { useEffect } from 'react';
-import { defineMessages, FormattedDate, useIntl } from 'react-intl';
+import { defineMessages, FormattedDate, FormattedMessage, useIntl } from 'react-intl';
 
 import { openModal } from '@/actions/modals.ts';
 import { fetchOAuthTokens, revokeOAuthTokenById } from '@/actions/security.ts';
@@ -8,15 +8,21 @@ import Button from '@/components/ui/button.tsx';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card.tsx';
 import { Column } from '@/components/ui/column.tsx';
 import HStack from '@/components/ui/hstack.tsx';
-import Spinner from '@/components/ui/spinner.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
-import { Token } from '@/reducers/security.ts';
+import securityReducer from '@/reducers/security.ts';
+import { injectReducer } from '@/store.ts';
+
+import type { Token } from '@/reducers/security.ts';
+
+injectReducer('security', securityReducer);
 
 const messages = defineMessages({
   header: { id: 'security.headers.tokens', defaultMessage: 'Sessions' },
+  currentSession: { id: 'security.tokens.current_session', defaultMessage: 'Current session' },
+  noSessions: { id: 'security.tokens.no_sessions', defaultMessage: 'No active sessions were returned.' },
   revoke: { id: 'security.tokens.revoke', defaultMessage: 'Revoke' },
   revokeSessionHeading: { id: 'confirmations.revoke_session.heading', defaultMessage: 'Revoke current session' },
   revokeSessionMessage: { id: 'confirmations.revoke_session.message', defaultMessage: 'You are about to revoke your current session. You will be signed out.' },
@@ -49,20 +55,33 @@ const AuthToken: React.FC<IAuthToken> = ({ token, isCurrent }) => {
   };
 
   return (
-    <div className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800'>
+    <div className='rounded-lg border border-solid border-primary-200 p-4 dark:border-primary-800'>
       <Stack space={2}>
         <Stack>
           <Text size='md' weight='medium'>{token.app_name}</Text>
+          {isCurrent && (
+            <Text size='sm' weight='medium' theme='muted'>
+              {intl.formatMessage(messages.currentSession)}
+            </Text>
+          )}
           {token.valid_until && (
             <Text size='sm' theme='muted'>
-              <FormattedDate
-                value={token.valid_until}
-                hour12
-                year='numeric'
-                month='short'
-                day='2-digit'
-                hour='numeric'
-                minute='2-digit'
+              <FormattedMessage
+                id='security.tokens.expires'
+                defaultMessage='Expires {date}'
+                values={{
+                  date: (
+                    <FormattedDate
+                      value={token.valid_until}
+                      hour12
+                      year='numeric'
+                      month='short'
+                      day='2-digit'
+                      hour='numeric'
+                      minute='2-digit'
+                    />
+                  ),
+                }}
               />
             </Text>
           )}
@@ -91,13 +110,13 @@ const AuthTokenList: React.FC = () => {
     dispatch(fetchOAuthTokens());
   }, []);
 
-  const body = tokens ? (
+  const body = tokens.size ? (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
       {tokens.map((token) => (
         <AuthToken key={token.id} token={token} isCurrent={token.id.toString() === currentTokenId} />
       ))}
     </div>
-  ) : <Spinner />;
+  ) : <Text theme='muted'>{intl.formatMessage(messages.noSessions)}</Text>;
 
   return (
     <Column label={intl.formatMessage(messages.header)} transparent withHeader={false}>

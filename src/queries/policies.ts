@@ -14,7 +14,7 @@
 */
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 import { MastodonClient } from '@/api/MastodonClient.ts';
 import { useApi } from '@/hooks/useApi.ts';

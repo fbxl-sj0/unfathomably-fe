@@ -12,6 +12,11 @@ interface FollowOpts {
   languages?: string[];
 }
 
+interface UnfollowOpts {
+  wasFollowing?: boolean;
+  wasRequested?: boolean;
+}
+
 function useFollow() {
   const api = useApi();
   const dispatch = useAppDispatch();
@@ -35,18 +40,45 @@ function useFollow() {
     });
   }
 
-  function unfollowEffect(accountId: string) {
+  function unfollowEffect(accountId: string, options: UnfollowOpts = {}) {
+    const { wasFollowing = true } = options;
+
     transaction({
       Accounts: {
         [accountId]: (account) => ({
           ...account,
-          followers_count: Math.max(0, account.followers_count - 1),
+          followers_count: wasFollowing
+            ? Math.max(0, account.followers_count - 1)
+            : account.followers_count,
         }),
       },
       Relationships: {
         [accountId]: (relationship) => ({
           ...relationship,
           following: false,
+          requested: false,
+        }),
+      },
+    });
+  }
+
+  function restoreUnfollowEffect(accountId: string, options: UnfollowOpts = {}) {
+    const { wasFollowing = true, wasRequested = false } = options;
+
+    transaction({
+      Accounts: {
+        [accountId]: (account) => ({
+          ...account,
+          followers_count: wasFollowing
+            ? account.followers_count + 1
+            : account.followers_count,
+        }),
+      },
+      Relationships: {
+        [accountId]: (relationship) => ({
+          ...relationship,
+          following: wasFollowing,
+          requested: wasRequested,
         }),
       },
     });
@@ -67,14 +99,18 @@ function useFollow() {
     }
   }
 
-  async function unfollow(accountId: string) {
+  async function unfollow(accountId: string, options: UnfollowOpts = {}) {
     if (!isLoggedIn) return;
-    unfollowEffect(accountId);
+    unfollowEffect(accountId, options);
 
     try {
-      await api.post(`/api/v1/accounts/${accountId}/unfollow`);
+      const response = await api.post(`/api/v1/accounts/${accountId}/unfollow`);
+      const result = relationshipSchema.safeParse(await response.json());
+      if (result.success) {
+        dispatch(importEntities([result.data], Entities.RELATIONSHIPS));
+      }
     } catch (e) {
-      followEffect(accountId);
+      restoreUnfollowEffect(accountId, options);
     }
   }
 

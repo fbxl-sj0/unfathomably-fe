@@ -7,6 +7,7 @@ import StatusReplyMentions from '@/components/status-reply-mentions.tsx';
 import HStack from '@/components/ui/hstack.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import PollPreview from '@/features/ui/components/poll-preview.tsx';
+import QuotedStatusContainer from '@/features/status/containers/quoted-status-container.tsx';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { Attachment } from '@/schemas/index.ts';
 
@@ -26,6 +27,7 @@ const ScheduledStatus: React.FC<IScheduledStatus> = ({ statusId, ...other }) => 
     if (!scheduledStatus) return null;
     return buildStatus(state, scheduledStatus);
   }) as StatusEntity | null;
+  const quotedStatusId = useAppSelector((state) => state.scheduled_statuses.get(statusId)?.quoted_status_id);
 
   if (!status) return null;
 
@@ -53,6 +55,8 @@ const ScheduledStatus: React.FC<IScheduledStatus> = ({ statusId, ...other }) => 
             status={status}
             collapsable
           />
+
+          {quotedStatusId && <QuotedStatusContainer statusId={quotedStatusId} />}
 
           {status.media_attachments.size > 0 && (
             <AttachmentThumbs

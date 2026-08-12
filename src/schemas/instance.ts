@@ -1,5 +1,5 @@
 /* eslint sort-keys: "error" */
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 import { accountSchema } from './account.ts';
 import { screenshotsSchema } from './manifest.ts';
@@ -89,6 +89,13 @@ const contactSchema = coerceObject({
 const nostrSchema = coerceObject({
   pubkey: z.string(),
   relay: z.string().url(),
+});
+
+const selectiveBridgeSchema = coerceObject({
+  actions: z.array(z.string()).catch([]),
+  enabled: z.boolean().catch(false),
+  retained_objects: z.array(z.string()).catch([]),
+  storage: z.literal('selective').catch('selective'),
 });
 
 const postArchiveImportSchema = coerceObject({
@@ -189,10 +196,12 @@ const usageSchema = coerceObject({
 
 const instanceV1BaseSchema = coerceObject({
   approval_required: z.boolean().catch(false),
+  atproto: selectiveBridgeSchema.optional().catch(undefined),
   configuration: configurationSchema,
   contact_account: accountSchema.optional().catch(undefined),
   description: z.string().catch(''),
   description_limit: z.number().catch(1500),
+  diaspora: selectiveBridgeSchema.optional().catch(undefined),
   email: z.string().email().catch(''),
   feature_quote: z.boolean().catch(false),
   fedibird_capabilities: z.array(z.string()).catch([]),
@@ -244,9 +253,11 @@ const instanceV1Schema = instanceV1BaseSchema.transform((instance) => {
 
 const instanceV2Schema = coerceObject({
   api_versions: z.record(z.string(), z.number()).catch({}),
+  atproto: selectiveBridgeSchema.optional().catch(undefined),
   configuration: configurationSchema,
   contact: contactSchema,
   description: z.string().catch(''),
+  diaspora: selectiveBridgeSchema.optional().catch(undefined),
   domain: z.string().catch(''),
   icon: filteredArray(instanceIconSchema),
   languages: filteredArray(z.string()),
@@ -266,12 +277,14 @@ const instanceV2Schema = coerceObject({
 function upgradeInstance(v1: InstanceV1): InstanceV2 {
   return {
     api_versions: {},
+    atproto: v1.atproto,
     configuration: v1.configuration,
     contact: {
       account: v1.contact_account,
       email: v1.email,
     },
     description: v1.short_description, // Shouldn't it be "v1.description" ?
+    diaspora: v1.diaspora,
     domain: v1.uri,
     icon: [],
     languages: v1.languages,

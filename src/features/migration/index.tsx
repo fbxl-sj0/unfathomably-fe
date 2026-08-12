@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
 import { Link } from 'react-router-dom';
 
-import { moveAccount } from '@/actions/security.ts';
+import { moveAccount, restartMoveAccount } from '@/actions/security.ts';
 import Button from '@/components/ui/button.tsx';
 import { Column } from '@/components/ui/column.tsx';
 import FormActions from '@/components/ui/form-actions.tsx';
@@ -12,6 +12,7 @@ import Input from '@/components/ui/input.tsx';
 import Text from '@/components/ui/text.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useInstance } from '@/hooks/useInstance.ts';
+import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
 import toast from '@/toast.tsx';
 
 const messages = defineMessages({
@@ -20,6 +21,11 @@ const messages = defineMessages({
   moveAccountSuccess: { id: 'migration.move_account.success', defaultMessage: 'Account successfully moved.' },
   moveAccountFail: { id: 'migration.move_account.fail', defaultMessage: 'Account migration failed.' },
   moveAccountFailCooldownPeriod: { id: 'migration.move_account.fail.cooldown_period', defaultMessage: 'You have moved your account too recently. Please try again later.' },
+  restartHeading: { id: 'migration.restart.heading', defaultMessage: 'Retry previous migration' },
+  restartHint: { id: 'migration.restart.hint', defaultMessage: 'Your latest migration targets {target}. Retry delivery if the new account did not receive all followers.' },
+  restartSubmit: { id: 'migration.restart.submit', defaultMessage: 'Retry migration delivery' },
+  restartSuccess: { id: 'migration.restart.success', defaultMessage: 'Account migration delivery was queued again.' },
+  restartFail: { id: 'migration.restart.fail', defaultMessage: 'The account migration could not be restarted.' },
   acctFieldLabel: { id: 'migration.fields.acct.label', defaultMessage: 'Handle of the new account' },
   acctFieldPlaceholder: { id: 'migration.fields.acct.placeholder', defaultMessage: 'username@domain' },
   currentPasswordFieldLabel: { id: 'migration.fields.confirm_password.label', defaultMessage: 'Current password' },
@@ -29,12 +35,16 @@ const Migration = () => {
   const intl = useIntl();
   const dispatch = useAppDispatch();
   const { instance } = useInstance();
+  const { account } = useOwnAccount();
 
   const cooldownPeriod = instance.pleroma.metadata.migration_cooldown_period;
 
   const [targetAccount, setTargetAccount] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [movedTo, setMovedTo] = useState(account?.pleroma?.moved_to);
+  const [restartPassword, setRestartPassword] = useState('');
+  const [isRestarting, setIsRestarting] = useState(false);
 
   const handleInputChange: React.ChangeEventHandler<HTMLInputElement> = e => {
     if (e.target.name === 'password') setPassword(e.target.value);
@@ -47,8 +57,10 @@ const Migration = () => {
   };
 
   const handleSubmit: React.FormEventHandler = e => {
+    e.preventDefault();
     setIsLoading(true);
     return dispatch(moveAccount(targetAccount, password)).then(() => {
+      setMovedTo(targetAccount);
       clearForm();
       toast.success(intl.formatMessage(messages.moveAccountSuccess));
     }).catch(error => {
@@ -65,13 +77,53 @@ const Migration = () => {
     });
   };
 
+  const handleRestartSubmit: React.FormEventHandler = e => {
+    e.preventDefault();
+    setIsRestarting(true);
+
+    return dispatch(restartMoveAccount(restartPassword)).then((data) => {
+      setMovedTo(data.moved_to);
+      setRestartPassword('');
+      toast.success(intl.formatMessage(messages.restartSuccess));
+    }).catch(() => {
+      toast.error(intl.formatMessage(messages.restartFail));
+    }).then(() => {
+      setIsRestarting(false);
+    });
+  };
+
   return (
     <Column label={intl.formatMessage(messages.heading)}>
+      {movedTo && (
+        <Form onSubmit={handleRestartSubmit}>
+          <Text size='xl' weight='bold'>{intl.formatMessage(messages.restartHeading)}</Text>
+          <Text theme='muted'>
+            {intl.formatMessage(messages.restartHint, { target: movedTo })}
+          </Text>
+          <FormGroup labelText={intl.formatMessage(messages.currentPasswordFieldLabel)}>
+            <Input
+              type='password'
+              name='restartPassword'
+              onChange={(event) => setRestartPassword(event.target.value)}
+              value={restartPassword}
+              required
+            />
+          </FormGroup>
+          <FormActions>
+            <Button
+              type='submit'
+              theme='secondary'
+              text={intl.formatMessage(messages.restartSubmit)}
+              disabled={isRestarting || !restartPassword}
+            />
+          </FormActions>
+        </Form>
+      )}
       <Form onSubmit={handleSubmit}>
         <Text theme='muted'>
           <FormattedMessage
             id='migration.hint'
-            defaultMessage='This will move your followers to the new account. No other data will be moved. To perform migration, you need to {link} on your new account first.'
+            defaultMessage='This will move your followers to the new account. Your posts and the accounts you follow will not move. To perform migration, you need to {link} on your new account first.'
             values={{
               link: (
                 <Link
@@ -119,9 +171,9 @@ const Migration = () => {
         </FormGroup>
         <FormActions>
           <Button
+            type='submit'
             theme='primary'
             text={intl.formatMessage(messages.submit)}
-            onClick={handleSubmit}
             disabled={isLoading}
           />
         </FormActions>

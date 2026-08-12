@@ -40,6 +40,7 @@ import AutosuggestEmoji from '@/components/autosuggest-emoji.tsx';
 import { isNativeEmoji } from '@/features/emoji/index.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useCompose } from '@/hooks/useCompose.ts';
+import { normalizeMention } from '@/normalizers/mention.ts';
 import { selectAccount } from '@/selectors/index.ts';
 import { textAtCursorMatchesToken } from '@/utils/suggestions.ts';
 
@@ -329,7 +330,7 @@ const AutosuggestPlugin = ({
           node.select();
         } else {
           const account = selectAccount(getState(), suggestion)!;
-          replaceMatch($createMentionNode(account));
+          replaceMatch($createMentionNode(normalizeMention(account).toJS()));
         }
 
         dispatch(clearComposeSuggestions(composeId));
@@ -505,9 +506,11 @@ const AutosuggestPlugin = ({
         },
         COMMAND_PRIORITY_LOW,
       ),
-      editor.registerCommand<KeyboardEvent>(
+      editor.registerCommand<KeyboardEvent | null>(
         KEY_ENTER_COMMAND,
         (payload) => {
+          if (!payload) return false;
+
           const event = payload;
           event.preventDefault();
           event.stopImmediatePropagation();

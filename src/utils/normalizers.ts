@@ -1,4 +1,4 @@
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 /** Use new value only if old value is undefined */
 export const mergeDefined = (oldVal: any, newVal: any) => oldVal === undefined ? newVal : oldVal;

@@ -22,7 +22,7 @@
     * presentation components
 */
 
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 const nativeActivityFieldValueSchema = z.union([
   z.string(),

@@ -1,3 +1,26 @@
+/*
+  Project: Unfathomably Frontend
+  --------------------------------
+
+  File: src/features/ui/components/modals/media-modal.tsx
+
+  Purpose:
+
+    Present status attachments in a navigable full-screen lightbox.
+
+  Responsibilities:
+
+    * open the attachment selected in the status media grid
+    * navigate, zoom, and download individual attachments
+    * retain access to the originating status and its interactions
+
+  This file intentionally does NOT contain:
+
+    * status thumbnail layout
+    * attachment upload behavior
+    * remote media storage
+*/
+
 import arrowLeftIcon from '@tabler/icons/outline/arrow-left.svg';
 import arrowRightIcon from '@tabler/icons/outline/arrow-right.svg';
 import arrowsMaximizeIcon from '@tabler/icons/outline/arrows-maximize.svg';
@@ -24,6 +47,7 @@ import PlaceholderStatus from '@/features/placeholder/components/placeholder-sta
 import Thread from '@/features/status/components/thread.tsx';
 import Video from '@/features/video/index.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
+import { useLocale } from '@/hooks/useLocale.ts';
 import { userTouching } from '@/is-mobile.ts';
 import { normalizeStatus } from '@/normalizers/index.ts';
 import { Status as StatusEntity, Attachment } from '@/schemas/index.ts';
@@ -72,6 +96,8 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
   const dispatch = useAppDispatch();
   const history = useHistory();
   const intl = useIntl();
+  const { direction } = useLocale();
+  const isRtl = direction === 'rtl';
 
   const actualStatus = status ? getActualStatus(status) : undefined;
 
@@ -93,12 +119,20 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
   const handleKeyDown = (e: KeyboardEvent) => {
     switch (e.key) {
       case 'ArrowLeft':
-        handlePrevClick();
+        if (isRtl) {
+          handleNextClick();
+        } else {
+          handlePrevClick();
+        }
         e.preventDefault();
         e.stopPropagation();
         break;
       case 'ArrowRight':
-        handleNextClick();
+        if (isRtl) {
+          handlePrevClick();
+        } else {
+          handleNextClick();
+        }
         e.preventDefault();
         e.stopPropagation();
         break;
@@ -106,11 +140,18 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
   };
 
   const handleDownload = () => {
-    const mediaItem = hasMultipleImages ? media[index as number] : media[0];
-    window.open(mediaItem?.url);
+    const mediaItem = media[getIndex()];
+
+    if (mediaItem) {
+      window.open(mediaItem.url);
+    }
   };
 
-  const getIndex = () => index !== null ? index : props.index;
+  const getIndex = () => {
+    const selectedIndex = index !== null ? index : props.index;
+
+    return selectedIndex >= 0 && selectedIndex < media.length ? selectedIndex : 0;
+  };
   const activeImageZoomed = zoomedImages.has(getIndex());
 
   const handleZoomChange = (imageIndex: number, zoomed: boolean) => {
@@ -245,7 +286,7 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [index]);
+  }, [direction, index]);
 
   if (status) {
     if (!actualStatus && isLoaded) {
@@ -321,14 +362,19 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
               className='relative h-[calc(100vh-120px)] w-full grow'
             >
               {hasMultipleImages && (
-                <div className={clsx('absolute inset-y-0 left-5 z-10 flex items-center transition-opacity', navigationHiddenClassName)}>
+                <div className={clsx(
+                  'absolute inset-y-0 z-10 flex items-center transition-opacity',
+                  isRtl ? 'right-5' : 'left-5',
+                  navigationHiddenClassName,
+                )}
+                >
                   <button
                     tabIndex={0}
                     className='flex size-10 items-center justify-center rounded-full bg-gray-900 text-white'
                     onClick={handlePrevClick}
                     aria-label={intl.formatMessage(messages.previous)}
                   >
-                    <Icon src={arrowLeftIcon} className='size-5' />
+                    <Icon src={isRtl ? arrowRightIcon : arrowLeftIcon} className='size-5' />
                   </button>
                 </div>
               )}
@@ -340,6 +386,7 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
                   onChangeIndex={handleSwipe}
                   className='flex items-center justify-center'
                   index={getIndex()}
+                  direction={direction}
                   disabled={activeImageZoomed}
                 >
                   {content}
@@ -347,14 +394,19 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
               </div>
 
               {hasMultipleImages && (
-                <div className={clsx('absolute inset-y-0 right-5 z-10 flex items-center transition-opacity', navigationHiddenClassName)}>
+                <div className={clsx(
+                  'absolute inset-y-0 z-10 flex items-center transition-opacity',
+                  isRtl ? 'left-5' : 'right-5',
+                  navigationHiddenClassName,
+                )}
+                >
                   <button
                     tabIndex={0}
                     className='flex size-10 items-center justify-center rounded-full bg-gray-900 text-white'
                     onClick={handleNextClick}
                     aria-label={intl.formatMessage(messages.next)}
                   >
-                    <Icon src={arrowRightIcon} className='size-5' />
+                    <Icon src={isRtl ? arrowLeftIcon : arrowRightIcon} className='size-5' />
                   </button>
                 </div>
               )}
@@ -399,3 +451,5 @@ const MediaModal: React.FC<IMediaModal> = (props) => {
 };
 
 export default MediaModal;
+
+/* end of src/features/ui/components/modals/media-modal.tsx */

@@ -1,5 +1,5 @@
 import { produce } from 'immer';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 import { create } from 'zustand';
 
 import { persist } from 'zustand/middleware';

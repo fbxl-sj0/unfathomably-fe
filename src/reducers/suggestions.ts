@@ -1,6 +1,6 @@
 import { OrderedSet as ImmutableOrderedSet, Record as ImmutableRecord } from 'immutable';
 
-import { ACCOUNT_BLOCK_SUCCESS, ACCOUNT_MUTE_SUCCESS } from '@/actions/accounts.ts';
+import { ACCOUNT_BLOCK_SUCCESS, ACCOUNT_MUTE_SUCCESS } from '@/action-types/accounts.ts';
 import { DOMAIN_BLOCK_SUCCESS } from '@/actions/domain-blocks.ts';
 import {
   SUGGESTIONS_FETCH_REQUEST,

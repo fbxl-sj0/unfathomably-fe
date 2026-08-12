@@ -34,6 +34,7 @@ const previewableProfiles = new Set([
   'blog_publisher',
   'collection_channel',
   'library',
+  'native_publisher',
   'rss_feed',
 ]);
 

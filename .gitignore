@@ -1,32 +1,49 @@
+# Dependencies and package-manager state
 /node_modules/
-/tmp/
-/build/
-/coverage/
-/.coverage/
-/.eslintcache
-/.env
-/deploy.sh
-/.vs/
-yarn-error.log*
-/junit.xml
-*.timestamp-*
-*.bundled_*
 /.yarn/*
 !/.yarn/releases/
 !/.yarn/plugins/
 !/.yarn/sdks/
 !/.yarn/versions/
 
+# Generated build output
+/tmp/
+/build/*
+!/build/zod-csp-safe-plugin.ts
+/coverage/
+/.coverage/
 /dist/
+/dist-protocol-origin/
 /static/
 /public/
-/dist/
+
+# Tool caches and reports
+/.eslintcache
+/.stylelintcache
+/.vite/
+*.tsbuildinfo
+/junit.xml
+*.log
+*.timestamp-*
+*.bundled_*
+
+# Local environment and deployment files
+/.env
+/.env.*
+!/.env.example
+/deploy.sh
+
+# Local release archives
 /unfathomably-fe.zip
 /unfathomably-fe-dist*.tgz
 /unfathomably-fe-dist*.zip
 
-.idea
+# Editors and operating systems
+/.vs/
+.idea/
 .DS_Store
+Thumbs.db
+Desktop.ini
 
 # Custom build files
 /custom/**/*

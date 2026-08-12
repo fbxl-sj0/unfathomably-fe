@@ -5,6 +5,7 @@ import { FormattedMessage } from 'react-intl';
 
 import { eventDiscussionCompose } from '@/actions/compose.ts';
 import { fetchStatusWithContext, fetchNext } from '@/actions/statuses.ts';
+import { useThreadStream } from '@/api/hooks/streaming/useThreadStream.ts';
 import MissingIndicator from '@/components/missing-indicator.tsx';
 import ScrollableList from '@/components/scrollable-list.tsx';
 import Tombstone from '@/components/tombstone.tsx';
@@ -56,12 +57,14 @@ const EventDiscussion: React.FC<IEventDiscussion> = (props) => {
   const node = useRef<HTMLDivElement>(null);
   const scroller = useRef<VirtuosoHandle>(null);
 
-  const fetchData = async() => {
+  const fetchData = useCallback(async() => {
     const { params } = props;
     const { statusId } = params;
     const { next } = await dispatch(fetchStatusWithContext(statusId));
     setNext(next);
-  };
+  }, [dispatch, props.params.statusId]);
+
+  useThreadStream(props.params.statusId, descendantsIds.toArray(), fetchData);
 
   useEffect(() => {
     fetchData().then(() => {
@@ -69,7 +72,7 @@ const EventDiscussion: React.FC<IEventDiscussion> = (props) => {
     }).catch(() => {
       setIsLoaded(true);
     });
-  }, [props.params.statusId]);
+  }, [fetchData]);
 
   useEffect(() => {
     if (isLoaded && me) dispatch(eventDiscussionCompose(`reply:${props.params.statusId}`, status!));

@@ -13,8 +13,10 @@ import type { Account, EmbeddedEntity, Status } from '@/types/entities.ts';
 
 export const AdminReportRecord = ImmutableRecord({
   account: null as EmbeddedEntity<Account>,
+  account_ap_id: '',
   action_taken: false,
   action_taken_by_account: null as EmbeddedEntity<Account> | null,
+  actor_ap_id: '',
   assigned_account: null as EmbeddedEntity<Account> | null,
   category: '',
   comment: '',

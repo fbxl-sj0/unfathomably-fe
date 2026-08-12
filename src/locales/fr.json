@@ -645,7 +645,7 @@
   "edit_profile.fields.hide_network_label": "Cacher le réseau",
   "edit_profile.fields.location_label": "Lieu",
   "edit_profile.fields.location_placeholder": "Lieu",
-  "edit_profile.fields.locked_label": "Lock account",
+  "edit_profile.fields.locked_label": "Manually review follow requests",
   "edit_profile.fields.lud16_label": "Adresse Lightning",
   "edit_profile.fields.lud16_placeholder": "utilisateur@exemple.com",
   "edit_profile.fields.meta_fields.content_placeholder": "Content",

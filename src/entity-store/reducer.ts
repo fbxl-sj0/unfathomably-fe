@@ -1,5 +1,7 @@
 import { produce } from 'immer';
 
+import { Entities } from './entities.ts';
+
 import {
   ENTITIES_IMPORT,
   ENTITIES_DELETE,
@@ -22,6 +24,28 @@ interface State {
   [entityType: string]: EntityCache | undefined;
 }
 
+type GroupEntity = Entity & {
+  owner_account?: unknown;
+  statuses_count?: number;
+};
+
+/** Keep compact status cards from erasing fields loaded by a group detail request. */
+const preserveGroupDetail = (cache: EntityCache, entities: Entity[]): Entity[] =>
+  entities.map((entity) => {
+    const incoming = entity as GroupEntity;
+    const existing = cache.store[entity.id] as GroupEntity | undefined;
+
+    if (!existing || incoming.owner_account) return entity;
+
+    return {
+      ...incoming,
+      owner_account: existing.owner_account ?? incoming.owner_account,
+      statuses_count: incoming.statuses_count === 0
+        ? existing.statuses_count ?? 0
+        : incoming.statuses_count,
+    };
+  });
+
 /** Import entities into the cache. */
 const importEntities = (
   state: State,
@@ -34,7 +58,11 @@ const importEntities = (
 ): State => {
   return produce(state, draft => {
     const cache = draft[entityType] ?? createCache();
-    cache.store = updateStore(cache.store, entities);
+    const storeEntities = entityType === Entities.GROUPS
+      ? preserveGroupDetail(cache, entities)
+      : entities;
+
+    cache.store = updateStore(cache.store, storeEntities);
 
     if (typeof listKey === 'string') {
       let list = cache.lists[listKey] ?? createList();
@@ -152,6 +180,8 @@ const invalidateEntityList = (state: State, entityType: string, listKey: string)
     const cache = draft[entityType] ?? createCache();
     const list = cache.lists[listKey] ?? createList();
     list.state.invalid = true;
+    cache.lists[listKey] = list;
+    draft[entityType] = cache;
   });
 };
 

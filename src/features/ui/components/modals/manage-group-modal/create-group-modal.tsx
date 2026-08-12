@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { HTTPError } from '@/api/HTTPError.ts';
 import { useCreateGroup, useGroupValidation, type CreateGroupParams } from '@/api/hooks/index.ts';

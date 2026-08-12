@@ -1,11 +1,20 @@
+/*
+ * Unfathomably FE
+ * File: account.ts
+ * Purpose: Validate account API data and derive stable presentation fields.
+ * This file intentionally does not fetch accounts or render profile UI.
+ */
+
 import DOMPurify from 'isomorphic-dompurify';
-import z from 'zod';
+import * as nip19 from 'nostr-tools/nip19';
+import * as z from '@/zod.ts';
 
 import avatarMissing from '@/assets/images/avatar-missing.png';
 import headerMissing from '@/assets/images/header-missing.png';
 
 import { customEmojiSchema } from './custom-emoji.ts';
 import { federationStatusSchema, Relationship } from './relationship.ts';
+import { identityProofSchema } from './identity-proof.ts';
 import { nativeActivityPresentationSchema } from './native-activity.ts';
 import { coerceObject, contentSchema, filteredArray, nostrIdSchema } from './utils.ts';
 
@@ -28,6 +37,93 @@ const roleSchema = z.object({
   highlighted: z.boolean().catch(true),
 });
 
+const nostrExternalIdentitySchema = z.object({
+  platform: z.string(),
+  identity: z.string(),
+  proof: z.string(),
+});
+
+const nostrBirthdaySchema = z.object({
+  year: z.number().int().optional().catch(undefined),
+  month: z.number().int().optional().catch(undefined),
+  day: z.number().int().optional().catch(undefined),
+});
+
+const nostrStatusSchema = z.object({
+  type: z.string(),
+  content: z.string(),
+  url: z.string().optional().catch(undefined),
+  profile: z.string().optional().catch(undefined),
+  event: z.string().optional().catch(undefined),
+  address: z.string().optional().catch(undefined),
+  expires_at: z.string().datetime().optional().catch(undefined),
+  created_at: z.string().datetime().optional().catch(undefined),
+  event_id: z.string().optional().catch(undefined),
+});
+
+const nostrBadgeSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional().catch(undefined),
+  image: z.string().url().optional().catch(undefined),
+  thumbnail: z.string().url().optional().catch(undefined),
+  issuer: nostrIdSchema,
+  award_event_id: nostrIdSchema,
+});
+
+const nostrIdentitySchema = coerceObject({
+  badges: filteredArray(nostrBadgeSchema),
+  birthday: nostrBirthdaySchema.optional().catch(undefined),
+  external_identities: filteredArray(nostrExternalIdentitySchema),
+  group_id: z.string().optional().catch(undefined),
+  kind: z.string().optional().catch(undefined),
+  lud06: z.string().optional().catch(undefined),
+  lud16: z.string().email().optional().catch(undefined),
+  nprofile: z.string().optional().catch(undefined),
+  npub: z.string().optional().catch(undefined),
+  nip05: z.string().optional().catch(undefined),
+  pubkey: nostrIdSchema.optional().catch(undefined),
+  relay: z.string().optional().catch(undefined),
+  relays: z.array(z.string()).catch([]),
+  statuses: filteredArray(nostrStatusSchema),
+  website: z.string().url().optional().catch(undefined),
+}).transform((identity) => {
+  let displayAddress = identity.nip05;
+
+  if (displayAddress?.startsWith('_@')) {
+    displayAddress = displayAddress.slice(2);
+  }
+
+  if (!displayAddress && identity.npub) {
+    displayAddress = identity.npub;
+  }
+
+  if (!displayAddress && identity.pubkey) {
+    displayAddress = nip19.npubEncode(identity.pubkey);
+  }
+
+  return {
+    ...identity,
+    display_address: displayAddress,
+  };
+});
+
+const atprotoIdentitySchema = z.object({
+  did: z.string().startsWith('did:'),
+  handle: z.string().optional().catch(undefined),
+  pds: z.string().url().optional().catch(undefined),
+  profile_url: z.string().url().optional().catch(undefined),
+  mirror: z.boolean().catch(false),
+}).optional().catch(undefined);
+
+const diasporaIdentitySchema = z.object({
+  id: z.string(),
+  guid: z.string(),
+  pod: z.string().url().optional().catch(undefined),
+  profile_url: z.string().url().optional().catch(undefined),
+  mirror: z.boolean().catch(false),
+}).optional().catch(undefined);
+
 const baseAccountSchema = z.object({
   acct: z.string().catch(''),
   avatar: z.string().catch(avatarMissing),
@@ -36,6 +132,7 @@ const baseAccountSchema = z.object({
   bot: z.boolean().catch(false),
   created_at: z.string().datetime().catch(new Date().toUTCString()),
   discoverable: z.boolean().catch(false),
+  indexable: z.boolean().optional().catch(undefined),
   display_name: z.string().catch(''),
   ditto: coerceObject({
     accepts_zaps: z.boolean().catch(false),
@@ -66,10 +163,9 @@ const baseAccountSchema = z.object({
     z.string(),
     z.null(),
   ]).catch(null),
-  nostr: coerceObject({
-    pubkey: nostrIdSchema.optional().catch(undefined),
-    lud16: z.string().email().optional().catch(undefined),
-  }),
+  nostr: nostrIdentitySchema,
+  atproto: atprotoIdentitySchema,
+  diaspora: diasporaIdentitySchema,
   note: contentSchema,
   /** Fedibird extra settings. */
   other_settings: z.object({
@@ -91,11 +187,13 @@ const baseAccountSchema = z.object({
     hide_followers_count: z.boolean().catch(false),
     hide_follows: z.boolean().catch(false),
     hide_follows_count: z.boolean().catch(false),
+    identity_proofs: filteredArray(identityProofSchema),
     is_admin: z.boolean().catch(false),
     is_local: z.boolean().optional().catch(undefined),
     is_moderator: z.boolean().catch(false),
     is_suggested: z.boolean().catch(false),
     location: z.string().optional().catch(undefined),
+    moved_to: z.string().url().nullish().catch(undefined),
     native: nativeActivityPresentationSchema,
     notification_settings: coerceObject({
       block_from_strangers: z.boolean().catch(false),
@@ -112,6 +210,7 @@ const baseAccountSchema = z.object({
       actor_type: z.string().catch('Person'),
       actor_types: z.array(z.string()).catch([]),
       discoverable: z.boolean().catch(true),
+      indexable: z.boolean().nullable().catch(null),
     }).optional().catch(undefined),
     sms_verified: z.boolean().catch(false),
     nostr: z.object({
@@ -158,6 +257,7 @@ const transformAccount = <T extends TransformableAccount>({ pleroma, other_setti
     admin: pleroma?.is_admin || false,
     avatar_static: account.avatar_static || account.avatar,
     discoverable: account.discoverable || account.source?.pleroma?.discoverable || false,
+    indexable: account.indexable ?? account.source?.pleroma?.indexable ?? false,
     display_name: displayName,
     domain,
     fqn: account.fqn || (account.acct.includes('@') ? account.acct : `${account.acct}@${domain}`),
@@ -184,3 +284,5 @@ type Account = Resolve<z.infer<typeof accountSchema>> & {
 }
 
 export { accountSchema, type Account };
+
+/* end of account.ts */

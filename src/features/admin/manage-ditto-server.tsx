@@ -23,7 +23,7 @@ import { Screenshots } from '@/schemas/manifest.ts';
 import toast from '@/toast.tsx';
 
 import type { StreamfieldComponent } from '@/components/ui/streamfield.tsx';
-import type { z } from 'zod';
+import type * as z from '@/zod.ts';
 
 const messages = defineMessages({
   heading: { id: 'column.admin.ditto_server.manage', defaultMessage: 'Manage Ditto Server' },

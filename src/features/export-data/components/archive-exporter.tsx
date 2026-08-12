@@ -8,6 +8,10 @@ import Form from '@/components/ui/form.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
+import backupsReducer from '@/reducers/backups.ts';
+import { injectReducer } from '@/store.ts';
+
+injectReducer('backups', backupsReducer);
 
 const messages = defineMessages({
   backupLink: { id: 'export_data.post_archive.backups_link', defaultMessage: 'View backups' },

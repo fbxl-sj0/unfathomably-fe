@@ -204,7 +204,7 @@ const QueueCard: React.FC<IQueueCard> = ({ queue }) => {
   const formatDate = (value?: string | null) => value ? intl.formatDate(value, dateFormatOptions) : undefined;
 
   return (
-    <div className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800'>
+    <div className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800 black:bg-primary-900/20'>
       <Stack space={3}>
         <HStack justifyContent='between' alignItems='center' space={4} wrap>
           <Text weight='semibold'>{queue.name}</Text>
@@ -213,7 +213,7 @@ const QueueCard: React.FC<IQueueCard> = ({ queue }) => {
 
         <HStack space={2} wrap>
           {queue.states.map((state) => (
-            <HStack key={`${queue.name}-${state.state}`} alignItems='center' space={2} className='rounded bg-white px-2 py-1 dark:bg-primary-900'>
+            <HStack key={`${queue.name}-${state.state}`} alignItems='center' space={2} className='rounded bg-white px-2 py-1 dark:bg-primary-900 black:bg-black'>
               <Text tag='span' size='sm'>
                 {intl.formatMessage(messages.stateLabel, {
                   state: state.state,
@@ -247,7 +247,7 @@ const RemoteInstance: React.FC<IRemoteInstance> = ({ instance }) => {
   });
 
   return (
-    <div className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800'>
+    <div className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800 black:bg-primary-900/20'>
       <Stack space={2}>
         <HStack alignItems='center' justifyContent='between' space={4} wrap>
           <HStack alignItems='center' space={2}>
@@ -340,7 +340,7 @@ const DeliveryEndpoint: React.FC<IDeliveryEndpoint> = ({ endpoint }) => {
   });
 
   return (
-    <div className='rounded-md border border-solid border-gray-200 bg-white p-3 dark:border-primary-700 dark:bg-primary-900'>
+    <div className='rounded-md border border-solid border-gray-200 bg-white p-3 dark:border-primary-700 dark:bg-primary-900 black:border-primary-800 black:bg-black'>
       <Stack space={2}>
         <Text weight='medium' size='sm' className='break-all'>{endpoint.url}</Text>
 

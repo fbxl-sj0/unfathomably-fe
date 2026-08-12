@@ -247,6 +247,9 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     announcementsReactions: v.software === MASTODON && gte(v.compatVersion, parse('3.1.0')),
 
+    /** Can link a Bluesky identity to the selective AT Protocol bridge. */
+    atproto: instance.atproto?.enabled === true,
+
     /**
      * Pleroma backups.
      * @see GET /api/v1/pleroma/backups
@@ -409,6 +412,9 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
       features.includes('custom_emoji_reactions'),
       isPleromaApiFamily(v) && gte(v.version, parse('2.5.50')),
     ]),
+
+    /** Exchanges locally relevant entities with diaspora* pods. */
+    diaspora: instance.diaspora?.enabled === true,
 
     /**
      * Legacy DMs timeline where messages are displayed chronologically without groupings.

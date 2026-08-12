@@ -1,7 +1,10 @@
+import { useCallback } from 'react';
 import { FormattedMessage } from 'react-intl';
 
 import { openModal } from '@/actions/modals.ts';
 import { useGroup, useGroupMedia } from '@/api/hooks/index.ts';
+import { hasStatusMedia } from '@/api/hooks/streaming/stream-filters.ts';
+import { useGroupStream } from '@/api/hooks/streaming/useGroupStream.ts';
 import LoadMore from '@/components/load-more.tsx';
 import MissingIndicator from '@/components/missing-indicator.tsx';
 import { Column } from '@/components/ui/column.tsx';
@@ -29,7 +32,19 @@ const GroupGallery: React.FC<IGroupGallery> = (props) => {
     isLoading,
     isFetching,
     hasNextPage,
+    fetchEntities,
   } = useGroupMedia(groupId);
+
+  const refreshMedia = useCallback(() => {
+    fetchEntities();
+  }, [fetchEntities]);
+
+  useGroupStream(groupId, {
+    timelineId: `group:${groupId}:media`,
+    accept: hasStatusMedia,
+    onUpdate: refreshMedia,
+    onDelete: refreshMedia,
+  });
 
   const attachments = statuses.reduce<Attachment[]>((result, status) => {
     result.push(...status.media_attachments.map((a) => a.set('status', status)));

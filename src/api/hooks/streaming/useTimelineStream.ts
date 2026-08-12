@@ -9,7 +9,8 @@ import { getAccessToken } from '@/utils/auth.ts';
 function useTimelineStream(...args: Parameters<typeof connectTimelineStream>) {
   // TODO: get rid of streaming.ts and move the actual opts here.
   const [timelineId, path] = args;
-  const { enabled = true } = args[3] ?? {};
+  const accept = args[2];
+  const { enabled = true, onUpdate, onDelete } = args[3] ?? {};
 
   const dispatch = useAppDispatch();
   const { instance } = useInstance();
@@ -39,7 +40,7 @@ function useTimelineStream(...args: Parameters<typeof connectTimelineStream>) {
   useEffect(() => {
     connect();
     return disconnect;
-  }, [accessToken, streamingUrl, timelineId, path, enabled]);
+  }, [accessToken, streamingUrl, timelineId, path, accept, enabled, onUpdate, onDelete]);
 
   return {
     disconnect,

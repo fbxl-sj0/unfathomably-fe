@@ -116,7 +116,7 @@ const ComposeEditor = forwardRef<LexicalEditor, IComposeEditor>(({
   }), []);
 
   const handlePaste: React.ClipboardEventHandler<HTMLDivElement> = (e) => {
-    if (onPaste && e.clipboardData && e.clipboardData.files.length === 1) {
+    if (onPaste && e.clipboardData && e.clipboardData.files.length > 0) {
       onPaste(e.clipboardData.files);
       e.preventDefault();
     }

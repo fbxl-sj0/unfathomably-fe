@@ -8,8 +8,8 @@ import {
   CHAT_MESSAGE_SEND_SUCCESS,
   CHAT_MESSAGE_DELETE_REQUEST,
   CHAT_MESSAGE_DELETE_SUCCESS,
-} from '@/actions/chats.ts';
-import { STREAMING_CHAT_UPDATE } from '@/actions/streaming.ts';
+} from '@/action-types/chats.ts';
+import { STREAMING_CHAT_UPDATE } from '@/actions/streaming-types.ts';
 import { normalizeChatMessage } from '@/normalizers/index.ts';
 
 import type { APIEntity } from '@/types/entities.ts';

@@ -21,7 +21,7 @@ const AwaitingApproval: React.FC = () => {
   const [isLoading, setLoading] = useState(true);
 
   useEffect(() => {
-    dispatch(fetchUsers({ pending: true }))
+    dispatch(fetchUsers({ pending: true, local: true }))
       .then(() => setLoading(false))
       .catch(() => {});
   }, []);

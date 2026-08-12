@@ -3,8 +3,10 @@ import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 import { Redirect, Route, useHistory, RouteProps, RouteComponentProps, match as MatchType, useLocation } from 'react-router-dom';
 
 import Layout from '@/components/ui/layout.tsx';
+import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
 import { useSettings } from '@/hooks/useSettings.ts';
+import { hasOAuthScope } from '@/utils/auth.ts';
 import { canRecoverFromDynamicImportError, isDynamicImportError, rememberDynamicImportRecovery } from '@/utils/errors.ts';
 import { unregisterSW } from '@/utils/sw.ts';
 
@@ -47,6 +49,7 @@ const WrappedRoute: React.FC<IWrappedRoute> = ({
 
   const { account } = useOwnAccount();
   const { isDeveloper } = useSettings();
+  const hasAdminScope = useAppSelector(state => hasOAuthScope(state, 'admin'));
 
   const renderComponent = ({ match }: RouteComponentProps) => {
     if (Page) {
@@ -85,8 +88,8 @@ const WrappedRoute: React.FC<IWrappedRoute> = ({
   const authorized = [
     account || publicRoute,
     developerOnly ? isDeveloper : true,
-    staffOnly ? account && account.staff : true,
-    adminOnly ? account && account.admin : true,
+    staffOnly ? account && account.staff && hasAdminScope : true,
+    adminOnly ? account && account.admin && hasAdminScope : true,
   ].every(c => c);
 
   if (!authorized) {
@@ -130,18 +133,19 @@ const FallbackError: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) =
   const location = useLocation();
   const firstUpdate = useRef(true);
   const recovering = useRef(false);
+  const canRecover = isDynamicImportError(error) && canRecoverFromDynamicImportError();
 
   useEffect(() => {
     if (recovering.current) {
       return;
     }
 
-    if (isDynamicImportError(error) && canRecoverFromDynamicImportError()) {
+    if (canRecover) {
       recovering.current = true;
       rememberDynamicImportRecovery();
       unregisterSW().then(() => window.location.reload()).catch(() => window.location.reload());
     }
-  }, [error]);
+  }, [canRecover, error]);
 
   useEffect(() => {
     if (firstUpdate.current) {
@@ -150,6 +154,10 @@ const FallbackError: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) =
       resetErrorBoundary();
     }
   }, [location]);
+
+  if (canRecover) {
+    return <FallbackLoading />;
+  }
 
   return (
     <FallbackLayout>

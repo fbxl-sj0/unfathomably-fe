@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { Link } from 'react-router-dom';
 
 import GroupAvatar from '@/components/groups/group-avatar.tsx';
@@ -60,6 +61,19 @@ const GroupGridItem = forwardRef((props: IGroup, ref: React.ForwardedRef<HTMLDiv
                 <span>&bull;</span> {/* eslint-disable-line formatjs/no-literal-string-in-jsx */}
                 <GroupMemberCount group={group} />
               </HStack>
+
+              {typeof group.nostr?.activity_30d === 'number' && (
+                <Text size='sm' theme='inherit'>
+                  <FormattedMessage
+                    id='groups.discover.activity'
+                    defaultMessage='{posts, plural, one {# post} other {# posts}} from {people, plural, one {# person} other {# people}} this month'
+                    values={{
+                      posts: group.nostr.activity_30d,
+                      people: group.nostr.active_authors_30d || 0,
+                    }}
+                  />
+                </Text>
+              )}
             </Stack>
           </Stack>
         </Stack>

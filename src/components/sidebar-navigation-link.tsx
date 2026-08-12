@@ -18,25 +18,27 @@ interface ISidebarNavigationLink {
   text: React.ReactNode;
   /** Route to an internal page. */
   to?: string;
+  /** Additional routes that belong to the same navigation section. */
+  paths?: Array<string>;
   /** Callback when the link is clicked. */
   onClick?: React.EventHandler<React.MouseEvent>;
 }
 
 /** Desktop sidebar navigation link. */
 const SidebarNavigationLink = forwardRef((props: ISidebarNavigationLink, ref: React.ForwardedRef<HTMLAnchorElement>): JSX.Element => {
-  const { icon, activeIcon, text, to = '', count, countMax, onClick } = props;
+  const { icon, activeIcon, text, to = '', paths, count, countMax, onClick } = props;
   const { pathname } = useLocation();
 
   const isDefault = to === '' || to === '/';
+  const matchesPath = (path: string): boolean => pathname === path || pathname.startsWith(`${path}/`);
 
-  let isActive;
+  let isActive = matchesPath(to);
 
-  if (isDefault) {
+  if (paths) {
+    isActive = paths.some(matchesPath);
+  } else if (isDefault) {
     isActive = pathname === to;
-  } else {
-    isActive = pathname.includes(to);
   }
-
 
   const handleClick: React.EventHandler<React.MouseEvent> = (e) => {
     if (onClick) {

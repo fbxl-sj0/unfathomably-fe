@@ -25,9 +25,13 @@
 
 import { render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import NativeStatusContext from './native-status-context.tsx';
+
+vi.mock('@/hooks/useSoapboxConfig.ts', () => ({
+  useSoapboxConfig: () => ({ tileServer: '', tileServerAttribution: '' }),
+}));
 
 describe('NativeStatusContext', () => {
   it('renders bounded BookWyrm context and the approved open control', () => {
@@ -46,9 +50,9 @@ describe('NativeStatusContext', () => {
 
     expect(screen.getByText('BookWyrm Review')).toBeInTheDocument();
     expect(screen.getByText('4.5')).toBeInTheDocument();
-    expect(screen.getByText('read')).toBeInTheDocument();
+    expect(screen.getByText('Read')).toBeInTheDocument();
     expect(screen.getByText('books.example.test/books/1')).toHaveAttribute('href', 'https://books.example.test/books/1');
-    expect(screen.getByText('Open native object')).toHaveAttribute('href', 'https://books.example.test/reviews/1');
+    expect(screen.getByText('Open resource')).toHaveAttribute('href', 'https://books.example.test/reviews/1');
   });
 
   it('does not place resources on the status context surface', () => {
@@ -62,6 +66,21 @@ describe('NativeStatusContext', () => {
     });
 
     expect(screen.queryByTestId('native-status-context')).not.toBeInTheDocument();
+  });
+
+  it('places reviewable book resources on the status surface without inventing an unauthenticated action', () => {
+    renderContext({
+      canonical_id: 'https://books.example.test/books/1',
+      class: 'resource',
+      context: null,
+      controls: ['open', 'review'],
+      fields: {},
+      type: 'Edition',
+    });
+
+    expect(screen.getByTestId('native-status-context')).toBeInTheDocument();
+    expect(screen.getByText('Federated Edition')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('renders NeoDB rating and catalog context without inventing controls', () => {
@@ -83,7 +102,7 @@ describe('NativeStatusContext', () => {
 
     expect(screen.getByText('NeoDB Article')).toBeInTheDocument();
     expect(screen.getByText('7/10')).toBeInTheDocument();
-    expect(screen.getByText('complete')).toBeInTheDocument();
+    expect(screen.getByText('Complete')).toBeInTheDocument();
     expect(screen.getByText('Movie')).toBeInTheDocument();
     expect(screen.getByText('neodb.example.test/movie/1')).toHaveAttribute('href', 'https://neodb.example.test/movie/1');
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
@@ -111,7 +130,7 @@ describe('NativeStatusContext', () => {
 
     expect(screen.getByText('Wanderer Trail')).toBeInTheDocument();
     expect(screen.getByText('Hiking')).toBeInTheDocument();
-    expect(screen.getByText('hard')).toBeInTheDocument();
+    expect(screen.getByText('Hard')).toBeInTheDocument();
     expect(screen.getByText('12450.000000m')).toBeInTheDocument();
     expect(screen.getByText('890.000000m')).toBeInTheDocument();
     expect(screen.getByText('Alien Escarpment')).toBeInTheDocument();
@@ -119,7 +138,7 @@ describe('NativeStatusContext', () => {
       'href',
       'https://wanderer.example.test/files/trail.gpx',
     );
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show all details' })).toBeInTheDocument();
   });
 
   it('renders bounded Flohmarkt listing context', () => {
@@ -143,7 +162,7 @@ describe('NativeStatusContext', () => {
     expect(screen.getByText('Alien radio')).toBeInTheDocument();
     expect(screen.getByText('25.00 CAD')).toBeInTheDocument();
     expect(screen.getByText('43.6532, -79.3832')).toBeInTheDocument();
-    expect(screen.getByText('Open native object')).toHaveAttribute('href', 'https://market.example.test/alice/items/42');
+    expect(screen.getByText('Open resource')).toHaveAttribute('href', 'https://market.example.test/alice/items/42');
   });
 
   it('renders bounded Castling.club game context', () => {
@@ -191,7 +210,7 @@ describe('NativeStatusContext', () => {
     });
 
     expect(screen.getByText('Bonfire ValueFlows EconomicEvent')).toBeInTheDocument();
-    expect(screen.getByText('transfer')).toBeInTheDocument();
+    expect(screen.getByText('Transfer')).toBeInTheDocument();
     expect(screen.getByText('3 https://units.example.test/items/radio')).toBeInTheDocument();
     expect(screen.getByText('bonfire.example.test/pub/actors/alice')).toHaveAttribute(
       'href',
@@ -201,7 +220,7 @@ describe('NativeStatusContext', () => {
       'href',
       'https://remote.example.test/pub/actors/bob',
     );
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show all details' })).toBeInTheDocument();
   });
 
   it('renders ZenPub publishing metadata and only bounded links', () => {
@@ -230,7 +249,7 @@ describe('NativeStatusContext', () => {
       'href',
       'https://zenpub.example.test/uploads/resource-1.pdf',
     );
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show all details' })).toBeInTheDocument();
   });
 });
 

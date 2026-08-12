@@ -1,5 +1,5 @@
 import { type ErrorInfo, useRef, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 import { FormattedMessage } from 'react-intl';
 
 import HStack from '@/components/ui/hstack.tsx';
@@ -171,8 +171,20 @@ const SiteErrorBoundary: React.FC<ISiteErrorBoundary> = ({ children }) => {
     </div>
   );
 
+  const renderFallback = ({ error }: FallbackProps) => {
+    if (isDynamicImportError(error) && canRecoverFromDynamicImportError()) {
+      return (
+        <div className='flex h-screen items-center justify-center bg-white black:bg-black dark:bg-primary-900'>
+          <SiteLogo alt='Logo' className='h-12 w-auto animate-pulse' />
+        </div>
+      );
+    }
+
+    return fallback;
+  };
+
   return (
-    <ErrorBoundary fallback={fallback} onError={handleError}>
+    <ErrorBoundary fallbackRender={renderFallback} onError={handleError}>
       {children}
     </ErrorBoundary>
   );

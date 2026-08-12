@@ -12,6 +12,7 @@ import {
 
 import { normalizeAttachment } from '@/normalizers/attachment.ts';
 import { normalizeEmoji } from '@/normalizers/emoji.ts';
+import { normalizeFilterResult } from '@/normalizers/filter-result.ts';
 import { normalizeMention } from '@/normalizers/mention.ts';
 import { accountSchema, cardSchema, emojiReactionSchema, groupSchema, pollSchema, tombstoneSchema } from '@/schemas/index.ts';
 import { filteredArray } from '@/schemas/utils.ts';
@@ -243,11 +244,17 @@ const fixContent = (status: ImmutableMap<string, any>) => {
   }
 };
 
-const normalizeFilterResults = (status: ImmutableMap<string, any>) =>
+export const normalizeFilterResults = (status: ImmutableMap<string, any>) =>
   status.update('filtered', ImmutableList(), filterResults =>
-    filterResults.map((filterResult: ImmutableMap<string, any>) =>
-      filterResult.getIn(['filter', 'title']),
-    ),
+    filterResults.flatMap((filterResult: ImmutableMap<string, any>) => {
+      const result = normalizeFilterResult(filterResult.toJS());
+      const matches = result.keyword_matches.filter(match => typeof match === 'string' && match.length > 0);
+      const title = result.filter?.title;
+
+      return matches.size > 0
+        ? matches
+        : ImmutableList(title ? [title] : []);
+    }),
   );
 
 const normalizeDislikes = (status: ImmutableMap<string, any>) => {

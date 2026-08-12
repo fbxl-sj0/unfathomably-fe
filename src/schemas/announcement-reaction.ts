@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import type { Resolve } from '@/utils/types.ts';
 

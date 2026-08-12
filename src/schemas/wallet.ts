@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { accountSchema } from '@/schemas/account.ts';
 import { nostrIdSchema } from '@/schemas/utils.ts';

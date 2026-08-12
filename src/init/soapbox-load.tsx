@@ -1,13 +1,9 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { IntlProvider } from 'react-intl';
-
 
 import { fetchMe } from '@/actions/me.ts';
 import { fetchSoapboxConfig } from '@/actions/soapbox.ts';
 import LoadingScreen from '@/components/loading-screen.tsx';
-import { useNostr } from '@/contexts/nostr-context.tsx';
-import { useBunker } from '@/hooks/nostr/useBunker.ts';
-import { useSigner } from '@/hooks/nostr/useSigner.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useInstance } from '@/hooks/useInstance.ts';
@@ -15,16 +11,7 @@ import { useLocale } from '@/hooks/useLocale.ts';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
 import MESSAGES from '@/messages.ts';
 
-/** Load initial data from the backend */
-const loadInitial = () => {
-  // @ts-ignore
-  return async(dispatch) => {
-    // Await for authenticated fetch
-    await dispatch(fetchMe());
-    // Await for configuration
-    await dispatch(fetchSoapboxConfig());
-  };
-};
+const NostrRuntime = lazy(() => import('./nostr-runtime.tsx'));
 
 interface ISoapboxLoad {
   children: React.ReactNode;
@@ -42,45 +29,114 @@ const SoapboxLoad: React.FC<ISoapboxLoad> = ({ children }) => {
 
   const [messages, setMessages] = useState<Record<string, string>>({});
   const [localeLoading, setLocaleLoading] = useState(true);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  const nostr = useNostr();
-  const signer = useSigner();
-
-  const nostrLoading = Boolean(nostr.isRelayLoading || signer.isLoading);
-
-  useBunker();
+  const [accountLoading, setAccountLoading] = useState(true);
+  const [configLoading, setConfigLoading] = useState(true);
 
   /** Whether to display a loading indicator. */
   const showLoading = [
     me === null,
     me && !account,
-    !isLoaded,
+    accountLoading,
+    configLoading,
     localeLoading,
     instance.isLoading,
     swUpdating,
-    nostrLoading,
   ].some(Boolean);
 
   // Load the user's locale
   useEffect(() => {
-    MESSAGES[locale]().then(messages => {
-      setMessages(messages);
-      setLocaleLoading(false);
-    }).catch(() => { });
+    let active = true;
+
+    const loadMessages = async () => {
+      setLocaleLoading(true);
+
+      try {
+        const loadedMessages = await MESSAGES[locale]();
+
+        if (active) {
+          setMessages(loadedMessages);
+        }
+      } catch (error) {
+        console.error(`Unable to load messages for locale "${locale}".`, error);
+
+        try {
+          const fallbackMessages = locale === 'en' ? {} : await MESSAGES.en();
+
+          if (active) {
+            setMessages(fallbackMessages);
+          }
+        } catch (fallbackError) {
+          console.error('Unable to load fallback English messages.', fallbackError);
+
+          if (active) {
+            setMessages({});
+          }
+        }
+      } finally {
+        if (active) {
+          setLocaleLoading(false);
+        }
+      }
+    };
+
+    void loadMessages();
+
+    return () => {
+      active = false;
+    };
   }, [locale]);
 
-  // Load initial data from the API
+  // Account verification does not depend on instance feature discovery.
+  // Starting it immediately removes an avoidable request waterfall for signed-in users.
   useEffect(() => {
-    if (!instance.isLoading && !nostrLoading) {
-      dispatch(loadInitial()).then(() => {
-        setIsLoaded(true);
-      }).catch((error) => {
+    let active = true;
+
+    const loadAccount = async () => {
+      try {
+        await dispatch(fetchMe());
+      } catch (error) {
         console.error(error);
-        setIsLoaded(true);
-      });
+      } finally {
+        if (active) {
+          setAccountLoading(false);
+        }
+      }
+    };
+
+    void loadAccount();
+
+    return () => {
+      active = false;
+    };
+  }, [dispatch]);
+
+  // Frontend configuration selection depends on backend feature metadata, so
+  // it starts as soon as instance discovery finishes rather than before it.
+  useEffect(() => {
+    if (instance.isLoading) {
+      return;
     }
-  }, [instance.isLoading, nostrLoading]);
+
+    let active = true;
+
+    const loadConfig = async () => {
+      try {
+        await dispatch(fetchSoapboxConfig());
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (active) {
+          setConfigLoading(false);
+        }
+      }
+    };
+
+    void loadConfig();
+
+    return () => {
+      active = false;
+    };
+  }, [dispatch, instance.isLoading]);
 
   // intl is part of loading.
   // It's important nothing in here depends on intl.
@@ -90,6 +146,9 @@ const SoapboxLoad: React.FC<ISoapboxLoad> = ({ children }) => {
 
   return (
     <IntlProvider locale={locale} messages={messages}>
+      <Suspense fallback={null}>
+        <NostrRuntime />
+      </Suspense>
       {children}
     </IntlProvider>
   );

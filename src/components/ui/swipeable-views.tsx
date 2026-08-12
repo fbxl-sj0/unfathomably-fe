@@ -29,11 +29,18 @@ interface ISwipeableViews {
   children: React.ReactNode;
   className?: string;
   containerStyle?: React.CSSProperties;
+  direction?: 'ltr' | 'rtl';
   disabled?: boolean;
   index?: number;
   onChangeIndex?(index: number): void;
   style?: React.CSSProperties;
 }
+
+const firstTouchClientX = (touches: React.TouchList): number | null => {
+  const touch = touches.item?.(0) ?? touches[0];
+
+  return typeof touch?.clientX === 'number' ? touch.clientX : null;
+};
 
 const MIN_SWIPE_DISTANCE = 48;
 
@@ -42,6 +49,7 @@ const SwipeableViews: React.FC<ISwipeableViews> = ({
   children,
   className,
   containerStyle,
+  direction = 'ltr',
   disabled = false,
   index = 0,
   onChangeIndex,
@@ -62,7 +70,7 @@ const SwipeableViews: React.FC<ISwipeableViews> = ({
       return;
     }
 
-    startX.current = event.touches[0]?.clientX ?? null;
+    startX.current = firstTouchClientX(event.touches);
   };
 
   const handleTouchEnd: React.TouchEventHandler<HTMLDivElement> = (event) => {
@@ -73,7 +81,7 @@ const SwipeableViews: React.FC<ISwipeableViews> = ({
 
     if (startX.current === null) return;
 
-    const endX = event.changedTouches[0]?.clientX;
+    const endX = firstTouchClientX(event.changedTouches);
     if (typeof endX !== 'number') return;
 
     const delta = endX - startX.current;
@@ -81,8 +89,9 @@ const SwipeableViews: React.FC<ISwipeableViews> = ({
 
     if (Math.abs(delta) < MIN_SWIPE_DISTANCE) return;
 
-    const direction = delta < 0 ? 1 : -1;
-    const nextIndex = clampIndex(index + direction);
+    const physicalStep = delta < 0 ? 1 : -1;
+    const logicalStep = direction === 'rtl' ? -physicalStep : physicalStep;
+    const nextIndex = clampIndex(index + logicalStep);
 
     if (nextIndex !== index) {
       onChangeIndex?.(nextIndex);
@@ -97,15 +106,17 @@ const SwipeableViews: React.FC<ISwipeableViews> = ({
       style={style}
     >
       <div
-        className='flex transition-transform duration-200 ease-out'
+        className={clsx(
+          'flex w-full flex-none transition-transform duration-200 ease-out',
+          direction === 'rtl' && 'flex-row-reverse',
+        )}
         style={{
           ...containerStyle,
-          transform: `translateX(${-clampIndex(index) * 100}%)`,
-          width: `${Math.max(childCount, 1) * 100}%`,
+          transform: `translateX(${(direction === 'rtl' ? 1 : -1) * clampIndex(index) * 100}%)`,
         }}
       >
         {Children.map(children, (child) => (
-          <div className='min-w-0 flex-none' style={{ width: `${100 / Math.max(childCount, 1)}%` }}>
+          <div className='w-full min-w-0 flex-none'>
             {child}
           </div>
         ))}

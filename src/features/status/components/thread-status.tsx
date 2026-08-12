@@ -15,9 +15,12 @@ interface IThreadStatus {
   focusedStatusId: string;
   onMoveUp: (id: string) => void;
   onMoveDown: (id: string) => void;
+  visibleStatusIds?: ImmutableOrderedSet<string>;
 }
 
-const getThreadDepth = (id: string, focusedStatusId: string, inReplyTos: { get: (id: string) => string | undefined }): number => {
+type ParentLookup = (id: string) => string | undefined;
+
+const getThreadDepth = (id: string, focusedStatusId: string, getParentId: ParentLookup): number => {
   const seen = new Set<string>();
   let currentId: string | undefined = id;
   let depth = 0;
@@ -25,7 +28,7 @@ const getThreadDepth = (id: string, focusedStatusId: string, inReplyTos: { get: 
   while (currentId && !seen.has(currentId)) {
     seen.add(currentId);
 
-    const parentId = inReplyTos.get(currentId);
+    const parentId = getParentId(currentId);
     if (!parentId) break;
 
     depth += 1;
@@ -39,11 +42,26 @@ const getThreadDepth = (id: string, focusedStatusId: string, inReplyTos: { get: 
 
 /** Status with reply-connector in threads. */
 const ThreadStatus: React.FC<IThreadStatus> = (props): JSX.Element => {
-  const { id, focusedStatusId } = props;
+  const { id, focusedStatusId, visibleStatusIds } = props;
 
-  const replyToId = useAppSelector(state => state.contexts.inReplyTos.get(id));
-  const replyCount = useAppSelector(state => state.contexts.replies.get(id, ImmutableOrderedSet()).size);
-  const replyDepth = useAppSelector(state => getThreadDepth(id, focusedStatusId, state.contexts.inReplyTos));
+  const getStoredParentId = (state: any, statusId: string): string | undefined =>
+    state.contexts.inReplyTos.get(statusId) || state.statuses.get(statusId)?.in_reply_to_id || undefined;
+
+  const replyToId = useAppSelector(state => {
+    const parentId = getStoredParentId(state, id);
+    return !visibleStatusIds || (parentId && visibleStatusIds.has(parentId)) ? parentId : undefined;
+  });
+  const replyCount = useAppSelector(state => {
+    if (!visibleStatusIds) {
+      return state.contexts.replies.get(id, ImmutableOrderedSet()).size;
+    }
+
+    return visibleStatusIds.count(statusId => getStoredParentId(state, statusId) === id);
+  });
+  const replyDepth = useAppSelector(state => getThreadDepth(id, focusedStatusId, statusId => {
+    const parentId = getStoredParentId(state, statusId);
+    return !visibleStatusIds || (parentId && visibleStatusIds.has(parentId)) ? parentId : undefined;
+  }));
   const isLoaded = useAppSelector(state => Boolean(state.statuses.get(id)));
 
   const renderConnector = (): JSX.Element | null => {

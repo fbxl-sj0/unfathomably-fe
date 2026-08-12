@@ -5,15 +5,16 @@
 }
 
 [data-soapbox-tabs] {
-  @apply relative pb-[3px];
+  @apply relative min-w-0 pb-[3px];
 }
 
 [data-soapbox-tab-list] {
-  @apply flex;
+  @apply flex max-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain;
+  scrollbar-width: thin;
 }
 
 [data-soapbox-tab] {
-  @apply flex-1 flex justify-center items-center
+  @apply flex-1 shrink-0 snap-start flex justify-center items-center
   py-4 px-1 text-center font-medium text-sm text-gray-700
   dark:text-gray-600 hover:text-gray-800 dark:hover:text-gray-500
   focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:ring-gray-800 dark:ring-offset-0 dark:focus-visible:ring-primary-500;

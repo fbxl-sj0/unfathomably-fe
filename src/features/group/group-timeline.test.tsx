@@ -32,6 +32,9 @@ import GroupTimeline from './group-timeline.tsx';
 import type { ReactNode } from 'react';
 
 const dispatchMock = vi.hoisted(() => vi.fn());
+const ownAccountMock = vi.hoisted((): { account: Record<string, string> | undefined } => ({
+  account: undefined,
+}));
 const timelineStatusIds = vi.hoisted(() => ({ size: 0 }));
 const featuredStatusIds = vi.hoisted(() => ({ size: 0 }));
 const makeGetStatusIdsMock = vi.hoisted(() =>
@@ -74,7 +77,7 @@ vi.mock('@/hooks/useDraggedFiles.ts', () => ({
 }));
 
 vi.mock('@/hooks/useOwnAccount.ts', () => ({
-  useOwnAccount: () => ({ account: undefined }),
+  useOwnAccount: () => ownAccountMock,
 }));
 
 vi.mock('@/selectors/index.ts', () => ({
@@ -99,6 +102,7 @@ const useGroupStreamMock = vi.mocked(useGroupStream);
 describe('GroupTimeline', () => {
   beforeEach(() => {
     dispatchMock.mockClear();
+    ownAccountMock.account = undefined;
     useGroupStreamMock.mockClear();
     useGroupMock.mockReturnValue({
       group: {
@@ -119,6 +123,31 @@ describe('GroupTimeline', () => {
 
     expect(screen.getByTestId('group-preview-items')).toHaveTextContent('preview group-1');
     expect(screen.queryByText('There are no posts in this group yet.')).not.toBeInTheDocument();
+  });
+
+  it('does not show a composer when the group only permits moderators to post', () => {
+    ownAccountMock.account = { acct: 'member', avatar: 'https://example.com/avatar.png' };
+    useGroupMock.mockReturnValue({
+      group: {
+        id: 'group-1',
+        locked: false,
+        relationship: {
+          member: true,
+          can_post: false,
+          moderation_message: 'Only group moderators can post here.',
+        },
+        target_kind: 'group',
+      },
+    } as unknown as ReturnType<typeof useGroup>);
+
+    render(
+      <IntlProvider locale='en'>
+        <GroupTimeline params={{ groupId: 'group-1' }} />
+      </IntlProvider>,
+    );
+
+    expect(screen.queryByTestId('compose-form')).not.toBeInTheDocument();
+    expect(screen.getByText('Only group moderators can post here.')).toBeInTheDocument();
   });
 });
 

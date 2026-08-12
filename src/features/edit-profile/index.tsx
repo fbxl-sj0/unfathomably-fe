@@ -59,7 +59,6 @@ const messages = defineMessages({
   headerDescriptionPlaceholder: { id: 'edit_profile.fields.header_description_placeholder', defaultMessage: 'Describe your header image.' },
   websitePlaceholder: { id: 'edit_profile.fields.website_placeholder', defaultMessage: 'Display a Link' },
   locationPlaceholder: { id: 'edit_profile.fields.location_placeholder', defaultMessage: 'Location' },
-  nip05Placeholder: { id: 'edit_profile.fields.nip05_placeholder', defaultMessage: 'user@{domain}' },
   lud16Placeholder: { id: 'edit_profile.fields.lud16_placeholder', defaultMessage: 'user@example.com' },
   cancel: { id: 'common.cancel', defaultMessage: 'Cancel' },
 });
@@ -90,6 +89,8 @@ interface AccountCredentialsSource {
 interface AccountCredentials {
   /** Whether the account should be shown in the profile directory. */
   discoverable?: boolean;
+  /** Whether public posts may be included in federated full-text search. */
+  indexable?: boolean;
   /** Whether the account has a bot flag. */
   bot?: boolean;
   /** The display name to use for the profile. */
@@ -130,8 +131,6 @@ interface AccountCredentials {
   location?: string;
   /** User's birthday. */
   birthday?: string;
-  /** Nostr NIP-05 identifier. */
-  nip05?: string;
   /**
    * Lightning address.
    * https://github.com/lnurl/luds/blob/luds/16.md
@@ -145,6 +144,7 @@ const accountToCredentials = (account: Account): AccountCredentials => {
 
   return {
     discoverable: account.discoverable,
+    indexable: account.indexable,
     bot: account.bot,
     display_name: account.display_name,
     avatar_description: account.avatar_description,
@@ -161,7 +161,6 @@ const accountToCredentials = (account: Account): AccountCredentials => {
     website: account.website,
     location: account.location,
     birthday: account.pleroma?.birthday ?? undefined,
-    nip05: account.source?.nostr?.nip05 ?? '',
     lud16: typeof account?.nostr?.lud16 === 'string' ? account.nostr.lud16 : '',
   };
 };
@@ -383,18 +382,6 @@ const EditProfile: React.FC = () => {
           />
         </FormGroup>
 
-        {features.nip05 && (
-          <FormGroup
-            labelText={<FormattedMessage id='edit_profile.fields.nip05_label' defaultMessage='Username' />}
-          >
-            <Input
-              type='text'
-              value={data.nip05}
-              onChange={handleTextChange('nip05')}
-              placeholder={intl.formatMessage(messages.nip05Placeholder, { domain: instance.domain })}
-            />
-          </FormGroup>
-        )}
 
         {features.birthdays && (
           <FormGroup
@@ -460,8 +447,8 @@ const EditProfile: React.FC = () => {
         <List>
           {features.followRequests && (
             <ListItem
-              label={<FormattedMessage id='edit_profile.fields.locked_label' defaultMessage='Lock account' />}
-              hint={<FormattedMessage id='edit_profile.hints.locked' defaultMessage='Requires you to manually approve followers' />}
+              label={<FormattedMessage id='edit_profile.fields.locked_label' defaultMessage='Manually review follow requests' />}
+              hint={<FormattedMessage id='edit_profile.hints.locked' defaultMessage='New followers will require your approval' />}
             >
               <Toggle
                 checked={data.locked}
@@ -509,11 +496,23 @@ const EditProfile: React.FC = () => {
           {features.profileDirectory && (
             <ListItem
               label={<FormattedMessage id='edit_profile.fields.discoverable_label' defaultMessage='Allow account discovery' />}
-              hint={<FormattedMessage id='edit_profile.hints.discoverable' defaultMessage='Display account in profile directory and allow indexing by external services' />}
+              hint={<FormattedMessage id='edit_profile.hints.discoverable' defaultMessage='Display this account in profile directories' />}
             >
               <Toggle
                 checked={data.discoverable}
                 onChange={handleCheckboxChange('discoverable')}
+              />
+            </ListItem>
+          )}
+
+          {features.profileDirectory && (
+            <ListItem
+              label={<FormattedMessage id='edit_profile.fields.indexable_label' defaultMessage='Allow public posts in search' />}
+              hint={<FormattedMessage id='edit_profile.hints.indexable' defaultMessage='Let compatible federated services include your public posts in full-text search results' />}
+            >
+              <Toggle
+                checked={data.indexable}
+                onChange={handleCheckboxChange('indexable')}
               />
             </ListItem>
           )}

@@ -7,8 +7,9 @@ import { useIntl, FormattedMessage, defineMessages } from 'react-intl';
 import { Link, useHistory } from 'react-router-dom';
 
 import { accountLookup } from '@/actions/accounts.ts';
-import { register, verifyCredentials } from '@/actions/auth.ts';
+import { verifyCredentials } from '@/actions/auth.ts';
 import { openModal } from '@/actions/modals.ts';
+import { register } from '@/actions/registration.ts';
 import BirthdayInput from '@/components/birthday-input.tsx';
 import Button from '@/components/ui/button.tsx';
 import Checkbox from '@/components/ui/checkbox.tsx';

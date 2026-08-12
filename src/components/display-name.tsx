@@ -1,3 +1,10 @@
+/*
+ * Unfathomably FE
+ * File: display-name.tsx
+ * Purpose: Render an account name and its human-readable identity suffix.
+ * This file intentionally does not resolve or fetch account identities.
+ */
+
 import HoverRefWrapper from '@/components/hover-ref-wrapper.tsx';
 import HStack from '@/components/ui/hstack.tsx';
 import Text from '@/components/ui/text.tsx';
@@ -10,7 +17,7 @@ import VerificationBadge from './verification-badge.tsx';
 import type { Account } from '@/schemas/index.ts';
 
 interface IDisplayName {
-  account: Pick<Account, 'id' | 'acct' | 'emojis' | 'fqn' | 'verified' | 'display_name'>;
+  account: Pick<Account, 'id' | 'acct' | 'emojis' | 'fqn' | 'nostr' | 'atproto' | 'diaspora' | 'verified' | 'display_name'>;
   withSuffix?: boolean;
   children?: React.ReactNode;
 }
@@ -33,7 +40,16 @@ const DisplayName: React.FC<IDisplayName> = ({ account, children, withSuffix = t
     </HStack>
   );
 
-  const suffix = (<span className='relative text-[14px] font-semibold'>@{getAcct(account, displayFqn)}</span>); // eslint-disable-line formatjs/no-literal-string-in-jsx
+  const accountAddress = account.nostr?.display_address
+    || (account.atproto?.handle ? `@${account.atproto.handle}` : undefined)
+    || account.diaspora?.id
+    || `@${getAcct(account, displayFqn)}`;
+
+  const suffix = (
+    <span className='relative text-[14px] font-semibold'>
+      {accountAddress}
+    </span>
+  );
 
   return (
     <span className='relative block max-w-full truncate' data-testid='display-name'>
@@ -47,3 +63,5 @@ const DisplayName: React.FC<IDisplayName> = ({ account, children, withSuffix = t
 };
 
 export default DisplayName;
+
+/* end of display-name.tsx */

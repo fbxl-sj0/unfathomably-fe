@@ -170,6 +170,30 @@ describe('federation platform classification', () => {
     }));
   });
 
+  it('classifies bounded JSON-LD type arrays by their strongest specialized type', () => {
+    expect(classifyFederationPlatform({ type: ['Note', 'Review'] })).toEqual(expect.objectContaining({
+      platform: 'bookwyrm',
+      family: 'books',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({
+      object: { type: ['Proposal', 'ValueFlows:Proposal'] },
+    })).toEqual(expect.objectContaining({
+      platform: 'bonfire_valueflows',
+      family: 'coordination',
+      confidence: 'object',
+    }));
+
+    expect(classifyFederationPlatform({
+      type: [...Array.from({ length: 32 }, () => 'Unknown'), 'Review'],
+    })).toEqual(expect.objectContaining({
+      platform: 'unknown',
+      family: 'generic',
+      confidence: 'unknown',
+    }));
+  });
+
   it('classifies Manyfold actors by their f3di concrete type', () => {
     expect(classifyFederationPlatform({
       type: 'Service',

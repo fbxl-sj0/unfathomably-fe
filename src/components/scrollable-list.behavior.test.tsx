@@ -23,6 +23,7 @@ vi.mock('react-virtuoso', async () => {
     return (
       <div
         data-testid='virtuoso'
+        data-initial-item-count={String(props.initialItemCount)}
         data-initial-index={JSON.stringify(props.initialTopMostItemIndex)}
         data-use-window-scroll={String(props.useWindowScroll)}
       >
@@ -141,6 +142,19 @@ describe('<ScrollableList /> migration behavior', () => {
 
     expect(screen.getAllByTestId('virtuoso-item')).toHaveLength(1);
     expect(screen.getByTestId('virtuoso-item')).toHaveStyle({ minHeight: '1px' });
+  });
+
+  it('seeds one measured row for a populated window-scrolling list', () => {
+    render(
+      <ScrollableList scrollKey='migration-below-header'>
+        {[
+          <div key='one'>first post below a tall header</div>,
+          <div key='two'>second post below a tall header</div>,
+        ]}
+      </ScrollableList>,
+    );
+
+    expect(screen.getByTestId('virtuoso')).toHaveAttribute('data-initial-item-count', '1');
   });
 
   it('saves and restores the top item for browser back navigation', () => {

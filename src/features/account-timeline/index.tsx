@@ -11,6 +11,7 @@ import StatusList from '@/components/status-list.tsx';
 import { Card, CardBody } from '@/components/ui/card.tsx';
 import Spinner from '@/components/ui/spinner.tsx';
 import Text from '@/components/ui/text.tsx';
+import { useAccountStream } from '@/api/hooks/streaming/useAccountStream.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useFeatures } from '@/hooks/useFeatures.ts';
@@ -24,10 +25,11 @@ interface IAccountTimeline {
   params: {
     username: string;
   };
+  nativeFamily?: string;
   withReplies?: boolean;
 }
 
-const AccountTimeline: React.FC<IAccountTimeline> = ({ params, withReplies = false }) => {
+const AccountTimeline: React.FC<IAccountTimeline> = ({ nativeFamily, params, withReplies = false }) => {
   const history = useHistory();
   const dispatch = useAppDispatch();
   const features = useFeatures();
@@ -37,9 +39,19 @@ const AccountTimeline: React.FC<IAccountTimeline> = ({ params, withReplies = fal
   const { account } = useAccountLookup(params.username, { withRelationship: true });
   const [accountLoading, setAccountLoading] = useState<boolean>(!account);
 
-  const path = withReplies ? `${account?.id}:with_replies` : account?.id;
-  const showPins = settings.account_timeline.shows.pinned && !withReplies;
-  const statusIds = useAppSelector(state => getStatusIds(state, { type: `account:${path}`, prefix: 'account_timeline' }));
+  let path = account?.id;
+
+  if (nativeFamily) {
+    path = `${account?.id}:worlds:${nativeFamily}`;
+  } else if (withReplies) {
+    path = `${account?.id}:with_replies`;
+  }
+
+  const timelineId = `account:${path}`;
+  useAccountStream(timelineId, account?.id || '', { nativeFamily, withReplies });
+
+  const showPins = settings.account_timeline.shows.pinned && !withReplies && !nativeFamily;
+  const statusIds = useAppSelector(state => getStatusIds(state, { type: timelineId, prefix: 'account_timeline' }));
   const featuredStatusIds = useAppSelector(state => getStatusIds(state, { type: `account:${account?.id}:pinned`, prefix: 'account_timeline' }));
 
   const isBlocked = useAppSelector(state => state.relationships.getIn([account?.id, 'blocked_by']) === true);
@@ -58,10 +70,10 @@ const AccountTimeline: React.FC<IAccountTimeline> = ({ params, withReplies = fal
   }, [params.username]);
 
   useEffect(() => {
-    if (account && !withReplies) {
+    if (account && !withReplies && !nativeFamily) {
       dispatch(expandAccountFeaturedTimeline(account.id));
     }
-  }, [account?.id, withReplies]);
+  }, [account?.id, nativeFamily, withReplies]);
 
   useEffect(() => {
     if (account && patronEnabled) {
@@ -71,13 +83,13 @@ const AccountTimeline: React.FC<IAccountTimeline> = ({ params, withReplies = fal
 
   useEffect(() => {
     if (account) {
-      dispatch(expandAccountTimeline(account.id, { withReplies }));
+      dispatch(expandAccountTimeline(account.id, { nativeFamily, withReplies }));
     }
-  }, [account?.id, withReplies]);
+  }, [account?.id, nativeFamily, withReplies]);
 
   const handleLoadMore = (maxId: string) => {
     if (account) {
-      dispatch(expandAccountTimeline(account.id, { url: next, maxId, withReplies }));
+      dispatch(expandAccountTimeline(account.id, { url: next, maxId, nativeFamily, withReplies }));
     }
   };
 
@@ -111,7 +123,9 @@ const AccountTimeline: React.FC<IAccountTimeline> = ({ params, withReplies = fal
       isLoading={isLoading}
       hasMore={hasMore}
       onLoadMore={handleLoadMore}
-      emptyMessage={<FormattedMessage id='empty_column.account_timeline' defaultMessage='No posts here!' />}
+      emptyMessage={nativeFamily
+        ? <FormattedMessage id='empty_column.account_world' defaultMessage='No {family} entries here yet.' values={{ family: nativeFamily }} />
+        : <FormattedMessage id='empty_column.account_timeline' defaultMessage='No posts here!' />}
     />
   );
 };

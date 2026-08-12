@@ -12,6 +12,7 @@ import dotsIcon from '@tabler/icons/outline/dots.svg';
 import editIcon from '@tabler/icons/outline/edit.svg';
 import externalLinkIcon from '@tabler/icons/outline/external-link.svg';
 import flagIcon from '@tabler/icons/outline/flag.svg';
+import checkIcon from '@tabler/icons/outline/check.svg';
 import gavelIcon from '@tabler/icons/outline/gavel.svg';
 import heartIcon from '@tabler/icons/outline/heart.svg';
 import languageIcon from '@tabler/icons/outline/language.svg';
@@ -42,6 +43,8 @@ import { deleteStatusModal, toggleStatusSensitivityModal } from '@/actions/moder
 import { initMuteModal } from '@/actions/mutes.ts';
 import { ReportableEntities } from '@/actions/reports.ts';
 import { deleteStatus, editStatus, toggleMuteStatus, translateStatus, undoStatusTranslation } from '@/actions/statuses.ts';
+import { setDistinguished } from '@/actions/interactions.ts';
+import { setAcceptedAnswer } from '@/actions/accepted-answers.ts';
 import { deleteFromTimelines } from '@/actions/timelines.ts';
 import { useDeleteGroupStatus } from '@/api/hooks/groups/useDeleteGroupStatus.ts';
 import { useBlockGroupMember, useBookmark, useGroup, useGroupRelationship, useMuteGroup, useUnmuteGroup, useFavourite } from '@/api/hooks/index.ts';
@@ -96,6 +99,12 @@ const messages = defineMessages({
   deleteStatus: { id: 'admin.statuses.actions.delete_status', defaultMessage: 'Delete post' },
   deleteUser: { id: 'admin.users.actions.delete_user', defaultMessage: 'Delete @{name}' },
   direct: { id: 'status.direct', defaultMessage: 'Direct message @{name}' },
+  distinguish: { id: 'status.distinguish', defaultMessage: 'Mark as moderator comment' },
+  distinguishFail: { id: 'status.distinguish.fail', defaultMessage: 'Could not change moderator distinction.' },
+  distinguishSuccess: { id: 'status.distinguish.success', defaultMessage: 'Marked as a moderator comment.' },
+  acceptAnswer: { id: 'status.accept_answer', defaultMessage: 'Accept answer' },
+  acceptAnswerFail: { id: 'status.accept_answer.fail', defaultMessage: 'Could not change the accepted answer.' },
+  acceptAnswerSuccess: { id: 'status.accept_answer.success', defaultMessage: 'Answer accepted.' },
   disfavourite: { id: 'status.disfavourite', defaultMessage: 'Disike' },
   edit: { id: 'status.edit', defaultMessage: 'Edit' },
   embed: { id: 'status.embed', defaultMessage: 'Embed post' },
@@ -141,6 +150,7 @@ const messages = defineMessages({
   redraftMessage: { id: 'confirmations.redraft.message', defaultMessage: 'Are you sure you want to delete this post and re-draft it? Favorites and reposts will be lost, and replies to the original post will be orphaned.' },
   replies_disabled_group: { id: 'status.disabled_replies.group_membership', defaultMessage: 'Only group members can reply' },
   replies_disabled_locked: { id: 'status.disabled_replies.locked', defaultMessage: 'Replies are closed' },
+  federationBlocked: { id: 'status.interactions_disabled.federation', defaultMessage: 'Interactions are disabled by this server\'s federation policy' },
   reply: { id: 'status.reply', defaultMessage: 'Reply' },
   replyAll: { id: 'status.reply_all', defaultMessage: 'Reply to thread' },
   replyConfirm: { id: 'confirmations.reply.confirm', defaultMessage: 'Reply' },
@@ -151,6 +161,10 @@ const messages = defineMessages({
   translate: { id: 'status.translate', defaultMessage: 'Translate' },
   translating: { id: 'status.translating', defaultMessage: 'Translating...' },
   unbookmark: { id: 'status.unbookmark', defaultMessage: 'Remove bookmark' },
+  undistinguish: { id: 'status.undistinguish', defaultMessage: 'Remove moderator distinction' },
+  undistinguishSuccess: { id: 'status.undistinguish.success', defaultMessage: 'Moderator distinction removed.' },
+  unacceptAnswer: { id: 'status.unaccept_answer', defaultMessage: 'Remove accepted answer' },
+  unacceptAnswerSuccess: { id: 'status.unaccept_answer.success', defaultMessage: 'Accepted answer removed.' },
   unmuteConversation: { id: 'status.unmute_conversation', defaultMessage: 'Unmute Conversation' },
   unmuteGroup: { id: 'group.unmute.long_label', defaultMessage: 'Unmute Group' },
   unmuteSuccess: { id: 'group.unmute.success', defaultMessage: 'Unmuted the group' },
@@ -186,6 +200,7 @@ const PureStatusActionBar: React.FC<IPureStatusActionBar> = ({
   const blockGroupMember = useBlockGroupMember(group as Group, status.account);
 
   const me = useAppSelector(state => state.me);
+  const accountRelationship = useAppSelector(state => state.relationships.get(status.account.id));
   const { groupRelationship } = useGroupRelationship(status.group?.id);
   const features = useFeatures();
   const { instance } = useInstance();
@@ -204,6 +219,14 @@ const PureStatusActionBar: React.FC<IPureStatusActionBar> = ({
   const { togglePin } = usePin();
   const { unpinFromGroup, pinToGroup } = usePinGroup();
   const { initReport } = useInitReport();
+  const canDistinguish =
+    status.account.id === me &&
+    !!status.in_reply_to_id &&
+    ['owner', 'moderator'].includes(groupRelationship?.role || '');
+  const canAcceptAnswer =
+    !!status.in_reply_to_id &&
+    (status.in_reply_to_account_id === me ||
+      ['owner', 'moderator'].includes(groupRelationship?.role || ''));
 
   const {
     allow_remote: allowRemoteTranslation,
@@ -223,6 +246,26 @@ const PureStatusActionBar: React.FC<IPureStatusActionBar> = ({
     }));
   };
 
+  const handleDistinguishClick = () => {
+    const distinguished = status.pleroma?.distinguished !== true;
+
+    dispatch(setDistinguished(status, distinguished))
+      .then(() => toast.success(intl.formatMessage(
+        distinguished ? messages.distinguishSuccess : messages.undistinguishSuccess,
+      )))
+      .catch(() => toast.error(intl.formatMessage(messages.distinguishFail)));
+  };
+
+  const handleAcceptedAnswerClick = () => {
+    const accepted = status.pleroma?.answer !== true;
+
+    dispatch(setAcceptedAnswer(status.id, accepted))
+      .then(() => toast.success(intl.formatMessage(
+        accepted ? messages.acceptAnswerSuccess : messages.unacceptAnswerSuccess,
+      )))
+      .catch(() => toast.error(intl.formatMessage(messages.acceptAnswerFail)));
+  };
+
   const handleReplyClick: React.MouseEventHandler = (e) => {
     if (me) {
       replyCompose(status.id);
@@ -231,12 +274,32 @@ const PureStatusActionBar: React.FC<IPureStatusActionBar> = ({
     }
   };
 
+  const localStatusPermalink = () => new URL(
+    `/@${status.account.acct}/posts/${status.id}`,
+    window.location.origin,
+  ).toString();
+
+  const sharePermalink = () => {
+    if (/^rss-[0-9a-f]+@/i.test(status.account.acct) && status.url) {
+      try {
+        const url = new URL(status.url);
+
+        if (url.protocol === 'http:' || url.protocol === 'https:') return url.toString();
+      } catch {
+        // Malformed remote URLs fall back to the stable local status route.
+      }
+    }
+
+    return localStatusPermalink();
+  };
+
   const handleShareClick = () => {
+    const url = sharePermalink();
+
     navigator.share({
-      text: status.search_index,
-      url: status.uri,
+      url,
     }).catch((e) => {
-      if (e.name !== 'AbortError') console.error(e);
+      if (e.name !== 'AbortError') copy(url);
     });
   };
 
@@ -417,9 +480,7 @@ const PureStatusActionBar: React.FC<IPureStatusActionBar> = ({
   };
 
   const handleCopy: React.EventHandler<React.MouseEvent> = (e) => {
-    const { uri } = status;
-
-    copy(uri);
+    copy(sharePermalink());
   };
 
   const handleTranslateClick: React.EventHandler<React.MouseEvent> = () => {
@@ -574,7 +635,27 @@ const PureStatusActionBar: React.FC<IPureStatusActionBar> = ({
 
     menu.push(null);
 
+    if (canAcceptAnswer) {
+      menu.push({
+        text: intl.formatMessage(
+          status.pleroma?.answer ? messages.unacceptAnswer : messages.acceptAnswer,
+        ),
+        action: handleAcceptedAnswerClick,
+        icon: checkIcon,
+      });
+    }
+
     if (ownAccount) {
+      if (canDistinguish) {
+        menu.push({
+          text: intl.formatMessage(
+            status.pleroma?.distinguished ? messages.undistinguish : messages.distinguish,
+          ),
+          action: handleDistinguishClick,
+          icon: gavelIcon,
+        });
+      }
+
       if (publicStatus) {
         menu.push({
           text: intl.formatMessage(status.pinned ? messages.unpin : messages.pin),
@@ -776,6 +857,10 @@ const PureStatusActionBar: React.FC<IPureStatusActionBar> = ({
   const meEmojiTitle = intl.formatMessage(reactMessages[meEmojiName || ''] || messages.favourite);
 
   const menu = _makeMenu(publicStatus);
+  const federationBlocked = Boolean(
+    accountRelationship?.federation_blocked || accountRelationship?.federation?.defederated,
+  );
+  const federationBlockedTitle = intl.formatMessage(messages.federationBlocked);
   let reblogIcon = repeatIcon;
   let replyTitle = status.in_reply_to_id ? intl.formatMessage(messages.replyAll) : intl.formatMessage(messages.reply);
   let replyMembershipDisabled = false;
@@ -799,24 +884,36 @@ const PureStatusActionBar: React.FC<IPureStatusActionBar> = ({
     replyTitle = intl.formatMessage(messages.replies_disabled_locked);
   }
 
+  if (federationBlocked) {
+    replyMembershipDisabled = false;
+    replyDisabled = true;
+    replyTitle = federationBlockedTitle;
+  }
+
   const reblogMenu = [{
     text: intl.formatMessage(status.reblogged ? messages.cancel_reblog_private : messages.reblog),
     action: handleReblogClick,
     icon: repeatIcon,
-    disabled: !publicStatus,
+    disabled: !publicStatus || federationBlocked,
   }, {
     text: intl.formatMessage(messages.quotePost),
     action: handleQuoteClick,
     icon: quoteIcon,
-    disabled: !quoteAllowed,
+    disabled: !quoteAllowed || federationBlocked,
   }];
+
+  let reblogTitle = publicStatus
+    ? intl.formatMessage(messages.reblog)
+    : intl.formatMessage(messages.cannot_reblog);
+
+  if (federationBlocked) reblogTitle = federationBlockedTitle;
 
   const reblogButton = (
     <StatusActionButton
       icon={reblogIcon}
       color='success'
-      disabled={!publicStatus}
-      title={!publicStatus ? intl.formatMessage(messages.cannot_reblog) : intl.formatMessage(messages.reblog)}
+      disabled={!publicStatus || federationBlocked}
+      title={reblogTitle}
       active={status.reblogged}
       onClick={handleReblogClick}
       count={reblogCount}
@@ -862,7 +959,7 @@ const PureStatusActionBar: React.FC<IPureStatusActionBar> = ({
         {(features.quotePosts && me) ? (
           <DropdownMenu
             items={reblogMenu}
-            disabled={!publicStatus && !quoteAllowed}
+            disabled={federationBlocked || (!publicStatus && !quoteAllowed)}
             onShiftClick={handleReblogClick}
           >
             {reblogButton}
@@ -872,40 +969,43 @@ const PureStatusActionBar: React.FC<IPureStatusActionBar> = ({
         )}
 
         {features.emojiReacts ? (
-          <PureStatusReactionWrapper statusId={status.id}>
+          <PureStatusReactionWrapper statusId={status.id} disabled={federationBlocked}>
             <StatusActionButton
-              title={meEmojiTitle}
+              title={federationBlocked ? federationBlockedTitle : meEmojiTitle}
               icon={heartIcon}
               filled
               color='accent'
               active={Boolean(meEmojiName)}
               count={emojiReactCount + favouriteCount}
               emoji={meEmojiReact}
+              disabled={federationBlocked}
               theme={statusActionButtonTheme}
             />
           </PureStatusReactionWrapper>
         ) : (
           <StatusActionButton
-            title={intl.formatMessage(messages.favourite)}
+            title={federationBlocked ? federationBlockedTitle : intl.formatMessage(messages.favourite)}
             icon={features.dislikes ? thumbUpIcon : heartIcon}
             color='accent'
             filled
             onClick={handleFavouriteClick}
             active={Boolean(meEmojiName)}
             count={favouriteCount}
+            disabled={federationBlocked}
             theme={statusActionButtonTheme}
           />
         )}
 
         {features.dislikes && (
           <StatusActionButton
-            title={intl.formatMessage(messages.disfavourite)}
+            title={federationBlocked ? federationBlockedTitle : intl.formatMessage(messages.disfavourite)}
             icon={thumbDownIcon}
             color='accent'
             filled
             onClick={handleDislikeClick}
             active={status.disliked}
             count={status.dislikes_count}
+            disabled={federationBlocked}
             theme={statusActionButtonTheme}
           />
         )}

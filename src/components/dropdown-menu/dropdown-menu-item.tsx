@@ -70,14 +70,14 @@ const DropdownMenuItem = ({ index, item, onClick }: IDropdownMenuItem) => {
   }, [itemRef.current, index]);
 
   if (item === null) {
-    return <li className='mx-2 my-1 h-[2px] bg-gray-100 dark:bg-gray-800' />;
+    return <li role='separator' className='mx-2 my-1 h-[2px] bg-gray-100 dark:bg-gray-800' />;
   }
 
   return (
     <li className='truncate focus-visible:ring-2 focus-visible:ring-primary-500'>
       <a
         href={item.href || item.to || '#'}
-        role='button'
+        role='menuitem'
         tabIndex={0}
         ref={itemRef}
         data-index={index}

@@ -7,7 +7,7 @@ import {
   LIST_CREATE_SUCCESS,
   LIST_UPDATE_SUCCESS,
   LIST_DELETE_SUCCESS,
-} from '@/actions/lists.ts';
+} from '@/action-types/lists.ts';
 import { normalizeList } from '@/normalizers/index.ts';
 
 import type { APIEntity } from '@/types/entities.ts';

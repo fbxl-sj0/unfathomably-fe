@@ -2,7 +2,7 @@ import { offset, Placement, useFloating, flip, arrow, shift } from '@floating-ui
 import dotsIcon from '@tabler/icons/outline/dots.svg';
 import clsx from 'clsx';
 import { supportsPassiveEvents } from 'detect-passive-events';
-import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
+import { cloneElement, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { closeDropdownMenu as closeDropdownMenuRedux, openDropdownMenu } from '@/actions/dropdown-menu.ts';
@@ -52,6 +52,7 @@ const DropdownMenu = (props: IDropdownMenu) => {
   const history = useHistory();
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const menuId = useId();
 
   const arrowRef = useRef<HTMLDivElement>(null);
 
@@ -246,7 +247,7 @@ const DropdownMenu = (props: IDropdownMenu) => {
   useEffect(() => {
     if (isOpen) {
       if (refs.floating.current) {
-        (refs.floating.current?.querySelector('li a[role=\'button\']') as HTMLAnchorElement)?.focus();
+        (refs.floating.current?.querySelector('li a[role=\'menuitem\']') as HTMLAnchorElement)?.focus();
       }
 
       document.addEventListener('click', handleDocumentClick, false);
@@ -269,6 +270,9 @@ const DropdownMenu = (props: IDropdownMenu) => {
     <>
       {children ? (
         cloneElement(children as React.ReactElement<any>, {
+          'aria-controls': isOpen ? menuId : undefined,
+          'aria-expanded': isOpen,
+          'aria-haspopup': 'menu',
           disabled,
           onClick: handleClick,
           onKeyPress: handleKeyPress,
@@ -276,6 +280,9 @@ const DropdownMenu = (props: IDropdownMenu) => {
         })
       ) : (
         <IconButton
+          aria-controls={isOpen ? menuId : undefined}
+          aria-expanded={isOpen}
+          aria-haspopup='menu'
           disabled={disabled}
           className={clsx({
             'text-gray-600 hover:text-gray-700 dark:hover:text-gray-500': true,
@@ -295,7 +302,7 @@ const DropdownMenu = (props: IDropdownMenu) => {
             data-testid='dropdown-menu'
             ref={refs.setFloating}
             className={
-              clsx('z-[1001] w-56 rounded-md bg-white py-1 shadow-lg transition-opacity duration-100 focus:outline-none black:bg-black dark:bg-gray-900 dark:ring-2 dark:ring-primary-700', {
+              clsx('z-[1001] max-h-[calc(100vh-2rem)] w-56 overflow-y-auto rounded-md bg-white py-1 shadow-lg transition-opacity duration-100 focus:outline-none black:bg-black dark:bg-gray-900 dark:ring-2 dark:ring-primary-700', {
                 'opacity-0 pointer-events-none': !isOpen,
               })
             }
@@ -305,7 +312,7 @@ const DropdownMenu = (props: IDropdownMenu) => {
               left: x ?? 0,
             }}
           >
-            <ul>
+            <ul id={menuId} role='menu' aria-orientation='vertical'>
               {items.map((item, idx) => (
                 <DropdownMenuItem
                   key={idx}

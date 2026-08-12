@@ -129,7 +129,7 @@ const Invites: React.FC = () => {
   return (
     <Column label={intl.formatMessage(messages.heading)}>
       <Stack space={6} className='p-4'>
-        <section className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800'>
+        <section className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800 black:bg-primary-900/20'>
           <Stack space={4}>
             <Stack space={1}>
               <Text size='lg' weight='bold'>
@@ -166,7 +166,7 @@ const Invites: React.FC = () => {
             </Form>
 
             {newInvite && (
-              <Stack space={2} className='rounded-md border border-solid border-primary-300 bg-white p-3 dark:border-primary-700 dark:bg-gray-900'>
+              <Stack space={2} className='rounded-md border border-solid border-primary-300 bg-white p-3 dark:border-primary-700 dark:bg-gray-900 black:border-primary-800 black:bg-black'>
                 <Text size='sm' weight='medium'>
                   <FormattedMessage id='admin.invites.new_link' defaultMessage='New invite link' />
                 </Text>
@@ -179,7 +179,7 @@ const Invites: React.FC = () => {
           </Stack>
         </section>
 
-        <section className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800'>
+        <section className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800 black:bg-primary-900/20'>
           <Stack space={4}>
             <Stack space={1}>
               <Text size='lg' weight='bold'>

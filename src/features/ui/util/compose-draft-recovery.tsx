@@ -15,26 +15,16 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 
-import { hydrateComposeDrafts } from '@/actions/compose.ts';
+import { hydrateComposeDrafts, resetCompose } from '@/actions/compose.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
-
-const STORAGE_KEY = 'unfathomably:compose-drafts:v1';
-
-interface DraftEnvelope {
-  tabId: string;
-  updatedAt: number;
-  drafts: Record<string, any>;
-}
-
-const loadEnvelope = (): DraftEnvelope | null => {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) as DraftEnvelope : null;
-  } catch {
-    return null;
-  }
-};
+import {
+  COMPOSE_DRAFT_STORAGE_KEY,
+  composeDraftsEqual,
+  loadComposeDraftEnvelope,
+  saveComposeDraftEnvelope,
+  type ComposeDraftEnvelope,
+} from '@/utils/compose-drafts.ts';
 
 const hasDraftContent = (draft: any) => {
   return Boolean(
@@ -81,6 +71,7 @@ const ComposeDraftRecovery: React.FC = () => {
   const tabId = useRef(`${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const lastImportedAt = useRef(0);
   const skippedInitialSave = useRef(false);
+  const currentDrafts = useRef<Record<string, any>>({});
 
   const drafts = useMemo(() => {
     const items = typeof compose?.entrySeq === 'function'
@@ -88,6 +79,8 @@ const ComposeDraftRecovery: React.FC = () => {
       : Object.entries(compose || {});
 
     return items.reduce((acc: Record<string, any>, [id, draft]: [string, any]) => {
+      if (id === 'default') return acc;
+
       const serialised = serialiseCompose(draft);
 
       if (hasDraftContent(serialised)) {
@@ -98,8 +91,10 @@ const ComposeDraftRecovery: React.FC = () => {
     }, {});
   }, [compose]);
 
+  currentDrafts.current = drafts;
+
   useEffect(() => {
-    const envelope = loadEnvelope();
+    const envelope = loadComposeDraftEnvelope();
 
     if (envelope?.drafts && envelope.updatedAt > lastImportedAt.current) {
       lastImportedAt.current = envelope.updatedAt;
@@ -109,13 +104,20 @@ const ComposeDraftRecovery: React.FC = () => {
 
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
-      if (event.key !== STORAGE_KEY || !event.newValue) return;
+      if (event.key !== COMPOSE_DRAFT_STORAGE_KEY || !event.newValue) return;
 
       try {
-        const envelope = JSON.parse(event.newValue) as DraftEnvelope;
+        const envelope = JSON.parse(event.newValue) as ComposeDraftEnvelope;
 
         if (envelope.tabId !== tabId.current && envelope.updatedAt > lastImportedAt.current) {
           lastImportedAt.current = envelope.updatedAt;
+
+          Object.entries(envelope.clearedDrafts || {}).forEach(([id, clearedDraft]) => {
+            if (composeDraftsEqual(currentDrafts.current[id], clearedDraft)) {
+              dispatch(resetCompose(id));
+            }
+          });
+
           dispatch(hydrateComposeDrafts(envelope.drafts));
         }
       } catch {
@@ -133,13 +135,14 @@ const ComposeDraftRecovery: React.FC = () => {
       return;
     }
 
-    const envelope: DraftEnvelope = {
+    const envelope: ComposeDraftEnvelope = {
       tabId: tabId.current,
       updatedAt: Date.now(),
       drafts,
     };
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
+    lastImportedAt.current = envelope.updatedAt;
+    saveComposeDraftEnvelope(envelope);
   }, [drafts]);
 
   return null;

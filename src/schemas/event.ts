@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { attachmentSchema } from './attachment.ts';
 import { locationSchema } from './location.ts';

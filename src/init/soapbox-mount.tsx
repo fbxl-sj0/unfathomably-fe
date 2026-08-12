@@ -6,7 +6,6 @@ import { openModal } from '@/actions/modals.ts';
 import LoadingScreen from '@/components/loading-screen.tsx';
 import { ScrollContext } from '@/components/scroll-context.tsx';
 import SiteErrorBoundary from '@/components/site-error-boundary.tsx';
-import { ModalContainer } from '@/features/ui/util/async-components.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useLoggedIn } from '@/hooks/useLoggedIn.ts';
@@ -16,6 +15,7 @@ import { useCachedLocationHandler } from '@/utils/redirect.ts';
 
 const GdprBanner = lazy(() => import('@/components/gdpr-banner.tsx'));
 const EmbeddedStatus = lazy(() => import('@/features/embedded-status/index.tsx'));
+const ModalContainer = lazy(() => import('@/features/ui/containers/modal-container.ts'));
 const UI = lazy(() => import('@/features/ui/index.tsx'));
 
 /** Highest level node with the Redux store. */

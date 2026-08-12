@@ -1,7 +1,6 @@
 import { QRCodeCanvas as QRCode } from 'qrcode.react';
 import { useCallback, useEffect, useState } from 'react';
 import { useIntl, FormattedMessage, defineMessages } from 'react-intl';
-import { useHistory } from 'react-router-dom';
 
 import {
   setupMfa,
@@ -27,9 +26,12 @@ const messages = defineMessages({
   passwordPlaceholder: { id: 'mfa.mfa_setup.password_placeholder', defaultMessage: 'Password' },
 });
 
-const OtpConfirmForm: React.FC = () => {
+interface IOtpConfirmForm {
+  onConfirmed: (codes: string[]) => void;
+}
+
+const OtpConfirmForm: React.FC<IOtpConfirmForm> = ({ onConfirmed }) => {
   const intl = useIntl();
-  const history = useHistory();
   const dispatch = useAppDispatch();
 
   const [state, setState] = useState<{ password: string; isLoading: boolean; code: string; qrCodeURI: string; confirmKey: string }>({
@@ -59,7 +61,7 @@ const OtpConfirmForm: React.FC = () => {
 
     dispatch(confirmMfa('totp', state.code, state.password) as any).then((r: any) => {
       toast.success(intl.formatMessage(messages.mfaConfirmSuccess));
-      history.push('../auth/edit');
+      onConfirmed(Array.isArray(r?.codes) ? r.codes : []);
     }).catch(() => {
       toast.error(intl.formatMessage(messages.confirmFail));
       setState((prevState) => ({ ...prevState, isLoading: false }));
@@ -126,7 +128,7 @@ const OtpConfirmForm: React.FC = () => {
             type='button'
             theme='tertiary'
             text={intl.formatMessage(messages.mfaCancelButton)}
-            onClick={() => history.push('../auth/edit')}
+            onClick={() => window.history.back()}
             disabled={state.isLoading}
           />
 

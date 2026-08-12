@@ -8,8 +8,8 @@ import {
   CHAT_FETCH_SUCCESS,
   CHAT_READ_SUCCESS,
   CHAT_READ_REQUEST,
-} from '@/actions/chats.ts';
-import { STREAMING_CHAT_UPDATE } from '@/actions/streaming.ts';
+} from '@/action-types/chats.ts';
+import { STREAMING_CHAT_UPDATE } from '@/actions/streaming-types.ts';
 import { normalizeChat } from '@/normalizers/index.ts';
 import { normalizeId } from '@/utils/normalizers.ts';
 

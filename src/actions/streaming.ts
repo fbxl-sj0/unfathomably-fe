@@ -6,10 +6,11 @@ import { selectEntity } from '@/entity-store/selectors.ts';
 import messages from '@/messages.ts';
 import { ChatKeys, IChat, isLastMessage } from '@/queries/chats.ts';
 import { queryClient } from '@/queries/client.ts';
-import { announcementSchema, type Announcement, type Relationship } from '@/schemas/index.ts';
+import { announcementSchema, type Announcement } from '@/schemas/announcement.ts';
+import type { Relationship } from '@/schemas/relationship.ts';
 import { getUnreadChatsCount, updateChatListItem, updateChatMessage } from '@/utils/chats.ts';
+import { playSound } from '@/utils/play-sound.ts';
 import { removePageItem } from '@/utils/queries.ts';
-import { play, soundCache } from '@/utils/sounds.ts';
 
 import { connectStream } from '../stream.ts';
 
@@ -18,18 +19,18 @@ import { fetchFilters } from './filters.ts';
 import { MARKER_FETCH_SUCCESS } from './markers.ts';
 import { updateNotificationsQueue } from './notifications.ts';
 import { updateStatus } from './statuses.ts';
+import { STREAMING_CHAT_UPDATE } from './streaming-types.ts';
 import {
   // deleteFromTimelines,
   connectTimeline,
   disconnectTimeline,
   processTimelineUpdate,
+  timelineAcceptsStatus,
 } from './timelines.ts';
 
 import type { IStatContext } from '@/contexts/stat-context.tsx';
 import type { AppDispatch, RootState } from '@/store.ts';
 import type { APIEntity, Chat } from '@/types/entities.ts';
-
-const STREAMING_CHAT_UPDATE = 'STREAMING_CHAT_UPDATE';
 
 const removeChatMessage = (payload: string) => {
   const data = JSON.parse(payload);
@@ -94,6 +95,8 @@ const deleteAnnouncement = (id: string) =>
 interface TimelineStreamOpts {
   statContext?: IStatContext;
   enabled?: boolean;
+  onUpdate?: (status: APIEntity) => void;
+  onDelete?: (statusId: string) => void;
 }
 
 const connectTimelineStream = (
@@ -115,18 +118,29 @@ const connectTimelineStream = (
 
     onReceive(data: any) {
       switch (data.event) {
-        case 'update':
-          dispatch(processTimelineUpdate(timelineId, JSON.parse(data.payload), accept));
+        case 'update': {
+          const status = JSON.parse(data.payload);
+          const accepted = timelineAcceptsStatus(status, accept);
+          dispatch(processTimelineUpdate(timelineId, status, accept));
+          if (accepted) opts?.onUpdate?.(status);
           break;
-        case 'status.update':
-          dispatch(updateStatus(JSON.parse(data.payload)));
+        }
+        case 'status.update': {
+          const status = JSON.parse(data.payload);
+          const accepted = timelineAcceptsStatus(status, accept);
+          dispatch(updateStatus(status));
+          if (accepted) opts?.onUpdate?.(status);
           break;
+        }
         // FIXME: We think delete & redraft is causing jumpy timelines.
         // Fix that in ScrollableList then re-enable this!
         //
         // case 'delete':
         //   dispatch(deleteFromTimelines(data.payload));
         //   break;
+        case 'delete':
+          opts?.onDelete?.(data.payload);
+          break;
         case 'notification':
           messages[locale]().then(messages => {
             dispatch(
@@ -160,7 +174,7 @@ const connectTimelineStream = (
               updateChatListItem(chat);
 
               if (settings.getIn(['chats', 'sound'])) {
-                play(soundCache.chat);
+                playSound('chat');
               }
 
               // Increment unread counter

@@ -1,4 +1,8 @@
 export { accountSchema, type Account } from './account.ts';
+export {
+  identityProofSchema,
+  type IdentityProof,
+} from './identity-proof.ts';
 export { announcementSchema, adminAnnouncementSchema, type Announcement, type AdminAnnouncement } from './announcement.ts';
 export { announcementReactionSchema, type AnnouncementReaction } from './announcement-reaction.ts';
 export { attachmentSchema, type Attachment } from './attachment.ts';

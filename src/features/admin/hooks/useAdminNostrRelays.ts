@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { useApi } from '@/hooks/useApi.ts';
 

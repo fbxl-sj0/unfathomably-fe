@@ -5,12 +5,12 @@ import { defineMessages, IntlShape } from 'react-intl';
 import { HTTPError } from '@/api/HTTPError.ts';
 import api from '@/api/index.ts';
 import { isNativeEmoji } from '@/features/emoji/index.ts';
-import emojiSearch from '@/features/emoji/search.ts';
 import { normalizeTag } from '@/normalizers/index.ts';
 import { selectAccount, selectOwnAccount } from '@/selectors/index.ts';
 import { tagHistory } from '@/settings.ts';
 import toast from '@/toast.tsx';
 import { isLoggedIn } from '@/utils/auth.ts';
+import { clearStoredComposeDraft } from '@/utils/compose-drafts.ts';
 import { getFeatures } from '@/utils/features.ts';
 
 import { ComposeSetStatusAction } from './compose-status.ts';
@@ -94,6 +94,7 @@ const messages = defineMessages({
   scheduleError: { id: 'compose.invalid_schedule', defaultMessage: 'You must schedule a post at least 5 minutes out.' },
   success: { id: 'compose.submit_success', defaultMessage: 'Your post was sent!' },
   editSuccess: { id: 'compose.edit_success', defaultMessage: 'Your post was edited' },
+  quoteWhileEditing: { id: 'compose.quote_while_editing', defaultMessage: 'Finish or cancel the current edit before quoting another post.' },
   uploadErrorLimit: { id: 'upload_error.limit', defaultMessage: 'File upload limit exceeded.' },
   uploadErrorPoll: { id: 'upload_error.poll', defaultMessage: 'File upload not allowed with polls.' },
   view: { id: 'toast.view', defaultMessage: 'View' },
@@ -124,6 +125,12 @@ interface ComposeReplyAction {
 const replyCompose = (status: Status) =>
   (dispatch: AppDispatch, getState: () => RootState) => {
     const state = getState();
+
+    if (state.compose.get('compose-modal')?.id) {
+      toast.error(messages.quoteWhileEditing);
+      return;
+    }
+
     const instance = state.instance;
     const { explicitAddressing } = getFeatures(instance);
     const preserveSpoilers = !!getSettings(state).get('preserveSpoilers');
@@ -199,6 +206,12 @@ const resetCompose = (composeId = 'compose-modal') => ({
   id: composeId,
 });
 
+const clearComposeDraft = (composeId: string) =>
+  (dispatch: AppDispatch) => {
+    clearStoredComposeDraft(composeId);
+    dispatch(resetCompose(composeId));
+  };
+
 interface ComposeMentionAction {
   type: typeof COMPOSE_MENTION;
   id: string;
@@ -221,6 +234,7 @@ interface ComposeDirectAction {
   type: typeof COMPOSE_DIRECT;
   id: string;
   account: Account;
+  initialText?: string;
 }
 
 const directCompose = (account: Account) =>
@@ -235,7 +249,7 @@ const directCompose = (account: Account) =>
     dispatch(openModal('COMPOSE'));
   };
 
-const directComposeById = (accountId: string) =>
+const directComposeById = (accountId: string, initialText?: string) =>
   (dispatch: AppDispatch, getState: () => RootState) => {
     const account = selectAccount(getState(), accountId);
     if (!account) return;
@@ -244,6 +258,7 @@ const directComposeById = (accountId: string) =>
       type: COMPOSE_DIRECT,
       id: 'compose-modal',
       account,
+      initialText,
     };
 
     dispatch(action);
@@ -254,6 +269,7 @@ const handleComposeSubmit = (dispatch: AppDispatch, getState: () => RootState, c
   if (!dispatch || !getState) return;
 
   dispatch(insertIntoTagHistory(composeId, data.tags || [], status));
+  clearStoredComposeDraft(composeId);
   dispatch(submitComposeSuccess(composeId, { ...data }));
   toast.success(edit ? messages.editSuccess : messages.success, {
     actionLabel: messages.view,
@@ -303,7 +319,7 @@ const submitCompose = (composeId: string, opts: SubmitComposeOpts = {}) =>
       return;
     }
 
-    if ((!status || !status.length) && media.size === 0) {
+    if ((!status || !status.length) && media.size === 0 && !compose.poll && !compose.quote) {
       return;
     }
 
@@ -331,7 +347,6 @@ const submitCompose = (composeId: string, opts: SubmitComposeOpts = {}) =>
     const params: Record<string, any> = {
       status,
       in_reply_to_id: compose.in_reply_to,
-      quoted_status_id: compose.quote,
       quote_approval_policy: compose.quote_approval_policy,
       media_ids: media.map(item => item.id),
       sensitive: compose.sensitive,
@@ -343,6 +358,10 @@ const submitCompose = (composeId: string, opts: SubmitComposeOpts = {}) =>
       to,
     };
 
+    if (!statusId) {
+      params.quoted_status_id = compose.quote;
+    }
+
     if (compose.privacy === 'group') {
       params.group_id = compose.group_id;
       params.group_timeline_visible = compose.group_timeline_visible;
@@ -353,8 +372,10 @@ const submitCompose = (composeId: string, opts: SubmitComposeOpts = {}) =>
         history.push('/messages');
       }
       handleComposeSubmit(dispatch, getState, composeId, data, status, !!statusId);
+      return true;
     }).catch(function(error) {
       dispatch(submitComposeFail(composeId, error));
+      return false;
     });
   };
 
@@ -521,9 +542,11 @@ const fetchComposeSuggestionsAccounts = throttle((dispatch, getState, composeId,
 }, 200, { edges: ['leading', 'trailing'] });
 
 const fetchComposeSuggestionsEmojis = (dispatch: AppDispatch, composeId: string, token: string, customEmojis: CustomEmoji[]) => {
-  const results = emojiSearch(token.replace(':', ''), { maxResults: 10 }, customEmojis);
+  void import('@/features/emoji/search.ts').then(({ default: emojiSearch }) => {
+    const results = emojiSearch(token.replace(':', ''), { maxResults: 10 }, customEmojis);
 
-  dispatch(readyComposeSuggestionsEmojis(composeId, token, results));
+    dispatch(readyComposeSuggestionsEmojis(composeId, token, results));
+  });
 };
 
 const fetchComposeSuggestionsTags = (dispatch: AppDispatch, getState: () => RootState, composeId: string, token: string) => {
@@ -937,6 +960,7 @@ export {
   cancelQuoteCompose,
   changeComposeQuotePolicy,
   resetCompose,
+  clearComposeDraft,
   mentionCompose,
   directCompose,
   directComposeById,

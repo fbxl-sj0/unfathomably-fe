@@ -11,6 +11,7 @@ describe('normalizeMention()', () => {
     expect(ImmutableRecord.isRecord(result)).toBe(true);
     expect(result.id).toEqual('');
     expect(result.acct).toEqual('');
+    expect(result.actor_type).toEqual('Person');
     expect(result.username).toEqual('');
     expect(result.url).toEqual('');
   });
@@ -20,5 +21,11 @@ describe('normalizeMention()', () => {
     const result = normalizeMention(account);
 
     expect(result.username).toEqual('alex');
+  });
+
+  it('preserves the actor type used to route group mentions', () => {
+    const result = normalizeMention({ acct: 'news@example.com', actor_type: 'Group' });
+
+    expect(result.actor_type).toEqual('Group');
   });
 });

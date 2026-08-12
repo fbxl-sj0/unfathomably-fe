@@ -10,7 +10,18 @@ import { createHtmlPlugin } from 'vite-plugin-html';
 import { VitePWA } from 'vite-plugin-pwa';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
+import { zodCspSafePlugin } from './build/zod-csp-safe-plugin.ts';
+
 const { NODE_ENV, PORT } = process.env;
+
+const frontendManualChunks = (id: string) => {
+  const normalizedId = id.replaceAll('\\', '/');
+
+  if (normalizedId.includes('/src/action-types/')) {
+    return 'action-types';
+  }
+
+};
 
 export default defineConfig(() => {
   const config: UserConfig = {
@@ -30,6 +41,7 @@ export default defineConfig(() => {
           assetFileNames: 'packs/assets/[name]-[hash].[ext]',
           chunkFileNames: 'packs/js/[name]-[hash].js',
           entryFileNames: 'packs/[name]-[hash].js',
+          manualChunks: frontendManualChunks,
         },
       },
       rollupOptions: {
@@ -40,6 +52,7 @@ export default defineConfig(() => {
           assetFileNames: 'packs/assets/[name]-[hash].[ext]',
           chunkFileNames: 'packs/js/[name]-[hash].js',
           entryFileNames: 'packs/[name]-[hash].js',
+          manualChunks: frontendManualChunks,
         },
       },
       sourcemap: true,
@@ -49,6 +62,7 @@ export default defineConfig(() => {
       port: Number(PORT ?? 3036),
     },
     plugins: [
+      zodCspSafePlugin(),
       compileTime(),
       createHtmlPlugin({
         template: 'index.html',
@@ -81,13 +95,9 @@ export default defineConfig(() => {
             },
           },
         },
-        manifest: {
-          name: 'Unfathomably FE',
-          short_name: 'Unfathomably',
-          description: 'A modern Fediverse frontend with a focus on custom branding and backend compatibility.',
-          background_color: '#000000',
-          theme_color: '#AA0000',
-        },
+        // The backend renders /manifest.json from the instance configuration.
+        // A build-time manifest would overwrite each operator's app identity.
+        manifest: false,
         srcDir: 'src/service-worker',
         filename: 'sw.ts',
       }),

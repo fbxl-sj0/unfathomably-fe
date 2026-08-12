@@ -40,7 +40,7 @@ const CapabilityChips: React.FC<ICapabilityChips> = ({ labels }) => {
     <div className='flex flex-wrap gap-1.5' data-testid='federation-capability-chips'>
       {visibleLabels.map((label) => (
         <span
-          className='rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+          className='rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 black:bg-primary-900/50 black:text-gray-200 dark:bg-gray-800 dark:text-gray-300'
           key={label}
         >
           {label}

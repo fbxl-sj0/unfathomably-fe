@@ -17,11 +17,11 @@ interface IGroupCard {
 const GroupCard: React.FC<IGroupCard> = ({ group }) => {
   return (
     <Stack
-      className='relative h-[240px] rounded-lg border border-solid border-gray-300 bg-white black:bg-white dark:border-primary-800 dark:bg-primary-900'
+      className='relative h-[240px] rounded-lg border border-solid border-gray-300 bg-white black:border-primary-800 black:bg-black dark:border-primary-800 dark:bg-primary-900'
       data-testid='group-card'
     >
       {/* Group Cover Image */}
-      <Stack grow className='relative basis-1/2 rounded-t-lg bg-primary-100 dark:bg-gray-800'>
+      <Stack grow className='relative basis-1/2 rounded-t-lg bg-primary-100 black:bg-primary-900 dark:bg-gray-800'>
         <GroupHeaderImage
           group={group}
           className='absolute inset-0 size-full rounded-t-lg object-cover'
@@ -45,7 +45,7 @@ const GroupCard: React.FC<IGroupCard> = ({ group }) => {
           )}
         </HStack>
 
-        <HStack className='text-gray-700 dark:text-gray-600' space={2} wrap>
+        <HStack className='text-gray-700 black:text-gray-300 dark:text-gray-400' space={2} wrap>
           <GroupRelationship group={group} />
           <GroupPrivacy group={group} />
           <GroupMemberCount group={group} />

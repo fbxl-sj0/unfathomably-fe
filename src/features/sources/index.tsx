@@ -30,7 +30,7 @@ const messages = defineMessages({
   placeholder: { id: 'sources.search.placeholder', defaultMessage: 'Search feeds or paste a feed/actor URL' },
 });
 
-type SourceFilter = 'all' | 'rss_feed' | 'blog_publisher' | 'collection_channel' | 'library' | 'application_source';
+type SourceFilter = 'all' | 'rss_feed' | 'blog_publisher' | 'collection_channel' | 'library' | 'native_publisher' | 'application_source';
 
 const sourceFilters: SourceFilter[] = [
   'all',
@@ -38,6 +38,7 @@ const sourceFilters: SourceFilter[] = [
   'blog_publisher',
   'collection_channel',
   'library',
+  'native_publisher',
   'application_source',
 ];
 
@@ -75,20 +76,26 @@ const loadHideAutomatedPreference = (): boolean => {
   }
 };
 
-const profileLabel = (source: Source) => {
+const profileLabel = (source: Source): string => {
+  if (source.source_kind_label) {
+    return source.source_kind_label;
+  }
+
   switch (source.source_profile) {
     case 'application_source':
-      return <FormattedMessage id='sources.profile.application_source' defaultMessage='Application source' />;
+      return 'Application source';
     case 'blog_publisher':
-      return <FormattedMessage id='sources.profile.blog_publisher' defaultMessage='Blog publisher' />;
+      return 'Blog publisher';
     case 'collection_channel':
-      return <FormattedMessage id='sources.profile.collection_channel' defaultMessage='Collection channel' />;
+      return 'Collection channel';
     case 'library':
-      return <FormattedMessage id='sources.profile.library' defaultMessage='Library' />;
+      return 'Library';
+    case 'native_publisher':
+      return 'Native source';
     case 'rss_feed':
-      return <FormattedMessage id='sources.profile.rss_feed' defaultMessage='RSS feed' />;
+      return 'RSS feed';
     default:
-      return <FormattedMessage id='sources.profile.activitypub_profile' defaultMessage='Profile feed' />;
+      return 'Profile feed';
   }
 };
 
@@ -100,6 +107,8 @@ const sourceNativeHint = (source: Source) => {
       return <FormattedMessage id='sources.native.collection_channel' defaultMessage='Channel, collection, or event updates' />;
     case 'library':
       return <FormattedMessage id='sources.native.library' defaultMessage='Library collection items' />;
+    case 'native_publisher':
+      return <FormattedMessage id='sources.native.native_publisher' defaultMessage='Specialized native objects and updates' />;
     case 'rss_feed':
       return <FormattedMessage id='sources.native.rss_feed' defaultMessage='Read-only feed items' />;
     case 'application_source':
@@ -119,6 +128,8 @@ const sourceFilterLabel = (filter: SourceFilter) => {
       return <FormattedMessage id='sources.filters.collection_channel' defaultMessage='Channels' />;
     case 'library':
       return <FormattedMessage id='sources.filters.library' defaultMessage='Libraries' />;
+    case 'native_publisher':
+      return <FormattedMessage id='sources.filters.native_publisher' defaultMessage='Native worlds' />;
     case 'application_source':
       return <FormattedMessage id='sources.filters.application_source' defaultMessage='Apps' />;
     default:
@@ -349,7 +360,7 @@ const Sources: React.FC = () => {
         <Text size='sm' theme='muted' align='center'>
           <FormattedMessage
             id='sources.empty.subtitle'
-            defaultMessage='Search for RSS/Atom feeds, Funkwhale libraries, blogs, podcasts, channels, and other feed-like actors.'
+            defaultMessage='Search for RSS/Atom feeds, libraries, blogs, channels, and specialized native-world publishers.'
           />
         </Text>
       </Stack>
@@ -389,7 +400,7 @@ const Sources: React.FC = () => {
         <Text theme='muted'>
           <FormattedMessage
             id='sources.subtitle'
-            defaultMessage='Follow RSS/Atom feeds, libraries, podcasts, blogs, and channel-like actors that do not fit cleanly into the normal account or group feeds.'
+            defaultMessage='Follow RSS/Atom feeds, libraries, blogs, channels, and specialized native-world publishers that do not fit cleanly into normal account or group feeds.'
           />
         </Text>
       </Stack>

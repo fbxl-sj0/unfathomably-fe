@@ -127,11 +127,11 @@ const StatusMedia: React.FC<IStatusMedia> = ({
         </Suspense>
       );
     }
-  } else if (status.spoiler_text.length === 0 && !status.quote && status.card?.group) {
+  } else if (showMedia && !status.quote && status.card?.group) {
     media = (
       <GroupLinkPreview card={status.card} />
     );
-  } else if (status.spoiler_text.length === 0 && !status.quote && status.card) {
+  } else if (showMedia && !status.quote && status.card) {
     media = (
       <PreviewCard
         onOpenMedia={openMedia}
@@ -165,14 +165,18 @@ interface IDockableMediaFrame {
 }
 
 const DockableMediaFrame: React.FC<IDockableMediaFrame> = ({ children, item, label, onPlay }) => (
-  <div className='relative'>
+  <div className='relative isolate'>
     {children}
 
     {item ? (
       <button
         aria-label={label}
-        className='absolute right-2 top-2 z-[2] inline-flex size-9 items-center justify-center rounded-md border border-solid border-primary-200 bg-white/95 text-primary-700 shadow-md backdrop-blur hover:bg-primary-50 dark:border-primary-800 dark:bg-gray-900/95 dark:text-primary-300 dark:hover:bg-primary-950/60 rtl:left-2 rtl:right-auto'
-        onClick={() => onPlay(item)}
+        className='pointer-events-auto absolute right-2 top-2 z-40 inline-flex size-9 items-center justify-center rounded-md border border-solid border-primary-200 bg-white/95 text-primary-700 shadow-md backdrop-blur hover:bg-primary-50 dark:border-primary-800 dark:bg-gray-900/95 dark:text-primary-300 dark:hover:bg-primary-950/60 rtl:left-2 rtl:right-auto'
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onPlay(item);
+        }}
         title={label}
         type='button'
       >

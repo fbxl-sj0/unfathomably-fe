@@ -690,6 +690,17 @@ const togglePin = (status: StatusEntity) =>
     }
   };
 
+const setDistinguished = (status: { id: string }, distinguished: boolean) =>
+  async (dispatch: AppDispatch, getState: () => RootState) => {
+    if (!isLoggedIn(getState)) return;
+
+    const action = distinguished ? 'distinguish' : 'undistinguish';
+    const response = await api(getState).post(`/api/v1/statuses/${status.id}/${action}`);
+    const data = await response.json();
+    dispatch(importFetchedStatus(data));
+    return data;
+  };
+
 const unpinRequest = (status: StatusEntity) => ({
   type: UNPIN_REQUEST,
   status,
@@ -858,6 +869,7 @@ export {
   unpinSuccess,
   unpinFail,
   togglePin,
+  setDistinguished,
   pinToGroup,
   unpinFromGroup,
   remoteInteraction,

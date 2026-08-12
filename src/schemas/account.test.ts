@@ -63,6 +63,27 @@ describe('accountSchema actor types', () => {
     expect(account.pleroma.native?.fields.license).toBe('MIT');
     expect(account.pleroma.native?.controls).toEqual(['open']);
   });
+
+  it('preserves server-validated Nostr statuses and profile badges', () => {
+    const account = buildAccount({
+      nostr: {
+        statuses: [{
+          type: 'music',
+          content: 'Intergalactic - Beastie Boys',
+          expires_at: '2026-08-05T05:00:00Z',
+        }],
+        badges: [{
+          id: `30009:${'a'.repeat(64)}:helper`,
+          name: 'Helper',
+          issuer: 'a'.repeat(64),
+          award_event_id: 'b'.repeat(64),
+        }],
+      },
+    });
+
+    expect(account.nostr.statuses[0]?.type).toBe('music');
+    expect(account.nostr.badges[0]?.name).toBe('Helper');
+  });
 });
 
 /* end of src/schemas/account.test.ts */

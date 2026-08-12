@@ -1,5 +1,5 @@
 import { FormattedNumber } from 'react-intl';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 /** Check if a value is REALLY a number. */
 export const isNumber = (value: unknown): value is number => typeof value === 'number' && !isNaN(value);

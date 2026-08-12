@@ -58,6 +58,8 @@ interface IText extends Pick<React.HTMLAttributes<HTMLParagraphElement>, 'danger
   className?: string;
   /** Text direction. */
   direction?: Directions;
+  /** Machine-readable timestamp when the selected tag is `time`. */
+  dateTime?: string;
   /** The "for" attribute specifies which form element a label is bound to. */
   htmlFor?: string;
   /** Font size of the text. */

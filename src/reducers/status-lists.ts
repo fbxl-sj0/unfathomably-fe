@@ -21,7 +21,7 @@ import {
   JOINED_EVENTS_FETCH_REQUEST,
   JOINED_EVENTS_FETCH_SUCCESS,
   JOINED_EVENTS_FETCH_FAIL,
-} from '../actions/events.ts';
+} from '@/action-types/events.ts';
 import {
   FAVOURITED_STATUSES_FETCH_REQUEST,
   FAVOURITED_STATUSES_FETCH_SUCCESS,

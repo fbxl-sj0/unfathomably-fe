@@ -271,6 +271,9 @@ const VALUEFLOWS_TYPES = new Set([
   'Unit',
 ]);
 
+const MAX_TYPE_CANDIDATES = 32;
+const MAX_TYPE_LENGTH = 512;
+
 export function classifyFederationPlatform(input: unknown): FederationPlatformClassification {
   if (typeof input === 'string') {
     return withConfidence(lookupSoftware(input), 'software') ?? unknown();
@@ -328,8 +331,8 @@ function findObjectClassification(input: JsonRecord): PlatformBase | undefined {
     getPath(input, ['source', 'pleroma', 'native', 'type']),
   ];
 
-  for (const type of concreteTypes) {
-    if (typeof type === 'string' && CONCRETE_TYPES[type]) {
+  for (const type of concreteTypes.flatMap(typeCandidates)) {
+    if (CONCRETE_TYPES[type]) {
       return CONCRETE_TYPES[type];
     }
   }
@@ -340,23 +343,50 @@ function findObjectClassification(input: JsonRecord): PlatformBase | undefined {
     getPath(input, ['activity', 'object', 'type']),
   ];
 
-  for (const type of objectTypes) {
-    if (typeof type === 'string') {
-      const valueflowsType = valueflowsTypeName(type);
+  let best: { classification: PlatformBase; priority: number } | undefined;
 
-      if (valueflowsType) {
-        return {
-          platform: 'bonfire_valueflows',
-          label: `ValueFlows ${valueflowsType}`,
-          family: 'coordination',
-        };
-      }
+  for (const type of objectTypes.flatMap(typeCandidates)) {
+    const classification = classifyObjectType(type);
 
-      if (OBJECT_TYPES[type]) {
-        return OBJECT_TYPES[type];
-      }
+    if (!classification) continue;
+
+    const priority = objectTypePriority(type, classification);
+
+    if (!best || priority > best.priority) {
+      best = { classification, priority };
     }
   }
+
+  return best?.classification;
+}
+
+function classifyObjectType(type: string): PlatformBase | undefined {
+  const valueflowsType = valueflowsTypeName(type);
+
+  if (valueflowsType) {
+    return {
+      platform: 'bonfire_valueflows',
+      label: `ValueFlows ${valueflowsType}`,
+      family: 'coordination',
+    };
+  }
+
+  return OBJECT_TYPES[type];
+}
+
+function objectTypePriority(type: string, classification: PlatformBase): number {
+  if (type.includes(':')) return 3;
+  if (!classification.platform.startsWith('activitypub-')) return 2;
+  return 1;
+}
+
+function typeCandidates(value: unknown): string[] {
+  const candidates = Array.isArray(value) ? value.slice(0, MAX_TYPE_CANDIDATES) : [value];
+
+  return candidates.filter(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.length <= MAX_TYPE_LENGTH,
+  );
 }
 
 function valueflowsTypeName(type: string) {
@@ -396,6 +426,10 @@ function softwareNames(input: JsonRecord): string[] {
 function nameCandidates(value: unknown): string[] {
   if (typeof value === 'string') {
     return [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.slice(0, MAX_TYPE_CANDIDATES).flatMap(nameCandidates);
   }
 
   if (!isRecord(value)) {

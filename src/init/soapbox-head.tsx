@@ -44,7 +44,7 @@ const SoapboxHead: React.FC<ISoapboxHead> = ({ children }) => {
   return (
     <>
       <Helmet>
-        <html lang={locale} className={clsx('h-full', { 'dark': theme === 'dark', 'dark black': theme === 'black' })} />
+        <html lang={locale} dir={direction} className={clsx('h-full', { 'dark': theme === 'dark', 'dark black': theme === 'black' })} />
         <body className={bodyClass} dir={direction} />
         {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
         {themeCss && <style id='theme' type='text/css'>{`:root{${themeCss}}`}</style>}

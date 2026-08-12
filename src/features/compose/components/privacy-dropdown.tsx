@@ -4,7 +4,7 @@ import mailIcon from '@tabler/icons/outline/mail.svg';
 import worldIcon from '@tabler/icons/outline/world.svg';
 import clsx from 'clsx';
 import { supportsPassiveEvents } from 'detect-passive-events';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useId } from 'react';
 import { useIntl, defineMessages } from 'react-intl';
 import { spring } from '@/compat/react-motion.tsx';
 // @ts-ignore
@@ -37,6 +37,7 @@ const messages = defineMessages({
 const listenerOptions = supportsPassiveEvents ? { passive: true } : false;
 
 interface IPrivacyDropdownMenu {
+  id: string;
   style?: React.CSSProperties;
   overlayRef?: React.RefCallback<HTMLElement>;
   items: any[];
@@ -48,7 +49,7 @@ interface IPrivacyDropdownMenu {
   active: boolean;
 }
 
-const PrivacyDropdownMenu: React.FC<IPrivacyDropdownMenu> = ({ style, overlayRef, items, placement, value, onClose, onChange, active }) => {
+const PrivacyDropdownMenu: React.FC<IPrivacyDropdownMenu> = ({ id, style, overlayRef, items, placement, value, onClose, onChange, active }) => {
   const node = useRef<HTMLDivElement>(null);
   const focusedItem = useRef<HTMLDivElement>(null);
 
@@ -134,7 +135,7 @@ const PrivacyDropdownMenu: React.FC<IPrivacyDropdownMenu> = ({ style, overlayRef
         // It should not be transformed when mounting because the resulting
         // size will be used to determine the coordinate of the menu by
         // react-overlays
-        <div id={'privacy-dropdown'} className={clsx('absolute z-[1000] ml-10 overflow-hidden rounded-md bg-white text-sm shadow-lg black:border black:border-gray-800 black:bg-black dark:bg-gray-900', { 'block shadow-md': active })} style={{ ...style, opacity: opacity, transform: mounted ? `scale(${scaleX}, ${scaleY})` : undefined, transformOrigin: placement === 'top' ? '50% 100%' : '50% 0' }} role='listbox' ref={setNode}>
+        <div id={id} className={clsx('absolute z-[1000] ml-10 overflow-hidden rounded-md bg-white text-sm shadow-lg black:border black:border-gray-800 black:bg-black dark:bg-gray-900', { 'block shadow-md': active })} style={{ ...style, opacity: opacity, transform: mounted ? `scale(${scaleX}, ${scaleY})` : undefined, transformOrigin: placement === 'top' ? '50% 100%' : '50% 0' }} role='listbox' ref={setNode}>
           {items.map(item => (
             <div role='option' tabIndex={0} key={item.value} data-index={item.value} onKeyDown={handleKeyDown} onClick={handleClick} className={clsx('group flex cursor-pointer p-2.5 text-sm text-gray-700 hover:bg-gray-100 black:hover:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800', { 'bg-gray-100 dark:bg-gray-800 black:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-700': item.value === value })} aria-selected={item.value === value} ref={item.value === value ? focusedItem : null}>
               <div className='mr-2.5 flex items-center justify-center rtl:ml-2.5 rtl:mr-0'>
@@ -171,6 +172,7 @@ const PrivacyDropdown: React.FC<IPrivacyDropdown> = ({
   const unavailable = compose.id;
 
   const [open, setOpen] = useState(false);
+  const menuId = useId();
   const [placement, setPlacement] = useState<Placement>('bottom');
 
   const options = [
@@ -256,6 +258,9 @@ const PrivacyDropdown: React.FC<IPrivacyDropdown> = ({
     <div onKeyDown={handleKeyDown} ref={node}>
       <div className={clsx({ 'rouded-t-md': placement === 'top' && open })}>
         <IconButton
+          aria-controls={open ? menuId : undefined}
+          aria-expanded={open}
+          aria-haspopup='listbox'
           className={clsx({
             'text-gray-600 hover:text-gray-700 dark:hover:text-gray-500': !open,
             'text-primary-500 hover:text-primary-600 dark:text-primary-500 dark:hover:text-primary-400': open,
@@ -271,6 +276,7 @@ const PrivacyDropdown: React.FC<IPrivacyDropdown> = ({
       <Overlay show={open} placement={placement} target={node.current}>
         {({ props }: { props: { ref: React.RefCallback<HTMLElement>; style: React.CSSProperties } }) => (
           <PrivacyDropdownMenu
+            id={menuId}
             style={props.style}
             overlayRef={props.ref}
             items={options}

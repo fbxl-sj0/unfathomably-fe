@@ -18,6 +18,7 @@ const ScheduledStatusRecord = ImmutableRecord({
   media_attachments: null as ImmutableList<ImmutableMap<string, any>> | null,
   text: '',
   in_reply_to_id: null as string | null,
+  quoted_status_id: null as string | null,
   media_ids: null as ImmutableList<string> | null,
   sensitive: false,
   spoiler_text: '',

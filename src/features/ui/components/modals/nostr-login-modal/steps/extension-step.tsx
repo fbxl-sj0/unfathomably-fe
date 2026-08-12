@@ -12,7 +12,7 @@ import HStack from '@/components/ui/hstack.tsx';
 import Modal from '@/components/ui/modal.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
-import { useNostr } from '@/contexts/nostr-context.tsx';
+import { useConnectedNostr } from '@/contexts/nostr-context.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useInstance } from '@/hooks/useInstance.ts';
 import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
@@ -27,7 +27,7 @@ const ExtensionStep: React.FC<IExtensionStep> = ({ isLogin, onClickAlt, onClose 
   const dispatch = useAppDispatch();
   const { instance } = useInstance();
   const { logo } = useSoapboxConfig();
-  const { relay } = useNostr();
+  const { relay } = useConnectedNostr();
 
   const handleClose = () => {
     onClose();

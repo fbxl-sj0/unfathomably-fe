@@ -11,11 +11,24 @@ import { normalizeAccount } from '@/normalizers/account.ts';
 export const MentionRecord = ImmutableRecord({
   id: '',
   acct: '',
+  actor_type: 'Person',
   username: '',
   url: '',
 });
 
-export const normalizeMention = (mention: Record<string, any>) => {
+export const normalizeMention = (mention: object) => {
+  const source = mention as Record<string, any> & {
+    get?: (key: string) => unknown;
+  };
+  const account = normalizeAccount(source);
+  const explicitActorType = typeof source.get === 'function'
+    ? source.get('actor_type')
+    : source.actor_type;
+  const actorType = explicitActorType
+    || account.getIn(['pleroma', 'actor_type'])
+    || account.getIn(['source', 'pleroma', 'actor_type'])
+    || 'Person';
+
   // Simply normalize it as an account then cast it as a mention ¯\_(ツ)_/¯
-  return MentionRecord(normalizeAccount(mention));
+  return MentionRecord(account).set('actor_type', String(actorType));
 };

@@ -12,7 +12,6 @@ import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
 import { useChatContext } from '@/contexts/chat-context.tsx';
 import UploadButton from '@/features/compose/components/upload-button.tsx';
-import emojiSearch from '@/features/emoji/search.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useFeatures } from '@/hooks/useFeatures.ts';
@@ -111,18 +110,26 @@ const ChatComposer = forwardRef<HTMLTextAreaElement | null, IChatComposer>(({
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const input = event.currentTarget;
+    const value = event.target.value;
     const [tokenStart, token] = textAtCursorMatchesToken(
-      event.target.value,
+      value,
       event.target.selectionStart,
       [':'],
     );
 
     if (token && tokenStart) {
-      const results = emojiSearch(token.replace(':', ''), { maxResults: 5 });
-      setSuggestions({
-        list: results,
-        token,
-        tokenStart: tokenStart - 1,
+      void import('@/features/emoji/search.ts').then(({ default: emojiSearch }) => {
+        if (input.value !== value) {
+          return;
+        }
+
+        const results = emojiSearch(token.replace(':', ''), { maxResults: 5 });
+        setSuggestions({
+          list: results,
+          token,
+          tokenStart: tokenStart - 1,
+        });
       });
     } else {
       setSuggestions(initialSuggestionState);
@@ -134,6 +141,10 @@ const ChatComposer = forwardRef<HTMLTextAreaElement | null, IChatComposer>(({
   };
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (event) => {
+    if (event.nativeEvent.isComposing || event.key === 'Process' || event.keyCode === 229) {
+      return;
+    }
+
     if (event.key === 'Enter' && !event.shiftKey && isSuggestionsAvailable) {
       return;
     }

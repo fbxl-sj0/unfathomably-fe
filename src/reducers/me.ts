@@ -4,7 +4,7 @@ import {
   AUTH_LOGGED_OUT,
   AUTH_ACCOUNT_REMEMBER_SUCCESS,
   VERIFY_CREDENTIALS_SUCCESS,
-} from '../actions/auth.ts';
+} from '@/action-types/auth.ts';
 import {
   ME_FETCH_SUCCESS,
   ME_FETCH_FAIL,

@@ -1,3 +1,10 @@
+/*
+ * Unfathomably FE
+ * File: keygen-step.tsx
+ * Purpose: Generate and initialize a new browser-local Nostr identity.
+ * This file intentionally does not upload or escrow the generated secret key.
+ */
+
 import downloadIcon from '@tabler/icons/outline/download.svg';
 import { generateSecretKey, getPublicKey, nip19 } from 'nostr-tools';
 import { useEffect, useMemo, useState } from 'react';
@@ -17,7 +24,7 @@ import Modal from '@/components/ui/modal.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
 import Tooltip from '@/components/ui/tooltip.tsx';
-import { useNostr } from '@/contexts/nostr-context.tsx';
+import { useConnectedNostr } from '@/contexts/nostr-context.tsx';
 import { keyring } from '@/features/nostr/keyring.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useInstance } from '@/hooks/useInstance.ts';
@@ -33,7 +40,7 @@ const KeygenStep: React.FC<IKeygenStep> = ({ onClose }) => {
   const { instance } = useInstance();
   const dispatch = useAppDispatch();
   const isMobile = useIsMobile();
-  const { relay } = useNostr();
+  const { relay } = useConnectedNostr();
 
   const secretKey = useMemo(() => generateSecretKey(), []);
   const pubkey = useMemo(() => getPublicKey(secretKey), [secretKey]);
@@ -58,13 +65,19 @@ const KeygenStep: React.FC<IKeygenStep> = ({ onClose }) => {
 
     const signer = keyring.add(secretKey);
     const now = Math.floor(Date.now() / 1000);
+    const generatedName = `nostr-${npub.slice(5, 13)}`;
 
     const [kind0, ...events] = await Promise.all([
-      signer.signEvent({ kind: 0, content: JSON.stringify({}), tags: [], created_at: now }),
+      signer.signEvent({
+        kind: 0,
+        content: JSON.stringify({ name: generatedName, display_name: generatedName }),
+        tags: [],
+        created_at: now,
+      }),
       signer.signEvent({ kind: 3, content: '', tags: [], created_at: now }),
       signer.signEvent({ kind: 10000, content: '', tags: [], created_at: now }),
       signer.signEvent({ kind: 10001, content: '', tags: [], created_at: now }),
-      signer.signEvent({ kind: 10002, content: '', tags: [], created_at: now }),
+      signer.signEvent({ kind: 10002, content: '', tags: [['r', relay.socket.url]], created_at: now }),
       signer.signEvent({ kind: 10003, content: '', tags: [], created_at: now }),
       signer.signEvent({ kind: 30078, content: '', tags: [['d', 'pub.ditto.pleroma_settings_store']], created_at: now }),
     ]);
@@ -122,3 +135,5 @@ const KeygenStep: React.FC<IKeygenStep> = ({ onClose }) => {
 };
 
 export default KeygenStep;
+
+/* end of keygen-step.tsx */

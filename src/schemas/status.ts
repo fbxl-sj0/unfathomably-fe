@@ -1,5 +1,5 @@
 import DOMPurify from 'isomorphic-dompurify';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { htmlToPlaintext, stripCompatibilityFeatures } from '@/utils/html.ts';
 
@@ -18,18 +18,43 @@ import { contentSchema, dateSchema, filteredArray } from './utils.ts';
 
 import type { Resolve } from '@/utils/types.ts';
 
+const statusNostrSchema = z.object({
+  event_id: z.string().regex(/^[0-9a-f]{64}$/i),
+  pubkey: z.string().regex(/^[0-9a-f]{64}$/i),
+  relay: z.string().refine((value) => value.startsWith('wss://') || value.startsWith('ws://')),
+});
+
+const statusAtprotoSchema = z.object({
+  uri: z.string().startsWith('at://'),
+  cid: z.string(),
+  url: z.string().url().nullish().catch(undefined),
+});
+
+const statusDiasporaSchema = z.object({
+  guid: z.string(),
+  author: z.string(),
+});
+
 const statusPleromaSchema = z.object({
   bookmark_folder: z.string().nullable().catch(null),
   comments_enabled: z.boolean().catch(true),
+  answer: z.boolean().catch(false),
+  distinguished: z.boolean().catch(false),
   event: eventSchema.nullish().catch(undefined),
   interaction_policy: z.any().nullable().catch(null),
+  local_references: z.record(z.string(), z.string()).catch({}),
   native: nativeActivityPresentationSchema,
+  nostr: statusNostrSchema.nullish().catch(undefined),
+  atproto: statusAtprotoSchema.nullish().catch(undefined),
+  diaspora: statusDiasporaSchema.nullish().catch(undefined),
   quote: z.literal(null).catch(null),
   quote_allowed: z.boolean().catch(true),
   quote_approval_required: z.boolean().catch(false),
+  quote_approval_policy: z.enum(['public', 'followers', 'following', 'manual', 'nobody', 'legacy', 'custom']).catch('public'),
   quote_authorization: z.string().nullable().catch(null),
   quote_manageable: z.boolean().catch(false),
   quote_state: z.enum(['pending', 'accepted', 'rejected', 'revoked']).nullable().catch(null),
+  quote_url: z.string().nullable().catch(null),
   quote_visible: z.boolean().catch(true),
 });
 

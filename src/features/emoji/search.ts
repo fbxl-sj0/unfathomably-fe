@@ -172,6 +172,10 @@ const search = (
   str: string, { maxResults = 5 }: searchOptions = {},
   customEmojis?: CustomEmoji[],
 ): Emoji[] => {
+  if (customEmojis) {
+    addCustomToPool(buildCustomEmojis(customEmojis));
+  }
+
   const customHits = customEmojis ? customSearchEntries.flatMap((entry): SearchHit[] => {
     const custom = customEmojis[entry.index];
     const score = scoreCustomEntry(entry, str);

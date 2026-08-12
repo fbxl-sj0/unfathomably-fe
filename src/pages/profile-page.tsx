@@ -1,5 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
 import { FormattedMessage } from 'react-intl';
 import { Redirect, useHistory } from 'react-router-dom';
+import * as z from '@/zod.ts';
 
 import { useAccountLookup } from '@/api/hooks/index.ts';
 import { Column } from '@/components/ui/column.tsx';
@@ -20,6 +22,7 @@ import {
   PocketWallet,
 } from '@/features/ui/util/async-components.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
+import { useApi } from '@/hooks/useApi.ts';
 import { useFeatures } from '@/hooks/useFeatures.ts';
 import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
 import { getAcct } from '@/utils/accounts.ts';
@@ -31,8 +34,37 @@ interface IProfilePage {
   children: React.ReactNode;
 }
 
+const worldFamilySchema = z.enum([
+  'audio', 'video', 'longform', 'photo', 'books', 'bookmarks', 'groups',
+  'events', 'development', 'models', 'marketplace', 'games', 'routes',
+  'culture', 'coordination', 'publishing',
+]);
+const worldParticipationSchema = z.object({
+  account_id: z.string(),
+  families: z.array(z.object({ id: worldFamilySchema, count: z.number().int().positive() })),
+});
+const worldLabels: Record<z.infer<typeof worldFamilySchema>, string> = {
+  audio: 'Audio',
+  video: 'Video',
+  longform: 'Articles',
+  photo: 'Photos',
+  books: 'Books',
+  bookmarks: 'Bookmarks',
+  groups: 'Communities',
+  events: 'Events',
+  development: 'Software',
+  models: '3D models',
+  marketplace: 'Markets',
+  games: 'Games',
+  routes: 'Routes',
+  culture: 'Culture',
+  coordination: 'Coordination',
+  publishing: 'Publishing',
+};
+
 /** Page to display a user's profile. */
 const ProfilePage: React.FC<IProfilePage> = ({ params, children }) => {
+  const api = useApi();
   const history = useHistory();
   const username = params?.username || '';
 
@@ -42,13 +74,22 @@ const ProfilePage: React.FC<IProfilePage> = ({ params, children }) => {
   const features = useFeatures();
   const { displayFqn } = useSoapboxConfig();
   const hasWallet = account?.ditto.accepts_zaps_cashu ?? false;
+  const { data: worldParticipation } = useQuery({
+    queryKey: ['account-worlds', account?.id],
+    queryFn: async () => {
+      const response = await api.get(`/api/v1/accounts/${account!.id}/worlds`);
+      return worldParticipationSchema.parse(await response.json());
+    },
+    enabled: Boolean(account?.id),
+    staleTime: 60_000,
+  });
 
   // Fix case of username
   if (account && account.acct !== username) {
     return <Redirect to={`/@${account.acct}`} />;
   }
 
-  const tabItems = [
+  const tabItems: Array<{ text: React.ReactNode; to: string; name: string }> = [
     {
       text: <FormattedMessage id='account.posts' defaultMessage='Posts' />,
       to: `/@${username}`,
@@ -75,11 +116,22 @@ const ProfilePage: React.FC<IProfilePage> = ({ params, children }) => {
         name: 'likes',
       });
     }
+
+    for (const { id } of worldParticipation?.families || []) {
+      tabItems.push({
+        text: worldLabels[id],
+        to: `/@${account.acct}/worlds/${id}`,
+        name: `world:${id}`,
+      });
+    }
   }
 
   let activeItem;
   const pathname = history.location.pathname.replace(`@${username}/`, '');
-  if (pathname.endsWith('/with_replies')) {
+  const worldMatch = pathname.match(/\/worlds\/([^/]+)$/);
+  if (worldMatch) {
+    activeItem = `world:${worldMatch[1]}`;
+  } else if (pathname.endsWith('/with_replies')) {
     activeItem = 'replies';
   } else if (pathname.endsWith('/media')) {
     activeItem = 'media';

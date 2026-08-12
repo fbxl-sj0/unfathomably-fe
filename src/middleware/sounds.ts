@@ -1,11 +1,11 @@
-import { play, soundCache } from '@/utils/sounds.ts';
+import { playSound } from '@/utils/play-sound.ts';
 
 import type { Sounds } from '@/utils/sounds.ts';
 import type { AnyAction, Middleware } from 'redux';
 
 interface Action extends AnyAction {
-  meta: {
-    sound: Sounds;
+  meta?: {
+    sound?: Sounds;
   };
 }
 
@@ -13,8 +13,8 @@ interface Action extends AnyAction {
 export default function soundsMiddleware(): Middleware {
   return () => next => anyAction => {
     const action = anyAction as Action;
-    if (action.meta?.sound && soundCache[action.meta.sound]) {
-      play(soundCache[action.meta.sound]);
+    if (action.meta?.sound) {
+      playSound(action.meta.sound);
     }
 
     return next(action);

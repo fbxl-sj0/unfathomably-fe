@@ -4,6 +4,7 @@ import { fetchRelationships } from '@/actions/accounts.ts';
 import { importFetchedAccounts } from '@/actions/importer/index.ts';
 import { useApi } from '@/hooks/useApi.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
+import { useLoggedIn } from '@/hooks/useLoggedIn.ts';
 
 import { PaginatedResult, removePageItem } from '../utils/queries.ts';
 
@@ -35,6 +36,7 @@ interface UseSuggestionsOpts {
 const useSuggestions = (opts?: UseSuggestionsOpts) => {
   const api = useApi();
   const dispatch = useAppDispatch();
+  const { isLoggedIn } = useLoggedIn();
   const local = opts?.local ?? false;
 
   const getV2Suggestions = async (pageParam?: PageParam): Promise<PaginatedResult<Result>> => {
@@ -59,6 +61,7 @@ const useSuggestions = (opts?: UseSuggestionsOpts) => {
   const result = useInfiniteQuery({
     queryKey: local ? SuggestionKeys.localSuggestions : SuggestionKeys.suggestions,
     queryFn: ({ pageParam }) => getV2Suggestions(pageParam),
+    enabled: isLoggedIn,
     placeholderData: keepPreviousData,
     initialPageParam: undefined as PageParam | undefined,
     getNextPageParam: (config): PageParam | undefined => {
@@ -93,6 +96,7 @@ const useDismissSuggestion = () => {
 function useOnboardingSuggestions() {
   const api = useApi();
   const dispatch = useAppDispatch();
+  const { isLoggedIn } = useLoggedIn();
 
   const getV2Suggestions = async (pageParam: any): Promise<{ data: Suggestion[]; link: string | undefined; hasMore: boolean }> => {
     const link = pageParam?.link || '/api/v2/suggestions';
@@ -116,6 +120,7 @@ function useOnboardingSuggestions() {
   const result = useInfiniteQuery({
     queryKey: ['suggestions', 'v2'],
     queryFn: ({ pageParam }) => getV2Suggestions(pageParam),
+    enabled: isLoggedIn,
     placeholderData: keepPreviousData,
     initialPageParam: { link: undefined as string | undefined },
     getNextPageParam: (config) => {

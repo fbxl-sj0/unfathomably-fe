@@ -1,5 +1,6 @@
 export { useDomains } from './useDomains.ts';
 export { useFederationHealth } from './useFederationHealth.ts';
+export { useFederatedTargetCurations } from './useFederatedTargetCurations.ts';
 export { useInvites } from './useInvites.ts';
 export { useModerationLog } from './useModerationLog.ts';
 export { useRelays } from './useRelays.ts';

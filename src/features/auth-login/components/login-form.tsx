@@ -43,6 +43,7 @@ const LoginForm: React.FC<ILoginForm> = ({ isLoading, handleSubmit }) => {
           placeholder={usernameLabel}
           type='text'
           name='username'
+          autoComplete='username'
           autoCorrect='off'
           autoCapitalize='off'
           required
@@ -65,7 +66,7 @@ const LoginForm: React.FC<ILoginForm> = ({ isLoading, handleSubmit }) => {
           placeholder={passwordLabel}
           type='password'
           name='password'
-          autoComplete='off'
+          autoComplete='current-password'
           autoCorrect='off'
           autoCapitalize='off'
           required

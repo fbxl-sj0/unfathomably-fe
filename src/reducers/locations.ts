@@ -1,7 +1,7 @@
 import { Map as ImmutableMap } from 'immutable';
 import { AnyAction } from 'redux';
 
-import { LOCATION_SEARCH_SUCCESS } from '@/actions/events.ts';
+import { LOCATION_SEARCH_SUCCESS } from '@/action-types/events.ts';
 import { normalizeLocation } from '@/normalizers/location.ts';
 
 import type { APIEntity } from '@/types/entities.ts';

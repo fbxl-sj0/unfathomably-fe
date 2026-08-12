@@ -112,7 +112,12 @@ export function connectStream(
           disconnected() {
             if (isCurrentStream(epoch)) {
               connection.disconnect();
-              scheduleRestart(STREAM_DISCONNECTED_RECONNECT_DELAY);
+
+              /*
+               * websocket-ts owns ordinary close recovery through its
+               * exponential backoff. Scheduling another replacement here
+               * creates overlapping sockets after a failed handshake.
+               */
             }
           },
 

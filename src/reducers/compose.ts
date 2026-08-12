@@ -57,7 +57,8 @@ import {
   ComposeAction,
   COMPOSE_CHANGE_MEDIA_ORDER,
 } from '../actions/compose.ts';
-import { EVENT_COMPOSE_CANCEL, EVENT_FORM_SET, type EventsAction } from '../actions/events.ts';
+import { EVENT_COMPOSE_CANCEL, EVENT_FORM_SET } from '@/action-types/events.ts';
+import type { EventsAction } from '../actions/events.ts';
 import { ME_FETCH_SUCCESS, ME_PATCH_SUCCESS, MeAction } from '../actions/me.ts';
 import { SETTING_CHANGE, FE_NAME, SettingsAction } from '../actions/settings.ts';
 import { TIMELINE_DELETE, TimelineAction } from '../actions/timelines.ts';
@@ -275,6 +276,26 @@ const updateSetting = (compose: Compose, path: string[], value: string) => {
 const updateCompose = (state: State, key: string, updater: (compose: Compose) => Compose) =>
   state.update(key, state.get('default')!, updater);
 
+const freshCompose = (state: State, id: string) => {
+  const defaults = state.get('default')!;
+
+  return ReducerCompose({
+    content_type: defaults.content_type,
+    idempotencyKey: crypto.randomUUID(),
+    privacy: defaults.privacy,
+    quote_approval_policy: defaults.quote_approval_policy,
+    resetFileKey: getResetFileKey(),
+    tagHistory: defaults.tagHistory,
+  }).withMutations(map => {
+    map.set('in_reply_to', id.startsWith('reply:') ? id.slice(6) : null);
+
+    if (id.startsWith('group:')) {
+      map.set('privacy', 'group');
+      map.set('group_id', id.slice(6));
+    }
+  });
+};
+
 const composeHasContent = (compose: Compose) =>
   Boolean(
     compose.text ||
@@ -331,6 +352,7 @@ const hydrateDraft = (compose: Compose, draft: any) => {
 const hydrateDrafts = (state: State, drafts: Record<string, any>) =>
   state.withMutations(map => {
     Object.entries(drafts || {}).forEach(([id, draft]) => {
+      if (id === 'default') return;
       map.set(id, hydrateDraft(map.get(id, map.get('default')!), draft));
     });
   });
@@ -377,6 +399,7 @@ export default function compose(state = initialState, action: ComposeAction | Ev
 
         map.set('group_id', action.status.getIn(['group', 'id']) as string);
         map.set('in_reply_to', action.status.get('id'));
+        map.set('quote', null);
         map.set('to', action.explicitAddressing ? statusToMentionsArray(action.status, action.account) : ImmutableOrderedSet<string>());
         map.set('text', !action.explicitAddressing ? statusToTextMentions(action.status, action.account) : '');
         map.set('privacy', privacyPreference(action.status.visibility, defaultCompose.privacy));
@@ -393,34 +416,41 @@ export default function compose(state = initialState, action: ComposeAction | Ev
     case COMPOSE_EVENT_REPLY:
       return updateCompose(state, action.id, compose => compose.withMutations(map => {
         map.set('in_reply_to', action.status.get('id'));
+        map.set('quote', null);
         map.set('to', statusToMentionsArray(action.status, action.account));
         map.set('idempotencyKey', crypto.randomUUID());
       }));
     case COMPOSE_QUOTE:
-      return updateCompose(state, 'compose-modal', compose => compose.withMutations(map => {
-        const author = action.status.getIn(['account', 'acct']) as string;
-        const defaultCompose = state.get('default')!;
+      return updateCompose(state, 'compose-modal', compose => {
+        if (compose.id !== null) return compose;
 
-        map.set('quote', action.status.get('id'));
-        map.set('to', ImmutableOrderedSet<string>([author]));
-        map.set('text', '');
-        map.set('privacy', privacyPreference(action.status.visibility, defaultCompose.privacy));
-        map.set('focusDate', new Date());
-        map.set('caretPosition', null);
-        map.set('idempotencyKey', crypto.randomUUID());
-        map.set('content_type', defaultCompose.content_type);
-        map.set('spoiler', false);
-        map.set('spoiler_text', '');
+        return compose.withMutations(map => {
+          const author = action.status.getIn(['account', 'acct']) as string;
+          const defaultCompose = state.get('default')!;
+          const quotedSpoilerText = (action.status.get('spoiler_text') as string) || '';
 
-        if (action.status.visibility === 'group') {
-          if (action.status.group?.group_visibility === 'everyone') {
-            map.set('privacy', privacyPreference('public', defaultCompose.privacy));
-          } else if (action.status.group?.group_visibility === 'members_only') {
-            map.set('group_id', action.status.getIn(['group', 'id']) as string);
-            map.set('privacy', 'group');
+          map.set('quote', action.status.get('id'));
+          map.set('to', ImmutableOrderedSet<string>([author]));
+          map.set('text', '');
+          map.set('privacy', privacyPreference(action.status.visibility, defaultCompose.privacy));
+          map.set('focusDate', new Date());
+          map.set('caretPosition', null);
+          map.set('idempotencyKey', crypto.randomUUID());
+          map.set('content_type', defaultCompose.content_type);
+          map.set('spoiler', compose.spoiler || quotedSpoilerText.length > 0);
+          map.set('sensitive', compose.sensitive || quotedSpoilerText.length > 0);
+          map.set('spoiler_text', compose.spoiler_text || quotedSpoilerText);
+
+          if (action.status.visibility === 'group') {
+            if (action.status.group?.group_visibility === 'everyone') {
+              map.set('privacy', privacyPreference('public', defaultCompose.privacy));
+            } else if (action.status.group?.group_visibility === 'members_only') {
+              map.set('group_id', action.status.getIn(['group', 'id']) as string);
+              map.set('privacy', 'group');
+            }
           }
-        }
-      }));
+        });
+      });
     case COMPOSE_SUBMIT_REQUEST:
       return updateCompose(state, action.id, compose => compose.set('is_submitting', true));
     case COMPOSE_UPLOAD_CHANGE_REQUEST:
@@ -429,14 +459,7 @@ export default function compose(state = initialState, action: ComposeAction | Ev
     case COMPOSE_QUOTE_CANCEL:
     case COMPOSE_RESET:
     case COMPOSE_SUBMIT_SUCCESS:
-      return updateCompose(state, action.id, () => state.get('default')!.withMutations(map => {
-        map.set('idempotencyKey', crypto.randomUUID());
-        map.set('in_reply_to', action.id.startsWith('reply:') ? action.id.slice(6) : null);
-        if (action.id.startsWith('group:')) {
-          map.set('privacy', 'group');
-          map.set('group_id', action.id.slice(6));
-        }
-      }));
+      return updateCompose(state, action.id, () => freshCompose(state, action.id));
     case COMPOSE_SUBMIT_FAIL:
       return updateCompose(state, action.id, compose => compose.set('is_submitting', false));
     case COMPOSE_UPLOAD_CHANGE_FAIL:
@@ -460,7 +483,14 @@ export default function compose(state = initialState, action: ComposeAction | Ev
       }));
     case COMPOSE_DIRECT:
       return updateCompose(state, 'compose-modal', compose => compose.withMutations(map => {
-        map.update('text', text => [text.trim(), `@${action.account.acct} `].filter((str) => str.length !== 0).join(' '));
+        map.update('text', text => {
+          const addressedText = [text.trim(), `@${action.account.acct} `]
+            .filter((value) => value.length !== 0)
+            .join(' ');
+          const initialText = action.initialText?.trim();
+
+          return initialText ? `${addressedText}\n\n${initialText}` : addressedText;
+        });
         map.set('privacy', 'direct');
         map.set('focusDate', new Date());
         map.set('caretPosition', null);
@@ -520,6 +550,13 @@ export default function compose(state = initialState, action: ComposeAction | Ev
         map.set('idempotencyKey', crypto.randomUUID());
         map.set('content_type', action.contentType || 'text/plain');
         map.set('quote', action.status.getIn(['quote', 'id']) as string);
+        const quotePolicy = action.status.getIn(['pleroma', 'quote_approval_policy']) as string | undefined;
+        map.set(
+          'quote_approval_policy',
+          quotePolicy && ['public', 'followers', 'following', 'manual', 'nobody'].includes(quotePolicy)
+            ? quotePolicy
+            : 'public',
+        );
         map.set('group_id', action.status.getIn(['group', 'id']) as string);
 
         if (action.v && isPleromaApiFamily(action.v) && action.withRedraft && hasIntegerMediaIds(action.status.toJS() as any)) {

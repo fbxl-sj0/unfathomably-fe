@@ -13,6 +13,7 @@ import Text from '@/components/ui/text.tsx';
 import { useFeatures } from '@/hooks/useFeatures.ts';
 
 import PopularGroups from './components/discover/popular-groups.tsx';
+import ActiveNostrGroups from './components/discover/active-nostr-groups.tsx';
 import PopularTags from './components/discover/popular-tags.tsx';
 import Search from './components/discover/search/search.tsx';
 import SuggestedGroups from './components/discover/suggested-groups.tsx';
@@ -110,6 +111,8 @@ const Discover: React.FC = () => {
             }
           />
         </HStack>
+
+        <ActiveNostrGroups />
 
         {content}
       </Stack>

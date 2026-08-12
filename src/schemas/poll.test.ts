@@ -32,4 +32,15 @@ describe('normalizePoll()', () => {
     expect(result.voted).toBe(false);
     expect(result.own_votes).toBe(null);
   });
+
+  it('treats a poll with a past expiry as expired', () => {
+    const poll = {
+      id: 'expired',
+      expired: false,
+      expires_at: '2000-01-01T00:00:00.000Z',
+      options: [{ title: 'Yes' }, { title: 'No' }],
+    };
+
+    expect(pollSchema.parse(poll).expired).toBe(true);
+  });
 });

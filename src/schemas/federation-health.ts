@@ -14,7 +14,7 @@
     - rendered admin UI
 */
 
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 const nullableDateSchema = z.string().nullable().catch(null);
 const nullableStringSchema = z.string().nullable().catch(null);

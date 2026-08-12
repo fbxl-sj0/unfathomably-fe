@@ -1,3 +1,5 @@
+import '@/zod-jitless.ts';
+
 import { enableMapSet } from 'immer';
 import { createRoot } from 'react-dom/client';
 
@@ -15,7 +17,6 @@ import '@fontsource/vazirmatn/arabic.css';
 import '@fontsource/noto-sans-javanese/javanese.css';
 import '@fontsource/roboto-mono/400.css';
 import 'line-awesome/dist/font-awesome-line-awesome/css/all.css';
-import '@/features/nostr/keyring.ts';
 
 import './iframe.ts';
 import './styles/tailwind.css';
@@ -23,7 +24,36 @@ import './styles/tailwind.css';
 import ready from './ready.ts';
 import { registerSW, lockSW } from './utils/sw.ts';
 
+const PRELOAD_RELOAD_KEY = 'unfathomably:preload-reload-at';
+const PRELOAD_RELOAD_COOLDOWN = 60_000;
+
 enableMapSet();
+
+/*
+  A tab opened before a frontend deployment can still request a lazy chunk
+  from the previous build. Vite emits this event before surfacing the failed
+  import. Reload once so the tab receives the current entrypoint, but retain a
+  cooldown in session storage to prevent a broken deployment from causing a
+  reload loop.
+*/
+window.addEventListener('vite:preloadError', (event) => {
+  const now = Date.now();
+
+  try {
+    const lastReloadAt = Number(window.sessionStorage.getItem(PRELOAD_RELOAD_KEY));
+
+    if (Number.isFinite(lastReloadAt) && now - lastReloadAt < PRELOAD_RELOAD_COOLDOWN) {
+      return;
+    }
+
+    window.sessionStorage.setItem(PRELOAD_RELOAD_KEY, String(now));
+  } catch {
+    return;
+  }
+
+  event.preventDefault();
+  window.location.reload();
+});
 
 if (BuildConfig.NODE_ENV === 'production') {
   registerSW('/sw.js');

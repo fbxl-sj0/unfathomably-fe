@@ -1,5 +1,5 @@
 import { isBlurhashValid } from 'blurhash';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { mimeSchema } from './utils.ts';
 

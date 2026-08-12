@@ -28,6 +28,8 @@ import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useSuggestions } from '@/queries/suggestions.ts';
 
+import FaspSearchNotice from './fasp-search-notice.tsx';
+
 import type { DiscoveryTarget } from '@/api/hooks/discovery/useTargetSearch.ts';
 import type { OrderedSet as ImmutableOrderedSet } from 'immutable';
 import type { VirtuosoHandle } from 'react-virtuoso';
@@ -101,17 +103,6 @@ const SearchResults = () => {
     dispatch(fetchTrendingStatuses());
   }, []);
 
-  const renderSectionTitle = (id: string, defaultMessage: string) => (
-    <Text
-      className='pb-2 pt-1 uppercase tracking-wide'
-      size='xs'
-      theme='muted'
-      weight='semibold'
-    >
-      <FormattedMessage id={id} defaultMessage={defaultMessage} />
-    </Text>
-  );
-
   const renderTarget = (target: DiscoveryTarget) => {
     if (target.target_type === 'group') {
       return <GroupListItem key={`target-group-${target.group.id}`} group={target.group} withJoinAction />;
@@ -133,7 +124,14 @@ const SearchResults = () => {
 
     return [
       <div key='target-search-heading'>
-        {renderSectionTitle('search_results.targets', 'Groups and feeds')}
+        <Text
+          className='pb-2 pt-1 uppercase tracking-wide'
+          size='xs'
+          theme='muted'
+          weight='semibold'
+        >
+          <FormattedMessage id='search_results.targets' defaultMessage='Groups and feeds' />
+        </Text>
       </div>,
       ...targetSearch.targets.map(renderTarget),
     ];
@@ -178,7 +176,14 @@ const SearchResults = () => {
     if (results.accounts && results.accounts.size > 0) {
       searchResults = [
         <div key='account-search-heading'>
-          {renderSectionTitle('search_results.accounts', 'Accounts')}
+          <Text
+            className='pb-2 pt-1 uppercase tracking-wide'
+            size='xs'
+            theme='muted'
+            weight='semibold'
+          >
+            <FormattedMessage id='search_results.accounts' defaultMessage='Accounts' />
+          </Text>
         </div>,
         ...results.accounts.map(accountId => <AccountContainer key={accountId} id={accountId} />).toArray(),
         ...renderTargetsSection(),
@@ -290,6 +295,10 @@ const SearchResults = () => {
           </Text>
         </HStack>
       )}
+
+      <FaspSearchNotice
+        enabled={Boolean(submitted && me && !filterByAccount && selectedFilter === 'accounts')}
+      />
 
       {noResultsMessage || (
         <ScrollableList

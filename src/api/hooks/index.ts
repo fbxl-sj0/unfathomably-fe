@@ -12,6 +12,7 @@ export { useRelationships } from './accounts/useRelationships.ts';
 export { usePatronUser } from './accounts/usePatronUser.ts';
 
 // Groups
+export { useActiveNostrGroups } from './groups/useActiveNostrGroups.ts';
 export { useBlockGroupMember } from './groups/useBlockGroupMember.ts';
 export { useCancelMembershipRequest } from './groups/useCancelMembershipRequest.ts';
 export { useCreateGroup, type CreateGroupParams } from './groups/useCreateGroup.ts';

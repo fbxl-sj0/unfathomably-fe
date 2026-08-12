@@ -81,15 +81,33 @@ describe('ThreadStatus', () => {
     expect(screen.queryByTestId('thread-connector')).not.toBeInTheDocument();
     expect(screen.getByTestId('status-container')).toHaveTextContent('standalone');
   });
+
+  it('uses visible timeline status relationships when the context cache is empty', () => {
+    mockState.current = buildState({
+      statuses: ImmutableMap({
+        parent: { id: 'parent', in_reply_to_id: null },
+        child: { id: 'child', in_reply_to_id: 'parent' },
+      }),
+    });
+
+    const visibleStatusIds = ImmutableOrderedSet(['parent', 'child']);
+
+    renderThreadStatus('parent', visibleStatusIds);
+    expect(screen.getByTestId('thread-connector-bottom')).toBeInTheDocument();
+
+    renderThreadStatus('child', visibleStatusIds);
+    expect(screen.getByTestId('thread-connector-top')).toBeInTheDocument();
+  });
 });
 
-function renderThreadStatus(id: string) {
+function renderThreadStatus(id: string, visibleStatusIds?: ImmutableOrderedSet<string>) {
   render(
     <ThreadStatus
       id={id}
       focusedStatusId='focused'
       onMoveUp={() => undefined}
       onMoveDown={() => undefined}
+      visibleStatusIds={visibleStatusIds}
     />,
   );
 }
@@ -97,6 +115,7 @@ function renderThreadStatus(id: string) {
 function buildState(overrides: {
   inReplyTos?: ImmutableMap<string, string>;
   replies?: ImmutableMap<string, ImmutableOrderedSet<string>>;
+  statuses?: ImmutableMap<string, any>;
 } = {}) {
   const ids = ['parent', 'child', 'grandchild', 'standalone'];
 
@@ -105,7 +124,7 @@ function buildState(overrides: {
       inReplyTos: overrides.inReplyTos ?? ImmutableMap<string, string>(),
       replies: overrides.replies ?? ImmutableMap<string, ImmutableOrderedSet<string>>(),
     },
-    statuses: ImmutableMap(ids.map((id) => [id, { id }])),
+    statuses: overrides.statuses ?? ImmutableMap(ids.map((id) => [id, { id }])),
   };
 }
 

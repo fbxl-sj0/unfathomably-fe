@@ -1,6 +1,5 @@
 import clsx from 'clsx';
 
-import unfathomablyLogoDarkSrc from '@/assets/images/unfathomably-logo-dark.svg';
 import unfathomablyLogoSrc from '@/assets/images/unfathomably-logo.svg';
 import { useSettings } from '@/hooks/useSettings.ts';
 import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
@@ -21,7 +20,7 @@ const SiteLogo: React.FC<ISiteLogo> = ({ className, theme, ...rest }) => {
   let darkMode = ['dark', 'black'].includes(useTheme());
   if (theme === 'dark') darkMode = true;
 
-  const defaultLogo = darkMode ? unfathomablyLogoDarkSrc : unfathomablyLogoSrc;
+  const defaultLogo = unfathomablyLogoSrc;
 
   // Use the right logo if provided, then use fallbacks.
   const getSrc = () => {

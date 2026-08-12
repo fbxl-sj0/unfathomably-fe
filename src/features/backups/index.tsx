@@ -13,8 +13,12 @@ import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
+import backupsReducer from '@/reducers/backups.ts';
+import { injectReducer } from '@/store.ts';
 
 import type { Backup as BackupEntity } from '@/reducers/backups.ts';
+
+injectReducer('backups', backupsReducer);
 
 const messages = defineMessages({
   heading: { id: 'column.backups', defaultMessage: 'Backups' },

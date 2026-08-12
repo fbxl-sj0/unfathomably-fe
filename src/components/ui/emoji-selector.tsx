@@ -9,7 +9,6 @@ import EmojiComponent from '@/components/ui/emoji.tsx';
 import HStack from '@/components/ui/hstack.tsx';
 import IconButton from '@/components/ui/icon-button.tsx';
 import EmojiPickerDropdown from '@/features/emoji/components/emoji-picker-dropdown.tsx';
-import emojiData from '@/features/emoji/data.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useClickOutside } from '@/hooks/useClickOutside.ts';
 import { useFeatures } from '@/hooks/useFeatures.ts';
@@ -18,6 +17,17 @@ import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
 import { userTouching } from '@/is-mobile.ts';
 
 import type { Emoji } from '@/features/emoji/index.ts';
+
+type EmojiData = typeof import('@/features/emoji/data.ts').default;
+
+let emojiDataPromise: Promise<EmojiData> | undefined;
+
+/** Load the large native emoji catalogue only when a picker is opened. */
+const loadEmojiData = (): Promise<EmojiData> => {
+  emojiDataPromise ??= import('@/features/emoji/data.ts').then(({ default: data }) => data);
+
+  return emojiDataPromise;
+};
 
 interface IEmojiButton {
   /** Unicode emoji character. */
@@ -78,6 +88,7 @@ const EmojiSelector: React.FC<IEmojiSelector> = ({
 
   const dispatch = useAppDispatch();
   const [expanded, setExpanded] = useState(false);
+  const [emojiData, setEmojiData] = useState<EmojiData>();
 
   const { x, y, strategy, refs, update } = useFloating<HTMLElement>({
     placement,
@@ -99,20 +110,28 @@ const EmojiSelector: React.FC<IEmojiSelector> = ({
     }
   };
 
-  const handleReact = (emoji: string) => {
-    // Reverse lookup...
-    // This is hell.
-    const data = Object.values(emojiData.emojis).find((e) => e.skins.some((s) => s.native === emoji));
-    const skin = data?.skins.find((s) => s.native === emoji);
+  const rememberReaction = (data: EmojiData, emoji: string) => {
+    const entry = Object.values(data.emojis).find((candidate) => (
+      candidate.skins.some((skin) => skin.native === emoji)
+    ));
+    const skin = entry?.skins.find((candidate) => candidate.native === emoji);
 
-    if (data && skin) {
+    if (entry && skin) {
       dispatch(chooseEmoji({
-        id: data.id,
-        colons: `:${data.id}:`,
+        id: entry.id,
+        colons: `:${entry.id}:`,
         custom: false,
         native: skin.native,
         unified: skin.unified,
       }));
+    }
+  };
+
+  const handleReact = (emoji: string) => {
+    if (emojiData) {
+      rememberReaction(emojiData, emoji);
+    } else {
+      void loadEmojiData().then((data) => rememberReaction(data, emoji));
     }
 
     onReact(emoji);
@@ -134,13 +153,30 @@ const EmojiSelector: React.FC<IEmojiSelector> = ({
     setExpanded(false);
   }, [visible]);
 
+  useEffect(() => {
+    let active = true;
+
+    if (visible) {
+      void loadEmojiData().then((data) => {
+        if (active) {
+          setEmojiData(data);
+          void update();
+        }
+      });
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [update, visible]);
+
   useClickOutside(refs, () => {
     onClose?.();
   });
 
   /** Frequently used emojis converted from shortcodes to native. */
   const frequentNative = frequentlyUsedEmojis.reduce<string[]>((results, shortcode) => {
-    const emoji = emojiData.emojis[shortcode]?.skins[0]?.native;
+    const emoji = emojiData?.emojis[shortcode]?.skins[0]?.native;
     if (emoji) {
       results.push(emoji);
     }

@@ -1,4 +1,6 @@
+import checkIcon from '@tabler/icons/outline/check.svg';
 import circlesIcon from '@tabler/icons/outline/circles.svg';
+import gavelIcon from '@tabler/icons/outline/gavel.svg';
 import pinnedIcon from '@tabler/icons/outline/pinned.svg';
 import repeatIcon from '@tabler/icons/outline/repeat.svg';
 import clsx from 'clsx';
@@ -9,7 +11,9 @@ import { Link, useHistory } from 'react-router-dom';
 import { openModal } from '@/actions/modals.ts';
 import { unfilterStatus } from '@/actions/statuses.ts';
 import { useFavourite } from '@/api/hooks/index.ts';
+import FederationProtocolStatusContext from '@/components/federation-protocol-status-context.tsx';
 import NativeStatusContext from '@/components/native-status-context.tsx';
+import NostrStatusContext from '@/components/nostr-status-context.tsx';
 import PureEventPreview from '@/components/pure-event-preview.tsx';
 import PureStatusActionBar from '@/components/pure-status-action-bar.tsx';
 import PureStatusContent from '@/components/pure-status-content.tsx';
@@ -32,6 +36,7 @@ import { useSettings } from '@/hooks/useSettings.ts';
 import { useStatusHidden } from '@/hooks/useStatusHidden.ts';
 import { Status as StatusEntity } from '@/schemas/index.ts';
 import { emojifyText } from '@/utils/emojify.tsx';
+import { quoteFallbackUrl } from '@/utils/quote-fallback.ts';
 import { defaultMediaVisibility, textForScreenReader, getActualStatus } from '@/utils/status.ts';
 
 import StatusMedia from './status-media.tsx';
@@ -97,6 +102,19 @@ const PureStatus: React.FC<IPureStatus> = (props) => {
   const [minHeight, setMinHeight] = useState(208);
 
   const actualStatus = getActualStatus(status);
+  let statusSource: React.ReactElement | undefined;
+
+  if (actualStatus.pleroma?.nostr) {
+    statusSource = <NostrStatusContext provenance={actualStatus.pleroma.nostr} />;
+  } else if (actualStatus.pleroma?.atproto || actualStatus.pleroma?.diaspora) {
+    statusSource = (
+      <FederationProtocolStatusContext
+        atproto={actualStatus.pleroma.atproto}
+        diaspora={actualStatus.pleroma.diaspora}
+      />
+    );
+  }
+
   const isReblog = status.reblog && typeof status.reblog === 'object';
   const statusUrl = `/@${actualStatus.account.acct}/posts/${actualStatus.id}`;
   const group = actualStatus.group;
@@ -283,6 +301,54 @@ const PureStatus: React.FC<IPureStatus> = (props) => {
           }
         />
       );
+    } else if (actualStatus.pleroma?.answer) {
+      return (
+        <StatusInfo
+          avatarSize={avatarSize}
+          icon={<Icon src={checkIcon} className='size-4 text-primary-600 dark:text-accent-blue' />}
+          text={
+            group ? (
+              <FormattedMessage
+                id='status.accepted_answer_in_group'
+                defaultMessage='Accepted answer in {group}'
+                values={{
+                  group: (
+                    <Link to={`/group/${group.slug}`} className='font-semibold hover:underline'>
+                      {group.display_name}
+                    </Link>
+                  ),
+                }}
+              />
+            ) : (
+              <FormattedMessage id='status.accepted_answer' defaultMessage='Accepted answer' />
+            )
+          }
+        />
+      );
+    } else if (actualStatus.pleroma?.distinguished) {
+      return (
+        <StatusInfo
+          avatarSize={avatarSize}
+          icon={<Icon src={gavelIcon} className='size-4 text-primary-600 dark:text-accent-blue' />}
+          text={
+            group ? (
+              <FormattedMessage
+                id='status.distinguished_in_group'
+                defaultMessage='Moderator comment in {group}'
+                values={{
+                  group: (
+                    <Link to={`/group/${group.slug}`} className='font-semibold hover:underline'>
+                      {group.display_name}
+                    </Link>
+                  ),
+                }}
+              />
+            ) : (
+              <FormattedMessage id='status.distinguished' defaultMessage='Moderator comment' />
+            )
+          }
+        />
+      );
     } else if (featured) {
       return (
         <StatusInfo
@@ -366,6 +432,7 @@ const PureStatus: React.FC<IPureStatus> = (props) => {
 
   let quote;
   const quoteState = actualStatus.pleroma?.quote_state;
+  const quoteUrl = quoteFallbackUrl(actualStatus.pleroma?.quote_url);
   const quoteControls = quoteState ? (
     <QuoteAuthorizationControls
       statusId={actualStatus.id}
@@ -374,15 +441,26 @@ const PureStatus: React.FC<IPureStatus> = (props) => {
     />
   ) : null;
 
-  if (actualStatus.quote) {
+  if (actualStatus.quote || quoteUrl) {
     if ((actualStatus?.pleroma?.quote_visible ?? true) === false) {
       quote = (
         <div>
           <p><FormattedMessage id='statuses.quote_tombstone' defaultMessage='Post is unavailable.' /></p>
         </div>
       );
-    } else {
+    } else if (actualStatus.quote) {
       quote = <QuotedStatus statusId={actualStatus.quote.id} />;
+    } else if (quoteUrl) {
+      quote = (
+        <a
+          href={quoteUrl}
+          target='_blank'
+          rel='noopener noreferrer'
+          className='text-sm font-bold text-primary-600 hover:underline black:text-primary-300 dark:text-primary-300'
+        >
+          <FormattedMessage id='statuses.quote_fallback' defaultMessage='View quoted post' />
+        </a>
+      );
     }
   }
 
@@ -447,6 +525,7 @@ const PureStatus: React.FC<IPureStatus> = (props) => {
             showProfileHoverCard={hoverable}
             withLinkToProfile={hoverable}
             approvalStatus={actualStatus.approval_status}
+            statusSource={statusSource}
             avatarSize={avatarSize}
           />
 
@@ -475,7 +554,7 @@ const PureStatus: React.FC<IPureStatus> = (props) => {
                     translatable
                   />
 
-                  <NativeStatusContext native={actualStatus.pleroma?.native} />
+                  <NativeStatusContext authorAccountId={actualStatus.account.id} native={actualStatus.pleroma?.native} statusId={actualStatus.id} />
 
                   <PureTranslateButton status={status} />
 

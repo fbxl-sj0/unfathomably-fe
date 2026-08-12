@@ -1,3 +1,10 @@
+/*
+ * Unfathomably FE
+ * File: display-name-inline.tsx
+ * Purpose: Render a compact account name with a human-readable identity.
+ * This file intentionally does not resolve or fetch account identities.
+ */
+
 import HStack from '@/components/ui/hstack.tsx';
 import Text from '@/components/ui/text.tsx';
 import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
@@ -11,7 +18,7 @@ import VerificationBadge from './verification-badge.tsx';
 import type { Account } from '@/schemas/index.ts';
 
 interface IDisplayName {
-  account: Pick<Account, 'id' | 'acct' | 'emojis' | 'fqn' | 'verified' | 'display_name'>;
+  account: Pick<Account, 'id' | 'acct' | 'emojis' | 'fqn' | 'nostr' | 'atproto' | 'diaspora' | 'verified' | 'display_name'>;
   withSuffix?: boolean;
 }
 
@@ -33,8 +40,16 @@ const DisplayNameInline: React.FC<IDisplayName> = ({ account, withSuffix = true 
     </HStack>
   );
 
-  // eslint-disable-next-line formatjs/no-literal-string-in-jsx
-  const suffix = (<span className='relative block max-w-full truncate'>@{getAcct(account, displayFqn)}</span>);
+  const accountAddress = account.nostr?.display_address
+    || (account.atproto?.handle ? `@${account.atproto.handle}` : undefined)
+    || account.diaspora?.id
+    || `@${getAcct(account, displayFqn)}`;
+
+  const suffix = (
+    <span className='relative block max-w-full truncate'>
+      {accountAddress}
+    </span>
+  );
 
   return (
     <div className='flex max-w-80 flex-col items-center justify-center text-center sm:flex-row sm:gap-2'>
@@ -46,3 +61,5 @@ const DisplayNameInline: React.FC<IDisplayName> = ({ account, withSuffix = true 
 };
 
 export default DisplayNameInline;
+
+/* end of display-name-inline.tsx */

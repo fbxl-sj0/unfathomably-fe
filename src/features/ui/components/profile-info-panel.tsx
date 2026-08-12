@@ -20,7 +20,9 @@ import { capitalize } from '@/utils/strings.ts';
 
 import ProfileFamiliarFollowers from './profile-familiar-followers.tsx';
 import ProfileField from './profile-field.tsx';
+import ProfileIdentityProofs from './profile-identity-proofs.tsx';
 import ProfileStats from './profile-stats.tsx';
+import NostrProfileMetadata from './nostr-profile-metadata.tsx';
 
 import type { Account } from '@/schemas/index.ts';
 
@@ -185,6 +187,10 @@ const ProfileInfoPanel: React.FC<IProfileInfoPanel> = ({ account, username }) =>
         {account.note.length > 0 && (
           <Markup size='sm' html={{ __html: account.note }} emojis={account.emojis} truncate />
         )}
+
+        <NostrProfileMetadata account={account} />
+
+        <ProfileIdentityProofs identityProofs={account.pleroma?.identity_proofs ?? []} />
 
         <div className='flex flex-col items-start gap-2 md:flex-row md:flex-wrap md:items-center'>
           {account.local ? (

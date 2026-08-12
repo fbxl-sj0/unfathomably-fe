@@ -93,6 +93,7 @@ const PureStatusContent: React.FC<IPureStatusContent> = ({
         lang={status.language || undefined}
         size={textSize}
         emojis={status.emojis}
+        localReferences={status.pleroma?.local_references}
         mentions={status.mentions}
         html={{ __html: parsedHtml }}
       />,
@@ -121,6 +122,7 @@ const PureStatusContent: React.FC<IPureStatusContent> = ({
         lang={status.language || undefined}
         size={textSize}
         emojis={status.emojis}
+        localReferences={status.pleroma?.local_references}
         mentions={status.mentions}
         html={{ __html: parsedHtml }}
       />,

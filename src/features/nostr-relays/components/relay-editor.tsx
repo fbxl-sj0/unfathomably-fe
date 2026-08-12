@@ -1,3 +1,10 @@
+/*
+ * Unfathomably FE
+ * File: relay-editor.tsx
+ * Purpose: Edit a bounded NIP-65 relay preference list.
+ * This file intentionally does not sign or publish relay-list events.
+ */
+
 import { FormattedMessage } from 'react-intl';
 
 import HStack from '@/components/ui/hstack.tsx';
@@ -13,6 +20,8 @@ interface IRelayEditor {
 
 const RelayEditor: React.FC<IRelayEditor> = ({ relays, setRelays }) => {
   const handleAddRelay = (): void => {
+    if (relays.length >= 8) return;
+
     setRelays([...relays, { url: '' }]);
   };
 
@@ -61,14 +70,14 @@ const RelayField: StreamfieldComponent<RelayData> = ({ value, onChange }) => {
         placeholder={instance.nostr?.relay ?? `wss://${instance.domain}/relay`}
       />
 
-      <Select className='mt-1' full={false} onChange={handleMarkerChange}>
-        <option value='' selected={value.marker === undefined}>
+      <Select className='mt-1' full={false} value={value.marker ?? ''} onChange={handleMarkerChange}>
+        <option value=''>
           <FormattedMessage id='nostr_relays.read_write' defaultMessage='Read & write' />
         </option>
-        <option value='read' selected={value.marker === 'read'}>
+        <option value='read'>
           <FormattedMessage id='nostr_relays.read_only' defaultMessage='Read-only' />
         </option>
-        <option value='write' selected={value.marker === 'write'}>
+        <option value='write'>
           <FormattedMessage id='nostr_relays.write_only' defaultMessage='Write-only' />
         </option>
       </Select>
@@ -79,3 +88,5 @@ const RelayField: StreamfieldComponent<RelayData> = ({ value, onChange }) => {
 export default RelayEditor;
 
 export type { RelayData };
+
+/* end of relay-editor.tsx */

@@ -4,12 +4,12 @@ import {
   OrderedSet as ImmutableOrderedSet,
 } from 'immutable';
 
-import { STATUS_IMPORT, STATUSES_IMPORT } from '@/actions/importer/index.ts';
-
 import {
   ACCOUNT_BLOCK_SUCCESS,
   ACCOUNT_MUTE_SUCCESS,
-} from '../actions/accounts.ts';
+} from '@/action-types/accounts.ts';
+import { STATUS_IMPORT, STATUSES_IMPORT } from '@/actions/importer/index.ts';
+
 import {
   CONTEXT_FETCH_SUCCESS,
   STATUS_CREATE_REQUEST,

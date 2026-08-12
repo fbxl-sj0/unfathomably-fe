@@ -8,6 +8,11 @@
     -ms-overflow-style: -ms-autohiding-scrollbar;
   }
 
+  html.black,
+  html.black body {
+    @apply bg-black;
+  }
+
   body.rtl {
     direction: rtl;
   
@@ -24,6 +29,13 @@
 
   ::selection {
     @apply bg-primary-600 text-white;
+  }
+
+  button:focus-visible,
+  input[type='button']:focus-visible,
+  input[type='reset']:focus-visible,
+  input[type='submit']:focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-primary-500;
   }
 
   div[data-viewport-type='window'] {
@@ -177,6 +189,11 @@
   .desktop-aside,
   .desktop-chat-widget {
     display: none;
+  }
+
+  .black .desktop-sidebar,
+  .black .desktop-aside {
+    @apply bg-black;
   }
 
   .layout-main {

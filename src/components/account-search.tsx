@@ -10,6 +10,7 @@ import SvgIcon from './ui/svg-icon.tsx';
 
 const messages = defineMessages({
   placeholder: { id: 'account_search.placeholder', defaultMessage: 'Search for an account' },
+  clear: { id: 'search.clear', defaultMessage: 'Clear search' },
 });
 
 interface IAccountSearch {
@@ -69,23 +70,25 @@ const AccountSearch: React.FC<IAccountSearch> = ({ onSelected, ...rest }) => {
           {...rest}
         />
 
-        <div
-          role='button'
-          tabIndex={0}
+        <button
+          type='button'
+          aria-label={intl.formatMessage(messages.clear)}
+          disabled={isEmpty()}
           className='absolute inset-y-0 flex cursor-pointer items-center px-3 ltr:right-0 rtl:left-0'
           onClick={handleClear}
         >
           <SvgIcon
             src={searchIcon}
             className={clsx('size-4 text-gray-400', { hidden: !isEmpty() })}
+            aria-hidden='true'
           />
 
           <SvgIcon
             src={xIcon}
             className={clsx('size-4 text-gray-400', { hidden: isEmpty() })}
-            aria-label={intl.formatMessage(messages.placeholder)}
+            aria-hidden='true'
           />
-        </div>
+        </button>
       </div>
     </div>
   );

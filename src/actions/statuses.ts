@@ -36,6 +36,20 @@ const CONTEXT_FETCH_REQUEST = 'CONTEXT_FETCH_REQUEST';
 const CONTEXT_FETCH_SUCCESS = 'CONTEXT_FETCH_SUCCESS';
 const CONTEXT_FETCH_FAIL    = 'CONTEXT_FETCH_FAIL';
 
+// Relay fetch and projection repair run in separate bounded workers. Polling
+// continues only while either worker reports pending work, and these delays
+// bound an opened status to five follow-up requests over about thirty seconds.
+const NOSTR_HYDRATION_RETRY_DELAYS = [1_500, 3_000, 5_000, 8_000, 12_000];
+const NOSTR_HYDRATION_PENDING_STATES = new Set(['scheduled', 'pending']);
+
+const nostrHydrationPending = (response: Response): boolean => {
+  const fetchState = response.headers.get('x-unfathomably-nostr-hydration');
+  const repairState = response.headers.get('x-unfathomably-nostr-thread-repair');
+
+  return NOSTR_HYDRATION_PENDING_STATES.has(fetchState || '') ||
+    NOSTR_HYDRATION_PENDING_STATES.has(repairState || '');
+};
+
 const STATUS_MUTE_REQUEST = 'STATUS_MUTE_REQUEST';
 const STATUS_MUTE_SUCCESS = 'STATUS_MUTE_SUCCESS';
 const STATUS_MUTE_FAIL    = 'STATUS_MUTE_FAIL';
@@ -146,6 +160,74 @@ const fetchStatus = (id: string) => {
   };
 };
 
+const fetchStatuses = (ids: string[]) => {
+  return async(dispatch: AppDispatch, getState: () => RootState) => {
+    const pendingIds = [...new Set(ids)].filter(id => !statusExists(getState, id));
+
+    if (pendingIds.length === 0) return [];
+
+    pendingIds.forEach(id => {
+      dispatch({ type: STATUS_FETCH_REQUEST, id, skipLoading: false });
+    });
+
+    try {
+      const statuses: APIEntity[] = [];
+      const batchSize = 40;
+
+      for (let offset = 0; offset < pendingIds.length; offset += batchSize) {
+        const params = new URLSearchParams();
+
+        pendingIds.slice(offset, offset + batchSize).forEach(id => {
+          params.append('id[]', id);
+        });
+
+        const response = await api(getState).get(`/api/v1/statuses?${params.toString()}`);
+        const page = await response.json() as APIEntity[];
+        statuses.push(...page);
+      }
+
+      dispatch(importFetchedStatuses(statuses));
+
+      statuses.forEach(status => {
+        dispatch({ type: STATUS_FETCH_SUCCESS, status, skipLoading: false });
+      });
+
+      const groupIds =
+        statuses
+          .map(status => status.group)
+          .filter((group): group is APIEntity => Boolean(group && typeof group === 'object'))
+          .map(group => String(group.id))
+          .filter(Boolean);
+
+      if (groupIds.length > 0) {
+        dispatch(fetchGroupRelationships([...new Set(groupIds)]));
+      }
+
+      const returnedIds = new Set(statuses.map(status => String(status.id)));
+
+      pendingIds
+        .filter(id => !returnedIds.has(id))
+        .forEach(id => {
+          dispatch({
+            type: STATUS_FETCH_FAIL,
+            id,
+            error: new Error('Status is not available'),
+            skipLoading: false,
+            skipAlert: true,
+          });
+        });
+
+      return statuses;
+    } catch (error) {
+      pendingIds.forEach(id => {
+        dispatch({ type: STATUS_FETCH_FAIL, id, error, skipLoading: false, skipAlert: true });
+      });
+
+      throw error;
+    }
+  };
+};
+
 const deleteStatus = (id: string, withRedraft = false) => {
   return (dispatch: AppDispatch, getState: () => RootState) => {
     if (!isLoggedIn(getState)) return null;
@@ -182,7 +264,7 @@ const fetchContext = (id: string) =>
   (dispatch: AppDispatch, getState: () => RootState) => {
     dispatch({ type: CONTEXT_FETCH_REQUEST, id });
 
-    return api(getState).get(`/api/v1/statuses/${id}/context`).then((response) => response.json()).then((context) => {
+    const importContext = (context: any) => {
       if (Array.isArray(context)) {
         // Mitra: returns a list of statuses
         dispatch(importFetchedStatuses(context));
@@ -195,6 +277,37 @@ const fetchContext = (id: string) =>
       } else {
         throw context;
       }
+
+      return context;
+    };
+
+    const refreshContext = (attempt: number) => {
+      const delay = NOSTR_HYDRATION_RETRY_DELAYS[attempt];
+      if (delay === undefined) return;
+
+      setTimeout(() => {
+        api(getState)
+          .get(`/api/v1/statuses/${id}/context`)
+          .then(async(response) => {
+            const context = importContext(await response.json());
+
+            if (nostrHydrationPending(response)) {
+              refreshContext(attempt + 1);
+            }
+
+            return context;
+          })
+          .catch(() => undefined);
+      }, delay);
+    };
+
+    return api(getState).get(`/api/v1/statuses/${id}/context`).then(async(response) => {
+      const context = importContext(await response.json());
+
+      if (nostrHydrationPending(response)) {
+        refreshContext(0);
+      }
+
       return context;
     }).catch(error => {
       if (error.response?.status === 404) {
@@ -393,6 +506,7 @@ export {
   createStatus,
   editStatus,
   fetchStatus,
+  fetchStatuses,
   deleteStatus,
   updateStatus,
   fetchContext,

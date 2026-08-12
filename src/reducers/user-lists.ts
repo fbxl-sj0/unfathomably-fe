@@ -17,7 +17,7 @@ import {
   FOLLOW_REQUEST_REJECT_SUCCESS,
   PINNED_ACCOUNTS_FETCH_SUCCESS,
   BIRTHDAY_REMINDERS_FETCH_SUCCESS,
-} from '@/actions/accounts.ts';
+} from '@/action-types/accounts.ts';
 import {
   BLOCKS_FETCH_SUCCESS,
   BLOCKS_EXPAND_SUCCESS,
@@ -37,7 +37,7 @@ import {
   EVENT_PARTICIPATION_REQUESTS_FETCH_SUCCESS,
   EVENT_PARTICIPATION_REQUEST_AUTHORIZE_SUCCESS,
   EVENT_PARTICIPATION_REQUEST_REJECT_SUCCESS,
-} from '@/actions/events.ts';
+} from '@/action-types/events.ts';
 import {
   FAMILIAR_FOLLOWERS_FETCH_SUCCESS,
 } from '@/actions/familiar-followers.ts';

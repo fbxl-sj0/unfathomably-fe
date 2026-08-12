@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-
+import BrowserLink from '@/components/browser-link.tsx';
 import Text from '@/components/ui/text.tsx';
 import { useSettings } from '@/hooks/useSettings.ts';
 import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
@@ -17,17 +16,14 @@ const Navlinks: React.FC<INavlinks> = ({ type }) => {
       <div className='flex flex-wrap justify-center'>
         {navlinks.get(type)?.map((link, idx) => {
           const url = link.url;
-          const isExternal = url.startsWith('http');
-          const Comp = (isExternal ? 'a' : Link) as 'a';
-          const compProps = isExternal ? { href: url, target: '_blank' } : { to: url };
 
           return (
             <div key={idx} className='px-5 py-2'>
-              <Comp {...compProps} className='text-primary-600 hover:underline dark:text-primary-400'>
+              <BrowserLink href={url} className='text-primary-600 hover:underline dark:text-primary-400'>
                 <Text tag='span' theme='inherit' size='sm'>
                   {(link.getIn(['titleLocales', locale]) || link.get('title')) as string}
                 </Text>
-              </Comp>
+              </BrowserLink>
             </div>
           );
         })}

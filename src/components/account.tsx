@@ -1,3 +1,10 @@
+/*
+ * Unfathomably FE
+ * File: account.tsx
+ * Purpose: Render a standard account row and its available actions.
+ * This file intentionally does not fetch account or relationship data.
+ */
+
 import pencilIcon from '@tabler/icons/outline/pencil.svg';
 import { useRef } from 'react';
 import { defineMessages, useIntl, FormattedMessage } from 'react-intl';
@@ -67,6 +74,7 @@ export interface IAccount {
   withLinkToProfile?: boolean;
   withRelationship?: boolean;
   showEdit?: boolean;
+  statusSource?: React.ReactNode;
   approvalStatus?: StatusApprovalStatus;
   emoji?: string;
   emojiUrl?: string;
@@ -94,6 +102,7 @@ const Account = ({
   withLinkToProfile = true,
   withRelationship = true,
   showEdit = false,
+  statusSource,
   approvalStatus,
   emoji,
   emojiUrl,
@@ -104,6 +113,16 @@ const Account = ({
 
   const me = useAppSelector((state) => state.me);
   const username = useAppSelector((state) => account ? getAcct(account, displayFqn(state)) : null);
+  const nostrAddress = account?.nostr?.display_address;
+  const atprotoAddress = account?.atproto?.handle;
+  const diasporaAddress = account?.diaspora?.id;
+  const displayAddress = acct ?? nostrAddress ?? atprotoAddress ?? diasporaAddress ?? username;
+  const nativeAddress = nostrAddress || atprotoAddress || diasporaAddress;
+  let displayAddressPrefix = '@';
+
+  if (nativeAddress && !acct && (nostrAddress || diasporaAddress)) {
+    displayAddressPrefix = '';
+  }
 
   const handleAction = () => {
     onActionClick!(account);
@@ -203,11 +222,11 @@ const Account = ({
 
             <Stack space={withAccountNote || note ? 1 : 0}>
               <HStack alignItems='center' space={1}>
-                <Text theme='muted' size='sm' direction='ltr' truncate>@{acct ?? username}</Text> {/* eslint-disable-line formatjs/no-literal-string-in-jsx */}
+                <Text theme='muted' size='sm' direction='ltr' truncate>
+                  {displayAddressPrefix}{displayAddress}
+                </Text>
 
-                {account.pleroma?.favicon && (
-                  <InstanceFavicon account={account} disabled={!withLinkToProfile} />
-                )}
+                <InstanceFavicon account={account} disabled={!withLinkToProfile} />
 
                 {(timestamp) ? (
                   <>
@@ -220,6 +239,14 @@ const Account = ({
                     ) : (
                       <RelativeTimestamp timestamp={timestamp} theme='muted' size='sm' className='whitespace-nowrap' futureDate={futureTimestamp} />
                     )}
+                  </>
+                ) : null}
+
+                {statusSource ? (
+                  <>
+                    <Text tag='span' theme='muted' size='sm'>&middot;</Text> {/* eslint-disable-line formatjs/no-literal-string-in-jsx */}
+
+                    {statusSource}
                   </>
                 ) : null}
 
@@ -281,3 +308,5 @@ const Account = ({
 };
 
 export default Account;
+
+/* end of account.tsx */

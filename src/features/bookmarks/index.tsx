@@ -26,6 +26,7 @@ import {
 import { useBookmarks } from '@/api/hooks/index.ts';
 import PureStatusList from '@/components/pure-status-list.tsx';
 import Button from '@/components/ui/button.tsx';
+import { Card } from '@/components/ui/card.tsx';
 import { Column } from '@/components/ui/column.tsx';
 import HStack from '@/components/ui/hstack.tsx';
 import Input from '@/components/ui/input.tsx';
@@ -57,7 +58,16 @@ const Bookmarks = () => {
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { bookmarks, isLoading, hasNextPage, fetchNextPage, invalidate } = useBookmarks(selectedFolderId);
+  const {
+    bookmarks,
+    isError: isBookmarksError,
+    isFetched: areBookmarksFetched,
+    isLoading,
+    hasNextPage,
+    fetchEntities,
+    fetchNextPage,
+    invalidate,
+  } = useBookmarks(selectedFolderId);
 
   const folderLabel = (folder: BookmarkFolder) => `${folder.emoji ? `${folder.emoji} ` : ''}${folder.name}`;
 
@@ -202,7 +212,7 @@ const Bookmarks = () => {
           <Text theme='muted'>
             <FormattedMessage
               id='bookmarks.subtitle'
-              defaultMessage='Keep saved posts tidy with Pleroma/Rebased bookmark folders.'
+              defaultMessage='Keep saved posts tidy by organizing them into folders.'
             />
           </Text>
         </Stack>
@@ -303,15 +313,45 @@ const Bookmarks = () => {
           </Text>
         )}
 
-        <PureStatusList
-          scrollKey={selectedFolderId ? `bookmarked_statuses:${selectedFolderId}` : 'bookmarked_statuses'}
-          statuses={bookmarks}
-          isLoading={!!isLoading}
-          showLoading={!!isLoading && bookmarks.length === 0}
-          onLoadMore={handleLoadMore}
-          hasMore={!!hasNextPage}
-          emptyMessage={<FormattedMessage id='empty_column.bookmarks' defaultMessage="You don't have any bookmarks yet. When you bookmark a post, it will show up here." />}
-        />
+        {isBookmarksError && bookmarks.length === 0 && (
+          <Card size='lg'>
+            <Stack space={3}>
+              <Text>
+                <FormattedMessage
+                  id='bookmarks.load_error'
+                  defaultMessage='Bookmarks could not be loaded. Your saved posts have not been changed.'
+                />
+              </Text>
+
+              <div>
+                <Button theme='secondary' onClick={() => fetchEntities()}>
+                  <FormattedMessage id='bookmarks.retry' defaultMessage='Try again' />
+                </Button>
+              </div>
+            </Stack>
+          </Card>
+        )}
+
+        {!isBookmarksError && areBookmarksFetched && bookmarks.length === 0 && (
+          <Card size='lg'>
+            <FormattedMessage
+              id='empty_column.bookmarks'
+              defaultMessage="You don't have any bookmarks yet. When you bookmark a post, it will show up here."
+            />
+          </Card>
+        )}
+
+        {(bookmarks.length > 0 || (!isBookmarksError && !areBookmarksFetched)) && (
+          <PureStatusList
+            scrollKey={selectedFolderId ? `bookmarked_statuses:${selectedFolderId}` : 'bookmarked_statuses'}
+            statuses={bookmarks}
+            isLoading={!!isLoading}
+            showLoading={!!isLoading && bookmarks.length === 0}
+            onLoadMore={handleLoadMore}
+            hasMore={!!hasNextPage}
+            emptyMessage={<FormattedMessage id='empty_column.bookmarks' defaultMessage="You don't have any bookmarks yet. When you bookmark a post, it will show up here." />}
+          />
+        )}
       </Stack>
     </Column>
   );

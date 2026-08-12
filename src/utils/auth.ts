@@ -44,6 +44,19 @@ export const getAccessToken = (state: RootState) => {
   return getUserToken(state, me);
 };
 
+/** Check whether the active OAuth token grants a scope or one of its parents. */
+export const hasOAuthScope = (state: RootState, requiredScope: string) => {
+  const accessToken = getAccessToken(state);
+  const scope = accessToken ? state.auth.tokens[accessToken]?.scope : undefined;
+
+  if (!scope) return false;
+
+  return scope
+    .split(/\s+/)
+    .filter(Boolean)
+    .some(grantedScope => requiredScope === grantedScope || requiredScope.startsWith(`${grantedScope}:`));
+};
+
 export const getAuthUserId = (state: RootState) => {
   const me = state.auth.me;
 

@@ -1,7 +1,7 @@
 import punycode from 'punycode';
 
 import DOMPurify from 'isomorphic-dompurify';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { groupSchema } from './group.ts';
 
@@ -70,7 +70,10 @@ const cardSchema = z.object({
       if (src.origin === location.origin) {
         throw new Error('iframe must not be same origin');
       }
-      frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+      frame.setAttribute('loading', 'lazy');
+      frame.setAttribute('referrerpolicy', 'no-referrer');
+      frame.setAttribute('scrolling', 'no');
+      frame.setAttribute('sandbox', 'allow-scripts allow-pointer-lock allow-same-origin allow-presentation');
     } catch (e) {
       frame.remove();
     }

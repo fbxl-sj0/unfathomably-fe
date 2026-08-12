@@ -9,11 +9,20 @@
 
 import { defineMessages } from 'react-intl';
 
-import { createAccount } from '@/actions/accounts.ts';
 import { createApp } from '@/actions/apps.ts';
 import { fetchMeSuccess, fetchMeFail } from '@/actions/me.ts';
 import { obtainOAuthToken, revokeOAuthToken } from '@/actions/oauth.ts';
-import { startOnboarding } from '@/actions/onboarding.ts';
+import {
+  AUTH_ACCOUNT_REMEMBER_SUCCESS,
+  AUTH_APP_AUTHORIZED,
+  AUTH_APP_CREATED,
+  AUTH_LOGGED_IN,
+  AUTH_LOGGED_OUT,
+  SWITCH_ACCOUNT,
+  VERIFY_CREDENTIALS_FAIL,
+  VERIFY_CREDENTIALS_REQUEST,
+  VERIFY_CREDENTIALS_SUCCESS,
+} from '@/action-types/auth.ts';
 import { HTTPError } from '@/api/HTTPError.ts';
 import { custom } from '@/custom.ts';
 import { queryClient } from '@/queries/client.ts';
@@ -31,20 +40,19 @@ import { importFetchedAccount } from './importer/index.ts';
 
 import type { AppDispatch, RootState } from '@/store.ts';
 
-export const SWITCH_ACCOUNT = 'SWITCH_ACCOUNT';
-
-export const AUTH_APP_CREATED    = 'AUTH_APP_CREATED';
-export const AUTH_APP_AUTHORIZED = 'AUTH_APP_AUTHORIZED';
-export const AUTH_LOGGED_IN      = 'AUTH_LOGGED_IN';
-export const AUTH_LOGGED_OUT     = 'AUTH_LOGGED_OUT';
-
-export const VERIFY_CREDENTIALS_REQUEST = 'VERIFY_CREDENTIALS_REQUEST';
-export const VERIFY_CREDENTIALS_SUCCESS = 'VERIFY_CREDENTIALS_SUCCESS';
-export const VERIFY_CREDENTIALS_FAIL    = 'VERIFY_CREDENTIALS_FAIL';
-
-export const AUTH_ACCOUNT_REMEMBER_REQUEST = 'AUTH_ACCOUNT_REMEMBER_REQUEST';
-export const AUTH_ACCOUNT_REMEMBER_SUCCESS = 'AUTH_ACCOUNT_REMEMBER_SUCCESS';
-export const AUTH_ACCOUNT_REMEMBER_FAIL    = 'AUTH_ACCOUNT_REMEMBER_FAIL';
+export {
+  AUTH_ACCOUNT_REMEMBER_FAIL,
+  AUTH_ACCOUNT_REMEMBER_REQUEST,
+  AUTH_ACCOUNT_REMEMBER_SUCCESS,
+  AUTH_APP_AUTHORIZED,
+  AUTH_APP_CREATED,
+  AUTH_LOGGED_IN,
+  AUTH_LOGGED_OUT,
+  SWITCH_ACCOUNT,
+  VERIFY_CREDENTIALS_FAIL,
+  VERIFY_CREDENTIALS_REQUEST,
+  VERIFY_CREDENTIALS_SUCCESS,
+} from '@/action-types/auth.ts';
 
 const customApp = custom('app');
 const AUTH_STORAGE_KEY = 'soapbox:auth';
@@ -58,7 +66,7 @@ export const messages = defineMessages({
 
 const noOp = () => new Promise(f => f(undefined));
 
-const createAppAndToken = () =>
+export const createAppAndToken = () =>
   (dispatch: AppDispatch) =>
     dispatch(getAuthApp()).then(() =>
       dispatch(createAppToken()),
@@ -312,18 +320,6 @@ export const fetchOwnAccounts = () =>
           .catch(() => console.warn(`Failed to load account: ${user.url}`));
       }
     });
-  };
-
-export const register = (params: Record<string, any>) =>
-  (dispatch: AppDispatch) => {
-    params.fullname = params.username;
-
-    return dispatch(createAppAndToken())
-      .then(() => dispatch(createAccount(params)))
-      .then(({ token }: { token: Record<string, string | number> }) => {
-        dispatch(startOnboarding());
-        return dispatch(authLoggedIn(token));
-      });
   };
 
 export const fetchCaptcha = () =>

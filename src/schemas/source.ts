@@ -1,5 +1,5 @@
 import DOMPurify from 'isomorphic-dompurify';
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 import avatarMissing from '@/assets/images/avatar-missing.png';
 import headerMissing from '@/assets/images/header-missing.png';

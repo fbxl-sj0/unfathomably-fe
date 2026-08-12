@@ -24,7 +24,7 @@ import type { AnyAction, Reducer, Store } from 'redux';
 
 // Mock Redux
 // https://redux.js.org/recipes/writing-tests/
-const rootState: RootState = rootReducer(undefined, {} as Action);
+const rootState = rootReducer(undefined, {} as Action) as unknown as RootState;
 const testReducer = rootReducer as unknown as Reducer<RootState, AnyAction>;
 const appThunk = thunk as unknown as ThunkMiddleware<RootState, AnyAction, {}>;
 type TestStore = Store<RootState, AnyAction> & {
@@ -125,7 +125,7 @@ const customRender = (
   store?: any,
   routerProps?: any,
 ) => render(ui, {
-  wrapper: () => <TestApp children={ui} storeProps={store} routerProps={routerProps} />,
+  wrapper: ({ children }) => <TestApp children={children} storeProps={store} routerProps={routerProps} />,
   ...options,
 });
 

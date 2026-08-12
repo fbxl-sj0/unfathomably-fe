@@ -192,7 +192,7 @@ const Preferences = () => {
             <SelectDropdown
               className='max-w-[200px]'
               items={defaultPrivacyOptions}
-              defaultValue={settings.defaultPrivacy}
+              value={settings.defaultPrivacy}
               onChange={(event: React.ChangeEvent<HTMLSelectElement>) => onSelectChange(event, ['defaultPrivacy'])}
             />
           </ListItem>

@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Counter from './counter.tsx';
@@ -48,10 +48,11 @@ const Tabs = ({ items, activeItem }: ITabs) => {
   const [activeRect, setActiveRect] = useState<ActiveRect | null>(null);
 
   const activeIndex = Math.max(items.findIndex(({ name }) => name === activeItem), 0);
+  const activeName = items[activeIndex]?.name;
 
-  const measureActiveTab = () => {
+  const measureActiveTab = useCallback(() => {
     const list = listRef.current;
-    const tab = tabRefs.current[items[activeIndex]?.name];
+    const tab = tabRefs.current[activeName];
 
     if (!list || !tab) return;
 
@@ -63,17 +64,38 @@ const Tabs = ({ items, activeItem }: ITabs) => {
       top: tabRect.bottom - listRect.top,
       width: tabRect.width - HORIZONTAL_PADDING * 2,
     });
-  };
+  }, [activeName]);
 
   useLayoutEffect(() => {
-    measureActiveTab();
+    const list = listRef.current;
+    const tab = tabRefs.current[activeName];
+
+    if (!list || !tab) return;
+
+    // A selected tab must never remain clipped after route navigation. Using
+    // nearest preserves the current scroll position when it is already fully
+    // visible and avoids unnecessary vertical page movement.
+    if (typeof tab.scrollIntoView === 'function') {
+      tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+
+    const measurementTimer = window.setTimeout(measureActiveTab, 0);
+    const resizeObserver = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(measureActiveTab);
 
     window.addEventListener('resize', measureActiveTab);
+    list.addEventListener('scroll', measureActiveTab, { passive: true });
+    resizeObserver?.observe(list);
+    resizeObserver?.observe(tab);
 
     return () => {
+      window.clearTimeout(measurementTimer);
       window.removeEventListener('resize', measureActiveTab);
+      list.removeEventListener('scroll', measureActiveTab);
+      resizeObserver?.disconnect();
     };
-  }, [activeItem, items.length]);
+  }, [activeName, items.length, measureActiveTab]);
 
   const selectItem = (item: Item) => {
     if (typeof item.action === 'function') {

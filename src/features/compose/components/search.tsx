@@ -26,6 +26,7 @@ import { looksLikeActorIdentifier } from '@/utils/search.ts';
 
 const messages = defineMessages({
   placeholder: { id: 'search.placeholder', defaultMessage: 'Search' },
+  clear: { id: 'search.clear', defaultMessage: 'Clear search' },
   action: { id: 'search.action', defaultMessage: 'Search for “{query}”' },
 });
 
@@ -93,7 +94,7 @@ const Search = (props: ISearch) => {
     }
   };
 
-  const handleClear = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleClear = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
 
     if (value.length > 0 || submitted) {
@@ -192,23 +193,25 @@ const Search = (props: ISearch) => {
           <Input {...componentProps} />
         )}
 
-        <div
-          role='button'
-          tabIndex={0}
+        <button
+          type='button'
+          aria-label={intl.formatMessage(messages.clear)}
+          disabled={!hasValue}
           className='absolute inset-y-0 right-0 flex cursor-pointer items-center px-3 rtl:left-0 rtl:right-auto'
           onClick={handleClear}
         >
           <SvgIcon
             src={searchIcon}
             className={clsx('size-4 text-gray-600', { hidden: hasValue })}
+            aria-hidden='true'
           />
 
           <SvgIcon
             src={xIcon}
             className={clsx('size-4 text-gray-600', { hidden: !hasValue })}
-            aria-label={intl.formatMessage(messages.placeholder)}
+            aria-hidden='true'
           />
-        </div>
+        </button>
       </div>
     </div>
   );

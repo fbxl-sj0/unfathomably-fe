@@ -1,4 +1,4 @@
-![Unfathomably FE Screenshot](soapbox-screenshot.png)
+![Unfathomably galaxy logo](src/assets/images/unfathomably-logo.svg)
 
 # Unfathomably FE
 

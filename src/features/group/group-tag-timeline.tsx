@@ -1,9 +1,11 @@
 import message2Icon from '@tabler/icons/outline/message-2.svg';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { FormattedMessage } from 'react-intl';
 
 import { expandGroupTimelineFromTag } from '@/actions/timelines.ts';
 import { useGroup, useGroupTag } from '@/api/hooks/index.ts';
+import { acceptsGroupTag } from '@/api/hooks/streaming/stream-filters.ts';
+import { useGroupStream } from '@/api/hooks/streaming/useGroupStream.ts';
 import { Column } from '@/components/ui/column.tsx';
 import Icon from '@/components/ui/icon.tsx';
 import Stack from '@/components/ui/stack.tsx';
@@ -11,6 +13,8 @@ import Text from '@/components/ui/text.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 
 import Timeline from '../ui/components/timeline.tsx';
+
+import type { APIEntity } from '@/types/entities.ts';
 
 type RouteParams = { tagId: string; groupId: string };
 
@@ -25,7 +29,13 @@ const GroupTagTimeline: React.FC<IGroupTimeline> = (props) => {
 
   const { group } = useGroup(groupId);
   const { tag, isLoading } = useGroupTag(tagId);
-  const timelineId = `group:tags:${groupId}:${tag?.name || tagId}`;
+  const tagName = tag?.name || '';
+  const timelineId = `group:tags:${groupId}:${tagName || tagId}`;
+  const acceptStatus = useCallback(
+    (status: APIEntity) => Boolean(tagName) && acceptsGroupTag(status, tagName),
+    [tagName],
+  );
+  useGroupStream(groupId, { timelineId, accept: acceptStatus, enabled: Boolean(tagName) });
 
   const handleLoadMore = (maxId: string) => {
     dispatch(expandGroupTimelineFromTag(groupId, tag?.name as string, { maxId }));

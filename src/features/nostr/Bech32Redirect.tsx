@@ -18,9 +18,11 @@ const Bech32Redirect: React.FC<INIP19Redirect> = ({ params }) => {
       case 'nprofile':
         return <Redirect to={`/@${params.bech32}`} />;
       case 'note':
-        return <Redirect to={`/posts/${result.data}`} />;
+        return <Redirect to={`/posts/${params.bech32}`} />;
       case 'nevent':
-        return <Redirect to={`/posts/${result.data.id}`} />;
+        return <Redirect to={`/posts/${params.bech32}`} />;
+      case 'naddr':
+        return <Redirect to={`/search?q=${encodeURIComponent(params.bech32)}`} />;
       default:
         return <MissingIndicator />;
     }

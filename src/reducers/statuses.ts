@@ -15,7 +15,7 @@ import {
   EVENT_JOIN_FAIL,
   EVENT_LEAVE_REQUEST,
   EVENT_LEAVE_FAIL,
-} from '../actions/events.ts';
+} from '@/action-types/events.ts';
 import { STATUS_IMPORT, STATUSES_IMPORT } from '../actions/importer/index.ts';
 import {
   REBLOG_REQUEST,

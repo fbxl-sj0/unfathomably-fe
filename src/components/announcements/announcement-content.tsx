@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 
+import { sameHttpUrl } from '@/utils/compare-urls.ts';
 import { getTextDirection } from '@/utils/rtl.ts';
 
 import type { Announcement as AnnouncementEntity, Mention as MentionEntity } from '@/schemas/index.ts';
@@ -58,7 +59,7 @@ const AnnouncementContent: React.FC<IAnnouncementContent> = ({ announcement }) =
       link.setAttribute('rel', 'nofollow noopener');
       link.setAttribute('target', '_blank');
 
-      const mention = announcement.mentions.find(mention => link.href === `${mention.url}`);
+      const mention = announcement.mentions.find(mention => sameHttpUrl(link.href, `${mention.url}`));
 
       // Add event listeners on mentions, hashtags and statuses
       if (mention) {

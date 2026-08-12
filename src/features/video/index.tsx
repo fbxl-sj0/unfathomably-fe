@@ -577,7 +577,8 @@ const Video: React.FC<IVideo> = ({
         onError={handleVideoError}
         onVolumeChange={handleVolumeChange}
         muted={muted}
-        poster={preview}
+        poster={visible ? preview : undefined}
+        preload={visible ? 'metadata' : 'none'}
       />
 
       <div

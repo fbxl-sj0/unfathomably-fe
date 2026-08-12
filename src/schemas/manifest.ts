@@ -1,4 +1,4 @@
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 const screenshotsSchema = z.array(z.object({
   form_factor: z.enum(['narrow', 'wide']).optional(),

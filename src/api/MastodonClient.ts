@@ -50,7 +50,8 @@ export class MastodonClient {
   }
 
   async request(method: string, path: string, data: unknown, opts: Opts = {}): Promise<MastodonResponse> {
-    const url = new URL(path, this.baseUrl);
+    const baseUrl = new URL(this.baseUrl);
+    const url = new URL(path, baseUrl);
 
     if (opts.searchParams) {
       const params = opts.searchParams instanceof URLSearchParams
@@ -80,7 +81,9 @@ export class MastodonClient {
 
     const headers = new Headers(opts.headers);
 
-    if (this.accessToken) {
+    if (url.origin !== baseUrl.origin) {
+      headers.delete('Authorization');
+    } else if (this.accessToken) {
       headers.set('Authorization', `Bearer ${this.accessToken}`);
     }
 

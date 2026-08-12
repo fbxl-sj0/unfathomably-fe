@@ -13,9 +13,13 @@ import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useFeatures } from '@/hooks/useFeatures.ts';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
+import aliasesReducer from '@/reducers/aliases.ts';
+import { injectReducer } from '@/store.ts';
 
 import Account from './components/account.tsx';
 import Search from './components/search.tsx';
+
+injectReducer('aliases', aliasesReducer);
 
 const messages = defineMessages({
   heading: { id: 'column.aliases', defaultMessage: 'Account aliases' },

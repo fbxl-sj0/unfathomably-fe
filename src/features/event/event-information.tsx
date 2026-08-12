@@ -148,6 +148,7 @@ const EventInformation: React.FC<IEventInformation> = ({ params }) => {
               weekday='long'
               hour='2-digit'
               minute='2-digit'
+              timeZoneName='short'
             />
             {endDate && (<>
               {' - '}
@@ -159,6 +160,7 @@ const EventInformation: React.FC<IEventInformation> = ({ params }) => {
                 weekday={sameDay ? undefined : 'long'}
                 hour='2-digit'
                 minute='2-digit'
+                timeZoneName='short'
               />
             </>)}
           </Text>

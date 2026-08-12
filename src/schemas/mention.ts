@@ -1,7 +1,8 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 const mentionSchema = z.object({
   acct: z.string(),
+  actor_type: z.string().catch('Person'),
   id: z.string(),
   url: z.string().url().catch(''),
   username: z.string().catch(''),

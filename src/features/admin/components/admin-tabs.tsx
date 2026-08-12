@@ -10,6 +10,7 @@ const messages = defineMessages({
   reports: { id: 'admin_nav.reports', defaultMessage: 'Reports' },
   waitlist: { id: 'admin_nav.awaiting_approval', defaultMessage: 'Waitlist' },
   invites: { id: 'admin_nav.invites', defaultMessage: 'Invites' },
+  federationConnectors: { id: 'admin_nav.federation_connectors', defaultMessage: 'Federation connectors' },
 });
 
 const AdminTabs: React.FC = () => {
@@ -41,6 +42,11 @@ const AdminTabs: React.FC = () => {
       name: '/soapbox/admin/invites',
       text: intl.formatMessage(messages.invites),
       to: '/soapbox/admin/invites',
+    });
+    tabs.push({
+      name: '/soapbox/admin/federation-connectors',
+      text: intl.formatMessage(messages.federationConnectors),
+      to: '/soapbox/admin/federation-connectors',
     });
   }
 

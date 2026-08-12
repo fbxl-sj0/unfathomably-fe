@@ -15,10 +15,11 @@ import { Status as StatusEntity } from '@/schemas/index.ts';
 interface IPureStatusReactionWrapper {
   statusId: string;
   children: JSX.Element;
+  disabled?: boolean;
 }
 
 /** Provides emoji reaction functionality to the underlying button component */
-const PureStatusReactionWrapper: React.FC<IPureStatusReactionWrapper> = ({ statusId, children }): JSX.Element | null => {
+const PureStatusReactionWrapper: React.FC<IPureStatusReactionWrapper> = ({ statusId, children, disabled = false }): JSX.Element | null => {
   const dispatch = useAppDispatch();
   const { account: ownAccount } = useOwnAccount();
   const getState = useGetState();
@@ -42,6 +43,8 @@ const PureStatusReactionWrapper: React.FC<IPureStatusReactionWrapper> = ({ statu
   if (!status) return null;
 
   const handleMouseEnter = () => {
+    if (disabled) return;
+
     if (timeout.current) {
       clearTimeout(timeout.current);
     }
@@ -68,6 +71,8 @@ const PureStatusReactionWrapper: React.FC<IPureStatusReactionWrapper> = ({ statu
   };
 
   const handleReact = (emoji: string, custom?: string): void => {
+    if (disabled) return;
+
     if (ownAccount) {
       simpleEmojiReact(status, emoji);
     } else {
@@ -78,6 +83,12 @@ const PureStatusReactionWrapper: React.FC<IPureStatusReactionWrapper> = ({ statu
   };
 
   const handleClick: React.EventHandler<React.MouseEvent> = e => {
+    if (disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
     const meEmojiReact = status.reactions?.find((emojiReact) => emojiReact.me)?.name ?? '👍' ; // allow all emojis
 
     if (userTouching.matches) {
@@ -112,7 +123,7 @@ const PureStatusReactionWrapper: React.FC<IPureStatusReactionWrapper> = ({ statu
         ref: setReferenceElement,
       })}
 
-      {visible && (
+      {visible && !disabled && (
         <Portal>
           <EmojiSelector
             placement='top-start'

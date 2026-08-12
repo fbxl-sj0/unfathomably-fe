@@ -5,7 +5,6 @@ import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useCompose } from '@/hooks/useCompose.ts';
 import { useFeatures } from '@/hooks/useFeatures.ts';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
-import { useSettingsNotifications } from '@/hooks/useSettingsNotifications.ts';
 import { selectOwnAccount } from '@/selectors/index.ts';
 
 import Warning from '../components/warning.tsx';
@@ -20,7 +19,6 @@ const WarningWrapper: React.FC<IWarningWrapper> = ({ composeId }) => {
   const compose = useCompose(composeId);
   const scheduledStatusCount = useAppSelector((state) => state.scheduled_statuses.size);
   const { account } = useOwnAccount();
-  const settingsNotifications = useSettingsNotifications();
   const features = useFeatures();
 
   const needsLockWarning = useAppSelector((state) => compose.privacy === 'private' && !selectOwnAccount(state)!.locked);
@@ -48,13 +46,13 @@ const WarningWrapper: React.FC<IWarningWrapper> = ({ composeId }) => {
     );
   }
 
-  if (features.nostr && account?.source?.nostr?.nip05 === undefined) {
+  if (features.nostr && account && !account.nostr.nip05) {
     return (
       <Warning
-        message={(settingsNotifications.has('needsNip05')) ? (
+        message={(
           <FormattedMessage
             id='compose_form.nip05.warning'
-            defaultMessage={'You don\'t have a username configured. {click} to set one up.'}
+            defaultMessage={'Your ActivityPub username is automatically used on Nostr. {click} to view your address.'}
             values={{
               click: (
                 <Link to='/settings/identity'>
@@ -62,11 +60,6 @@ const WarningWrapper: React.FC<IWarningWrapper> = ({ composeId }) => {
                 </Link>
               ),
             }}
-          />
-        ) : (
-          <FormattedMessage
-            id='compose_form.nip05.pending'
-            defaultMessage='Your username request is under review.'
           />
         )}
       />

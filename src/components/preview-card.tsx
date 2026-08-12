@@ -1,11 +1,36 @@
+/*
+  Project: Unfathomably Frontend
+  --------------------------------
+
+  File: src/components/preview-card.tsx
+
+  Purpose:
+
+    Render a link, photo, or embedded-media preview inside a status.
+
+  Responsibilities:
+
+    * preserve the configured light, dark, or black visual theme
+    * expose clear preview and external-source actions
+    * open photo previews through the shared media viewer
+
+  This file intentionally does NOT contain:
+
+    * remote metadata fetching
+    * arbitrary embed validation
+    * status interaction controls
+*/
+
 import externalLinkIcon from '@tabler/icons/outline/external-link.svg';
 import linkIcon from '@tabler/icons/outline/link.svg';
 import playerPlayIcon from '@tabler/icons/outline/player-play.svg';
 import zoomInIcon from '@tabler/icons/outline/zoom-in.svg';
 import clsx from 'clsx';
 import { useState, useEffect, useRef } from 'react';
+import { defineMessages, useIntl } from 'react-intl';
 
 import Blurhash from '@/components/blurhash.tsx';
+import BrowserLink from '@/components/browser-link.tsx';
 import HStack from '@/components/ui/hstack.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import SvgIcon from '@/components/ui/svg-icon.tsx';
@@ -16,6 +41,11 @@ import { addAutoPlay } from '@/utils/media.ts';
 import { getTextDirection } from '@/utils/rtl.ts';
 
 import type { Card as CardEntity } from '@/types/entities.ts';
+
+const messages = defineMessages({
+  openMedia: { id: 'preview_card.open_media', defaultMessage: 'Open media preview' },
+  openSource: { id: 'preview_card.open_source', defaultMessage: 'Open original source' },
+});
 
 /** Props for `PreviewCard`. */
 interface IPreviewCard {
@@ -40,6 +70,7 @@ const PreviewCard: React.FC<IPreviewCard> = ({
   onOpenMedia,
   horizontal,
 }): JSX.Element => {
+  const intl = useIntl();
   const ref = useRef<HTMLElement>(null);
 
   const [width, setWidth] = useState(defaultWidth);
@@ -53,6 +84,7 @@ const PreviewCard: React.FC<IPreviewCard> = ({
 
   const trimmedTitle = trim(card.title, maxTitle);
   const trimmedDescription = trim(card.description, maxDescription);
+  const provider = card.provider_name || hostname(card.url);
 
   useEffect(() => {
     if (ref.current) {
@@ -65,7 +97,7 @@ const PreviewCard: React.FC<IPreviewCard> = ({
   const handlePhotoClick = () => {
     const attachment = normalizeAttachment({
       type: 'image',
-      url: card.embed_url,
+      url: card.embed_url || card.image || card.url,
       description: trimmedTitle,
       meta: {
         original: {
@@ -112,12 +144,20 @@ const PreviewCard: React.FC<IPreviewCard> = ({
 
   const interactive = card.type !== 'link';
   horizontal = typeof horizontal === 'boolean' ? horizontal : interactive || embedded;
-  const className = clsx('flex overflow-hidden rounded-lg border border-solid border-gray-200 text-sm text-gray-800 no-underline dark:border-gray-800 dark:text-gray-200', { '!block': horizontal, 'border-gray-200 dark:border-gray-800': compact, interactive, 'flex flex-col md:flex-row': card.type === 'link' });
+  const className = clsx(
+    'flex overflow-hidden rounded-lg border border-solid border-gray-200 text-sm text-gray-800 no-underline black:border-gray-800 black:text-gray-200 dark:border-gray-700 dark:text-gray-200',
+    {
+      '!block': horizontal,
+      'border-gray-200 black:border-gray-800 dark:border-gray-700': compact,
+      interactive,
+      'flex flex-col md:flex-row': card.type === 'link',
+    },
+  );
   const ratio = getRatio(card);
   const height = (compact && !embedded) ? (width / (16 / 9)) : (width / ratio);
 
   const title = interactive ? (
-    <a
+    <BrowserLink
       onClick={(e) => e.stopPropagation()}
       href={card.url}
       title={trimmedTitle}
@@ -126,7 +166,7 @@ const PreviewCard: React.FC<IPreviewCard> = ({
       dir={direction}
     >
       <span dir={direction}>{trimmedTitle}</span>
-    </a>
+    </BrowserLink>
   ) : (
     <span title={trimmedTitle} dir={direction}>{trimmedTitle}</span>
   );
@@ -144,7 +184,7 @@ const PreviewCard: React.FC<IPreviewCard> = ({
           <SvgIcon src={linkIcon} />
         </Text>
         <Text tag='span' theme='muted' size='sm' direction={direction}>
-          {card.provider_name}
+          {provider}
         </Text>
       </HStack>
     </Stack>
@@ -186,28 +226,35 @@ const PreviewCard: React.FC<IPreviewCard> = ({
           {thumbnail}
 
           <div className='absolute inset-0 flex items-center justify-center'>
-            <div className='flex items-center justify-center rounded-full bg-gray-500/90 px-4 py-3 shadow-md dark:bg-gray-700/90'>
+            <div className='flex items-center justify-center rounded-full bg-primary-700/90 px-4 py-3 text-white shadow-md backdrop-blur-sm'>
               <HStack space={3} alignItems='center'>
-                <button onClick={handleEmbedClick} className='appearance-none text-gray-700 hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-100'>
+                <button
+                  onClick={handleEmbedClick}
+                  className='appearance-none text-white/90 hover:text-white'
+                  aria-label={intl.formatMessage(messages.openMedia)}
+                  title={intl.formatMessage(messages.openMedia)}
+                >
                   <SvgIcon
                     src={iconVariant}
-                    className=' size-6  text-inherit'
+                    className='size-6 text-inherit'
                   />
                 </button>
 
                 {horizontal && (
-                  <a
+                  <BrowserLink
                     onClick={(e) => e.stopPropagation()}
                     href={card.url}
                     target='_blank'
                     rel='noopener'
-                    className='text-gray-700 hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-100'
+                    className='text-white/90 hover:text-white'
+                    aria-label={intl.formatMessage(messages.openSource)}
+                    title={intl.formatMessage(messages.openSource)}
                   >
                     <SvgIcon
                       src={externalLinkIcon}
                       className='size-6 text-inherit'
                     />
-                  </a>
+                  </BrowserLink>
                 )}
               </HStack>
             </div>
@@ -240,9 +287,9 @@ const PreviewCard: React.FC<IPreviewCard> = ({
   }
 
   return (
-    <a
+    <BrowserLink
       href={card.url}
-      className={clsx(className, 'cursor-pointer hover:bg-gray-100 hover:no-underline dark:hover:bg-primary-800/30')}
+      className={clsx(className, 'cursor-pointer hover:bg-gray-100 hover:no-underline black:hover:bg-primary-900/30 dark:hover:bg-primary-800/30')}
       target='_blank'
       rel='noopener'
       ref={ref as React.RefObject<HTMLAnchorElement>}
@@ -250,7 +297,7 @@ const PreviewCard: React.FC<IPreviewCard> = ({
     >
       {embed}
       {description}
-    </a>
+    </BrowserLink>
   );
 };
 
@@ -265,4 +312,14 @@ function trim(text: string, len: number): string {
   return text.substring(0, cut) + (text.length > len ? '…' : '');
 }
 
+function hostname(value: string): string {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return '';
+  }
+}
+
 export default PreviewCard;
+
+/* end of src/components/preview-card.tsx */

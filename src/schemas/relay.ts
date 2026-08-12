@@ -1,4 +1,4 @@
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 const relaySchema = z.preprocess((data: any) => {
   return { id: data.actor, ...data };

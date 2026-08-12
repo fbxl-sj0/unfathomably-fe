@@ -8,7 +8,7 @@ import StatusMedia from '@/components/status-media.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import AccountContainer from '@/containers/account-container.tsx';
 import { useSettings } from '@/hooks/useSettings.ts';
-import { Status as StatusEntity } from '@/schemas/index.ts';
+import { type Relationship, Status as StatusEntity } from '@/schemas/index.ts';
 import { defaultMediaVisibility } from '@/utils/status.ts';
 
 import EventPreview from './event-preview.tsx';
@@ -23,6 +23,9 @@ import type { Status as LegacyStatus } from '@/types/entities.ts';
 const messages = defineMessages({
   cancel: { id: 'reply_indicator.cancel', defaultMessage: 'Cancel' },
   filtered: { id: 'status.filtered_with_reasons', defaultMessage: 'Filtered: {reasons}.' },
+  blockedAccount: { id: 'status.quote_hidden.blocked_account', defaultMessage: 'This quoted post is hidden because you blocked @{name}.' },
+  blockedDomain: { id: 'status.quote_hidden.blocked_domain', defaultMessage: 'This quoted post is hidden because you blocked {domain}.' },
+  mutedAccount: { id: 'status.quote_hidden.muted_account', defaultMessage: 'This quoted post is hidden because you muted @{name}.' },
   showAnyway: { id: 'status.show_filter_reason', defaultMessage: 'Show anyway' },
 });
 
@@ -33,10 +36,12 @@ interface IQuotedStatus {
   onCancel?: Function;
   /** Whether the status is shown in the post composer. */
   compose?: boolean;
+  /** Current user's relationship with the quoted account. */
+  relationship?: Relationship;
 }
 
 /** Status embedded in a quote post. */
-const QuotedStatus: React.FC<IQuotedStatus> = ({ status, onCancel, compose }) => {
+const QuotedStatus: React.FC<IQuotedStatus> = ({ status, onCancel, compose, relationship }) => {
   const intl = useIntl();
   const history = useHistory();
 
@@ -46,11 +51,23 @@ const QuotedStatus: React.FC<IQuotedStatus> = ({ status, onCancel, compose }) =>
 
   const [showMedia, setShowMedia] = useState<boolean>(defaultMediaVisibility(status, displayMedia));
   const [showFiltered, setShowFiltered] = useState(false);
+  const [showRelationshipFiltered, setShowRelationshipFiltered] = useState(false);
   const [minHeight, setMinHeight] = useState(208);
+
+  let relationshipFilter: 'domain' | 'blocking' | 'muting' | null = null;
+
+  if (relationship?.domain_blocking) {
+    relationshipFilter = 'domain';
+  } else if (relationship?.blocking) {
+    relationshipFilter = 'blocking';
+  } else if (relationship?.muting) {
+    relationshipFilter = 'muting';
+  }
 
   useEffect(() => {
     setShowFiltered(false);
-  }, [status?.id]);
+    setShowRelationshipFiltered(false);
+  }, [status?.id, relationshipFilter]);
 
   useEffect(() => {
     if (overlay.current) {
@@ -86,6 +103,35 @@ const QuotedStatus: React.FC<IQuotedStatus> = ({ status, onCancel, compose }) =>
 
   if (!status) {
     return null;
+  }
+
+  if (relationshipFilter && !showRelationshipFiltered) {
+    const accountName = status.account.acct;
+    const domain = accountName.split('@')[1] || accountName;
+    let message = intl.formatMessage(messages.mutedAccount, { name: accountName });
+
+    if (relationshipFilter === 'domain') {
+      message = intl.formatMessage(messages.blockedDomain, { domain });
+    } else if (relationshipFilter === 'blocking') {
+      message = intl.formatMessage(messages.blockedAccount, { name: accountName });
+    }
+
+    return (
+      <OutlineBox data-testid='quoted-status' className='text-center'>
+        <p className='text-sm text-gray-600 dark:text-gray-300'>{message}</p>
+        <button
+          type='button'
+          className='mt-2 text-sm text-primary-600 hover:underline dark:text-accent-blue'
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setShowRelationshipFiltered(true);
+          }}
+        >
+          {intl.formatMessage(messages.showAnyway)}
+        </button>
+      </OutlineBox>
+    );
   }
 
   if (status.filtered.size > 0 && !showFiltered) {

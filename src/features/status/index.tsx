@@ -12,13 +12,14 @@ import PullToRefresh from '@/components/pull-to-refresh.tsx';
 import { Column } from '@/components/ui/column.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import PlaceholderStatus from '@/features/placeholder/components/placeholder-status.tsx';
+import { useThreadStream } from '@/api/hooks/streaming/useThreadStream.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
 import { useLoggedIn } from '@/hooks/useLoggedIn.ts';
 import { makeGetStatus } from '@/selectors/index.ts';
 
 import ThreadLoginCta from './components/thread-login-cta.tsx';
-import Thread from './components/thread.tsx';
+import Thread, { getDescendantsIds } from './components/thread.tsx';
 
 const messages = defineMessages({
   title: { id: 'status.title', defaultMessage: 'Post Details' },
@@ -78,6 +79,9 @@ const StatusDetails: React.FC<IStatusDetails> = (props) => {
       refreshInFlight.current = false;
     }
   }, [dispatch, props.params.statusId]);
+
+  const streamedDescendantIds = useAppSelector((state) => getDescendantsIds(state, props.params.statusId)).toArray();
+  useThreadStream(props.params.statusId, streamedDescendantIds, fetchData);
 
   // Load data.
   useEffect(() => {

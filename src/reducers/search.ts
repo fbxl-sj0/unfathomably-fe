@@ -48,6 +48,7 @@ const ReducerRecord = ImmutableRecord({
   filter: 'statuses' as SearchFilter,
   accountId: null as string | null,
   next: null as string | null,
+  shortVideosOnly: false,
 });
 
 type State = ReturnType<typeof ReducerRecord>;
@@ -101,11 +102,13 @@ const paginateResults = (state: State, searchType: SearchFilter, results: APIEnt
   });
 };
 
-const handleSubmitted = (state: State, value: string) => {
+const handleSubmitted = (state: State, value: string, shortVideosOnly: boolean) => {
   return state.withMutations(state => {
     state.set('results', ResultsRecord());
     state.set('submitted', true);
     state.set('submittedValue', value);
+    state.set('next', null);
+    state.set('shortVideosOnly', shortVideosOnly);
   });
 };
 
@@ -121,6 +124,8 @@ export default function search(state = ReducerRecord(), action: AnyAction) {
         results: ResultsRecord(),
         submitted: false,
         submittedValue: '',
+        next: null,
+        shortVideosOnly: false,
       });
     case SEARCH_SHOW:
       return state.set('hidden', false);
@@ -130,7 +135,7 @@ export default function search(state = ReducerRecord(), action: AnyAction) {
     case COMPOSE_QUOTE:
       return state.set('hidden', true);
     case SEARCH_FETCH_REQUEST:
-      return handleSubmitted(state, action.value);
+      return handleSubmitted(state, action.value, Boolean(action.shortVideosOnly));
     case SEARCH_FETCH_SUCCESS:
       return importResults(state, action.results, action.searchTerm, action.searchType, action.next);
     case SEARCH_FILTER_SET:

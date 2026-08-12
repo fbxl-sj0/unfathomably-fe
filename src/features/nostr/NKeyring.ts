@@ -1,6 +1,6 @@
 import { NSchema as n, NostrSigner, NSecSigner } from '@nostrify/nostrify';
 import { getPublicKey, nip19 } from 'nostr-tools';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 const storageLocks = new WeakMap<object, Set<string>>();
 

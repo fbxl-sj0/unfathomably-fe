@@ -5,15 +5,15 @@ import {
   fromJS,
 } from 'immutable';
 
-import { normalizeNotification } from '@/normalizers/notification.ts';
-import { validType } from '@/utils/notification.ts';
-
 import {
   ACCOUNT_BLOCK_SUCCESS,
   ACCOUNT_MUTE_SUCCESS,
   FOLLOW_REQUEST_AUTHORIZE_SUCCESS,
   FOLLOW_REQUEST_REJECT_SUCCESS,
-} from '../actions/accounts.ts';
+} from '@/action-types/accounts.ts';
+import { normalizeNotification } from '@/normalizers/notification.ts';
+import { validType } from '@/utils/notification.ts';
+
 import {
   MARKER_FETCH_SUCCESS,
   MARKER_SAVE_REQUEST,

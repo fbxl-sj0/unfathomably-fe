@@ -5,12 +5,12 @@ import { closeModal } from '@/actions/modals.ts';
 import { nostrExtensionLogIn } from '@/actions/nostr.ts';
 import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
-import { useNostr } from '@/contexts/nostr-context.tsx';
+import { useConnectedNostr } from '@/contexts/nostr-context.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 
 const NostrExtensionIndicator: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { relay } = useNostr();
+  const { relay } = useConnectedNostr();
 
   const onClick = () => {
     if (relay) {

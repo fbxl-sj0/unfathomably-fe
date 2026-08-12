@@ -581,7 +581,7 @@
   "edit_profile.fields.hide_network_label": "Sembunyikan jaringan",
   "edit_profile.fields.location_label": "Lokasi",
   "edit_profile.fields.location_placeholder": "Lokasi",
-  "edit_profile.fields.locked_label": "Lock account",
+  "edit_profile.fields.locked_label": "Manually review follow requests",
   "edit_profile.fields.meta_fields.content_placeholder": "Content",
   "edit_profile.fields.meta_fields.label_placeholder": "Label",
   "edit_profile.fields.meta_fields_label": "Bidang profil",

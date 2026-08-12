@@ -12,10 +12,14 @@ import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
+import historyReducer from '@/reducers/history.ts';
 import { Attachment } from '@/schemas/index.ts';
+import { injectReducer } from '@/store.ts';
 import { emojifyText } from '@/utils/emojify.tsx';
 
 import type { StatusEdit as StatusEditEntity } from '@/types/entities.ts';
+
+injectReducer('history', historyReducer);
 
 interface ICompareHistoryModal {
   onClose: (string: string) => void;

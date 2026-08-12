@@ -1,5 +1,5 @@
 /* eslint sort-keys: "error" */
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { hexColorSchema } from '../utils.ts';
 

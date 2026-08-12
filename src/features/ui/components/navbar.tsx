@@ -28,6 +28,7 @@ import { useSettingsNotifications } from '@/hooks/useSettingsNotifications.ts';
 import ProfileDropdown from './profile-dropdown.tsx';
 
 const messages = defineMessages({
+  menu: { id: 'navbar.menu', defaultMessage: 'Open menu' },
   login: { id: 'navbar.login.action', defaultMessage: 'Log in' },
   username: { id: 'navbar.login.username.placeholder', defaultMessage: 'Email or username' },
   email: { id: 'navbar.login.email.placeholder', defaultMessage: 'E-mail address' },
@@ -93,7 +94,12 @@ const Navbar = () => {
         <div className='relative flex h-12 justify-between lg:h-16'>
           {account && (
             <div className='absolute inset-y-0 left-0 flex items-center lg:hidden rtl:left-auto rtl:right-0'>
-              <button onClick={onOpenSidebar} className='relative'>
+              <button
+                type='button'
+                aria-label={intl.formatMessage(messages.menu)}
+                onClick={onOpenSidebar}
+                className='relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 black:focus-visible:ring-offset-black dark:focus-visible:ring-offset-primary-900'
+              >
                 {settingsNotifications.size ? (
                   <span className='absolute -right-3 -top-1 z-10 flex h-5 min-w-[20px] shrink-0 items-center justify-center whitespace-nowrap break-words'>
                     <Counter count={settingsNotifications.size} />
@@ -113,7 +119,7 @@ const Navbar = () => {
             })}
           >
             <Link key='logo' to='/' data-preview-title-id='column.home' className='ml-4 flex shrink-0 items-center'>
-              <SiteLogo alt='Logo' className='h-5 w-auto cursor-pointer' />
+              <SiteLogo alt='' className='h-5 w-auto cursor-pointer' />
               <span className='hidden'><FormattedMessage id='tabs_bar.home' defaultMessage='Home' /></span>
             </Link>
 
@@ -153,6 +159,7 @@ const Navbar = () => {
                         value={username}
                         onChange={(event) => setUsername(event.target.value)}
                         type='text'
+                        autoComplete='username'
                         placeholder={intl.formatMessage(features.logInWithUsername ? messages.username : messages.email)}
                         className='max-w-[200px]'
                       />
@@ -162,6 +169,7 @@ const Navbar = () => {
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
                         type='password'
+                        autoComplete='current-password'
                         placeholder={intl.formatMessage(messages.password)}
                         className='max-w-[200px]'
                       />

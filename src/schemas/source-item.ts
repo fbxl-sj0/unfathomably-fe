@@ -12,7 +12,7 @@
     API request logic or rendering decisions.
 */
 
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { nativeActivityPresentationSchema } from './native-activity.ts';
 

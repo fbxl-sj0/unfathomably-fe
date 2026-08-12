@@ -37,6 +37,10 @@ vi.mock('@/features/ui/util/async-components.ts', () => ({
   Video: ({ src }: { src: string }) => <video controls src={src} />,
 }));
 
+vi.mock('@/components/preview-card.tsx', () => ({
+  default: () => <div data-testid='preview-card' />,
+}));
+
 describe('StatusMedia', () => {
   it('opens a status video in the persistent media dock', async () => {
     const user = userEvent.setup();
@@ -67,6 +71,22 @@ describe('StatusMedia', () => {
 
     expect(within(dock).getByText(/PeerTube/)).toBeInTheDocument();
     expect(video).toHaveAttribute('src', status.media_attachments[0].url);
+  });
+
+  it('reveals a preview card after its content warning is expanded', async () => {
+    const { default: statusJson } = await import('@/__fixtures__/status-with-card.json');
+    const status = statusSchema.parse({
+      ...statusJson,
+      spoiler_text: 'Spoilers',
+    });
+
+    const { rerender } = render(<StatusMedia status={status} showMedia={false} />);
+
+    expect(screen.queryByTestId('preview-card')).not.toBeInTheDocument();
+
+    rerender(<StatusMedia status={status} showMedia />);
+
+    expect(screen.getByTestId('preview-card')).toBeInTheDocument();
   });
 });
 

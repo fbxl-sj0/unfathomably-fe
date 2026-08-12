@@ -105,7 +105,7 @@ const Dashboard: React.FC = () => {
         {account.admin && (
           <ListItem
             to='/soapbox/config'
-            label={<FormattedMessage id='navigation_bar.soapbox_config' defaultMessage='Frontend configuration' />}
+            label={<FormattedMessage id='admin.dashboard.frontend_config' defaultMessage='Frontend configuration' />}
           />
         )}
 
@@ -137,7 +137,7 @@ const Dashboard: React.FC = () => {
         {account.admin && (
           <ListItem
             to='/soapbox/admin/relays'
-            label={<FormattedMessage id='column.admin.relays' defaultMessage='ActivityPub relays' />}
+            label={<FormattedMessage id='admin.dashboard.activitypub_relays' defaultMessage='ActivityPub relays' />}
           />
         )}
 
@@ -145,6 +145,14 @@ const Dashboard: React.FC = () => {
           <ListItem
             to='/soapbox/admin/federation-health'
             label={<FormattedMessage id='column.admin.federation_health' defaultMessage='Federation health' />}
+          />
+        )}
+
+        {account.admin && (
+          <ListItem
+            to='/soapbox/admin/fasps'
+            label={<FormattedMessage id='admin.dashboard.fasps' defaultMessage='Discovery providers' />}
+            hint={<FormattedMessage id='admin.dashboard.fasps_hint' defaultMessage='Review signed provider fingerprints and deliberately activate discovery capabilities.' />}
           />
         )}
 

@@ -60,12 +60,8 @@ const ThumbNavigation: React.FC = (): JSX.Element => {
 
   return (
     <div
-      className='mobile-navigation hide-scrollbar fixed inset-x-0 bottom-0 z-50 flex w-full border-t border-solid border-gray-200 bg-white/90 shadow-2xl backdrop-blur-md black:bg-black/90 dark:border-gray-800 dark:bg-primary-900/90' style={{
-        paddingBottom: 'env(safe-area-inset-bottom)', // iOS PWA
-        overflowX: 'auto',
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#fff transparent',
-      }}
+      className='mobile-navigation hide-scrollbar fixed inset-x-0 bottom-0 z-50 flex w-full overflow-x-auto border-t border-solid border-gray-200 bg-white/90 shadow-2xl backdrop-blur-md black:bg-black/90 dark:border-gray-800 dark:bg-primary-900/90'
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ThumbNavigationLink
         src={homeIcon}
@@ -74,25 +70,6 @@ const ThumbNavigation: React.FC = (): JSX.Element => {
         to='/'
         exact
       />
-
-      {features.groups && (
-        <ThumbNavigationLink
-          src={circlesIcon}
-          activeSrc={circlesFilledIcon}
-          text={<FormattedMessage id='tabs_bar.groups' defaultMessage='Groups' />}
-          to='/groups'
-          exact
-        />
-      )}
-
-      {features.federating && (
-        <ThumbNavigationLink
-          src={worldIcon}
-          text={<FormattedMessage id='tabs_bar.native_federation' defaultMessage='Worlds' />}
-          to='/federation'
-          exact
-        />
-      )}
 
       {account && (
         <ThumbNavigationLink
@@ -112,6 +89,15 @@ const ThumbNavigation: React.FC = (): JSX.Element => {
         exact
       />
 
+      {features.federating && (
+        <ThumbNavigationLink
+          src={worldIcon}
+          text={<FormattedMessage id='tabs_bar.native_federation' defaultMessage='Worlds' />}
+          to='/worlds'
+          paths={['/worlds', '/federation']}
+        />
+      )}
+
       {features.ditto && (
         <ThumbNavigationLink
           src={videoIcon}
@@ -122,6 +108,16 @@ const ThumbNavigation: React.FC = (): JSX.Element => {
       )}
 
       {account && renderMessagesLink()}
+
+      {features.groups && (
+        <ThumbNavigationLink
+          src={circlesIcon}
+          activeSrc={circlesFilledIcon}
+          text={<FormattedMessage id='tabs_bar.groups' defaultMessage='Groups' />}
+          to='/groups'
+          exact
+        />
+      )}
 
       {(account && account.staff) && (
         <ThumbNavigationLink

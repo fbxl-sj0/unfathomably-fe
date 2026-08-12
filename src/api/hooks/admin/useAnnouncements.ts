@@ -43,7 +43,7 @@ const useAnnouncements = () => {
     retry: false,
     onSuccess: async (response: Response) => {
       const data = await response.json();
-      return queryClient.setQueryData(['admin', 'announcements'], (prevResult: ReadonlyArray<AdminAnnouncement>) =>
+      return queryClient.setQueryData(['admin', 'announcements'], (prevResult: ReadonlyArray<AdminAnnouncement> = []) =>
         [...prevResult, adminAnnouncementSchema.parse(data)],
       );
     },
@@ -58,7 +58,7 @@ const useAnnouncements = () => {
     retry: false,
     onSuccess: async (response: Response) => {
       const data = await response.json();
-      return queryClient.setQueryData(['admin', 'announcements'], (prevResult: ReadonlyArray<AdminAnnouncement>) =>
+      return queryClient.setQueryData(['admin', 'announcements'], (prevResult: ReadonlyArray<AdminAnnouncement> = []) =>
         prevResult.map((announcement) => announcement.id === data.id ? adminAnnouncementSchema.parse(data) : announcement),
       );
     },
@@ -72,7 +72,7 @@ const useAnnouncements = () => {
     mutationFn: (id: string) => api.delete(`/api/v1/pleroma/admin/announcements/${id}`),
     retry: false,
     onSuccess: (_, id) =>
-      queryClient.setQueryData(['admin', 'announcements'], (prevResult: ReadonlyArray<AdminAnnouncement>) =>
+      queryClient.setQueryData(['admin', 'announcements'], (prevResult: ReadonlyArray<AdminAnnouncement> = []) =>
         prevResult.filter(({ id: announcementId }) => announcementId !== id),
       ),
     onSettled: () => userAnnouncements.refetch(),

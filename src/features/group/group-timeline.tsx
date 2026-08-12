@@ -44,7 +44,15 @@ const GroupTimeline: React.FC<IGroupTimeline> = (props) => {
   const { group } = useGroup(groupId);
 
   const composeId = `group:${groupId}`;
-  const canComposeGroupStatus = !!account && group?.relationship?.member;
+  const canComposeGroupStatus =
+    !!account && group?.relationship?.member && group.relationship.can_post !== false;
+  const postingRestriction =
+    account && group?.relationship?.member && group.relationship.can_post === false
+      ? group.relationship.moderation_message || intl.formatMessage({
+        id: 'group.posting.moderator_only',
+        defaultMessage: 'Only group moderators can post here.',
+      })
+      : null;
   const groupTimelineVisible = useAppSelector((state) => !!state.compose.get(composeId)?.group_timeline_visible);
   const timelineStatusIds = useAppSelector((state) => getTimelineStatusIds(state, { type: composeId }));
   const featuredStatusIds = useAppSelector((state) => getFeaturedStatusIds(state, { type: `group:${group?.id}:pinned` }));
@@ -127,6 +135,12 @@ const GroupTimeline: React.FC<IGroupTimeline> = (props) => {
               )}
             />
           </HStack>
+        </div>
+      )}
+
+      {postingRestriction && (
+        <div role='status' className='border-b border-solid border-primary-600/40 px-4 py-3'>
+          <Text size='sm' weight='medium'>{postingRestriction}</Text>
         </div>
       )}
 

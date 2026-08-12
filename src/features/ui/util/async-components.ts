@@ -1,4 +1,35 @@
-import { lazy } from 'react';
+import { lazy as reactLazy, type ComponentType, type LazyExoticComponent } from 'react';
+
+import { isDynamicImportError } from '@/utils/errors.ts';
+
+const DYNAMIC_IMPORT_RETRY_DELAYS_MS = [250, 1000] as const;
+
+type LazyModule<T extends ComponentType<any>> = {
+  default: T;
+};
+
+/** Retry transient route chunk fetch failures before escalating to the route error boundary. */
+const loadLazyModule = async <T extends ComponentType<any>>(
+  factory: () => Promise<LazyModule<T>>,
+): Promise<LazyModule<T>> => {
+  for (let attempt = 0; attempt <= DYNAMIC_IMPORT_RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      return await factory();
+    } catch (error) {
+      if (!isDynamicImportError(error) || attempt === DYNAMIC_IMPORT_RETRY_DELAYS_MS.length) {
+        throw error;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, DYNAMIC_IMPORT_RETRY_DELAYS_MS[attempt]));
+    }
+  }
+
+  throw new Error('Lazy module retry loop ended unexpectedly.');
+};
+
+const lazy = <T extends ComponentType<any>>(
+  factory: () => Promise<LazyModule<T>>,
+): LazyExoticComponent<T> => reactLazy(() => loadLazyModule(factory));
 
 export const AboutPage = lazy(() => import('@/features/about/index.tsx'));
 export const EmojiPicker = lazy(() => import('@/features/emoji/components/emoji-picker.tsx'));
@@ -20,6 +51,7 @@ export const Bookmarks = lazy(() => import('@/features/bookmarks/index.tsx'));
 export const Status = lazy(() => import('@/features/status/index.tsx'));
 export const PinnedStatuses = lazy(() => import('@/features/pinned-statuses/index.tsx'));
 export const AccountTimeline = lazy(() => import('@/features/account-timeline/index.tsx'));
+export const AccountWorlds = lazy(() => import('@/features/account-worlds/index.tsx'));
 export const AccountGallery = lazy(() => import('@/features/account-gallery/index.tsx'));
 export const Followers = lazy(() => import('@/features/followers/index.tsx'));
 export const Following = lazy(() => import('@/features/following/index.tsx'));
@@ -67,6 +99,7 @@ export const ExternalLogin = lazy(() => import('@/features/external-login/index.
 export const LogoutPage = lazy(() => import('@/features/auth-login/components/logout.tsx'));
 export const RegistrationPage = lazy(() => import('@/features/auth-login/components/registration-page.tsx'));
 export const Settings = lazy(() => import('@/features/settings/index.tsx'));
+export const ATProtoLink = lazy(() => import('@/features/atproto-link/index.tsx'));
 export const EditProfile = lazy(() => import('@/features/edit-profile/index.tsx'));
 export const EditEmail = lazy(() => import('@/features/edit-email/index.tsx'));
 export const EmailConfirmation = lazy(() => import('@/features/email-confirmation/index.tsx'));

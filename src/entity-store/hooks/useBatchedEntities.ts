@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { shallowEqual } from 'react-redux';
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';

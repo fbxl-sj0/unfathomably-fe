@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
-import { useParams } from 'react-router-dom';
 
 import { fetchPinnedStatuses } from '@/actions/pin-statuses.ts';
 import MissingIndicator from '@/components/missing-indicator.tsx';
@@ -14,10 +13,16 @@ const messages = defineMessages({
   heading: { id: 'column.pins', defaultMessage: 'Pinned posts' },
 });
 
-const PinnedStatuses = () => {
+interface IPinnedStatuses {
+  params?: {
+    username?: string;
+  };
+}
+
+const PinnedStatuses: React.FC<IPinnedStatuses> = ({ params }) => {
   const intl = useIntl();
   const dispatch = useAppDispatch();
-  const { username } = useParams<{ username: string }>();
+  const username = params?.username || '';
 
   const meUsername = useAppSelector((state) => selectOwnAccount(state)?.username || '');
   const statusIds = useAppSelector((state) => state.status_lists.get('pins')!.items);

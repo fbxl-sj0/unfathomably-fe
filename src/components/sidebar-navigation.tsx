@@ -22,6 +22,7 @@ import userPlusIcon from '@tabler/icons/outline/user-plus.svg';
 import userIcon from '@tabler/icons/outline/user.svg';
 import videoIcon from '@tabler/icons/outline/video.svg';
 import walletIcon from '@tabler/icons/outline/wallet.svg';
+import worldIcon from '@tabler/icons/outline/world.svg';
 import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
 import { Link } from 'react-router-dom';
 
@@ -29,7 +30,6 @@ import Account from '@/components/account.tsx';
 import SiteLogo from '@/components/site-logo.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import { useStatContext } from '@/contexts/stat-context.tsx';
-import worldIcon from '@tabler/icons/outline/world.svg';
 
 import Search from '@/features/compose/components/search.tsx';
 import ComposeButton from '@/features/ui/components/compose-button.tsx';
@@ -164,7 +164,7 @@ const SidebarNavigation = () => {
     <Stack justifyContent='between' className='sidebar-navigation min-h-screen py-6'>
       <Stack className='sidebar-navigation__primary gap-6'>
         <Link key='logo' to='/' data-preview-title-id='column.home' className='sidebar-navigation__logo ml-4 flex shrink-0 items-center'>
-          <SiteLogo alt='Logo' className='sidebar-navigation__logo-image h-10 w-auto cursor-pointer' />
+          <SiteLogo alt='' className='sidebar-navigation__logo-image h-10 w-auto cursor-pointer' />
           <span className='hidden'><FormattedMessage id='tabs_bar.home' defaultMessage='Home' /></span>
         </Link>
 
@@ -198,7 +198,8 @@ const SidebarNavigation = () => {
 
           {features.federating && (
             <SidebarNavigationLink
-              to='/federation'
+              to='/worlds'
+              paths={['/worlds', '/federation']}
               icon={worldIcon}
               text={<FormattedMessage id='tabs_bar.native_federation' defaultMessage='Worlds' />}
             />

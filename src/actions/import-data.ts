@@ -22,6 +22,18 @@ export const IMPORT_POST_ARCHIVE_REQUEST = 'IMPORT_POST_ARCHIVE_REQUEST';
 export const IMPORT_POST_ARCHIVE_SUCCESS = 'IMPORT_POST_ARCHIVE_SUCCESS';
 export const IMPORT_POST_ARCHIVE_FAIL    = 'IMPORT_POST_ARCHIVE_FAIL';
 
+export type PostArchiveImportState = 'invalid' | 'awaiting_review' | 'pending' | 'running' | 'complete' | 'failed' | 'rejected';
+
+export interface PostArchiveImport {
+  id: string | number;
+  state: PostArchiveImportState;
+  processed_number: number;
+  total_items: number;
+  imported_count: number;
+  error: string | null;
+  inserted_at: string;
+}
+
 type ImportDataActions = {
   type: typeof IMPORT_FOLLOWS_REQUEST
   | typeof IMPORT_FOLLOWS_SUCCESS
@@ -100,8 +112,16 @@ export const importPostArchive = (params: FormData) =>
         }
 
         dispatch({ type: IMPORT_POST_ARCHIVE_SUCCESS, config: data });
+        return data as PostArchiveImport;
       }).catch(error => {
         dispatch({ type: IMPORT_POST_ARCHIVE_FAIL, error });
         toast.showAlertForError(error);
+        throw error;
       });
   };
+
+export const fetchPostArchiveImports = () =>
+  (_dispatch: React.Dispatch<ImportDataActions>, getState: () => RootState) =>
+    api(getState)
+      .get('/api/pleroma/post_archive_imports')
+      .then((response) => response.json() as Promise<PostArchiveImport[]>);

@@ -20,7 +20,7 @@ import userXIcon from '@tabler/icons/outline/user-x.svg';
 import userIcon from '@tabler/icons/outline/user.svg';
 import { useMutation } from '@tanstack/react-query';
 import { List as ImmutableList } from 'immutable';
-import { nip19 } from 'nostr-tools';
+import * as nip19 from 'nostr-tools/nip19';
 import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
 import { useHistory } from 'react-router-dom';
 
@@ -71,7 +71,7 @@ const messages = defineMessages({
   mute: { id: 'account.mute', defaultMessage: 'Mute @{name}' },
   report: { id: 'account.report', defaultMessage: 'Report @{name}' },
   copy: { id: 'account.copy', defaultMessage: 'Copy link to profile' },
-  npub: { id: 'account.npub', defaultMessage: 'Copy user npub' },
+  npub: { id: 'account.npub', defaultMessage: 'Copy portable Nostr profile' },
   share: { id: 'account.share', defaultMessage: 'Share @{name}\'s profile' },
   media: { id: 'account.media', defaultMessage: 'Media' },
   blockDomain: { id: 'account.block_domain', defaultMessage: 'Hide everything from {domain}' },
@@ -309,7 +309,11 @@ const Header: React.FC<IHeader> = ({ account }) => {
   };
 
   const handleCopyNpub: React.EventHandler<React.MouseEvent> = (e) => {
-    copy(nip19.npubEncode(String(account.nostr.pubkey)));
+    const identifier = account.nostr.nprofile
+      || account.nostr.npub
+      || nip19.npubEncode(String(account.nostr.pubkey));
+
+    copy(identifier);
   };
 
   const handleZapAccount: React.EventHandler<React.MouseEvent> = (e) => {

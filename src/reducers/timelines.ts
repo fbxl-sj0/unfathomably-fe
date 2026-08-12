@@ -10,7 +10,7 @@ import {
 import {
   ACCOUNT_BLOCK_SUCCESS,
   ACCOUNT_MUTE_SUCCESS,
-} from '../actions/accounts.ts';
+} from '@/action-types/accounts.ts';
 import {
   STATUS_CREATE_REQUEST,
   STATUS_CREATE_SUCCESS,

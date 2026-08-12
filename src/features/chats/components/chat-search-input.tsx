@@ -6,6 +6,7 @@ import Icon from '@/components/ui/icon.tsx';
 import Input from '@/components/ui/input.tsx';
 
 const messages = defineMessages({
+  clear: { id: 'search.clear', defaultMessage: 'Clear search' },
   searchPlaceholder: { id: 'chats.search_placeholder', defaultMessage: 'Start a chat with…' },
 });
 
@@ -34,7 +35,12 @@ const ChatSearchInput: React.FC<IChatSearchInput> = ({ value, onChange, onClear 
       outerClassName='mt-0'
       theme='search'
       append={
-        <button onClick={onClear}>
+        <button
+          type='button'
+          aria-label={intl.formatMessage(messages.clear)}
+          disabled={!value.length}
+          onClick={onClear}
+        >
           <Icon
             src={value.length ? xIcon : searchIcon}
             className='size-4 text-gray-700 dark:text-gray-600'

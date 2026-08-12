@@ -1,6 +1,8 @@
 import { List as ImmutableList, Record as ImmutableRecord } from 'immutable';
 
 import {
+  HASHTAG_FOLLOW_SUCCESS,
+  HASHTAG_UNFOLLOW_SUCCESS,
   FOLLOWED_HASHTAGS_FETCH_REQUEST,
   FOLLOWED_HASHTAGS_FETCH_SUCCESS,
   FOLLOWED_HASHTAGS_FETCH_FAIL,
@@ -21,6 +23,17 @@ const ReducerRecord = ImmutableRecord({
 
 export default function followed_tags(state = ReducerRecord(), action: AnyAction) {
   switch (action.type) {
+    case HASHTAG_FOLLOW_SUCCESS: {
+      const tag = normalizeTag(action.tag);
+
+      if (state.items.some(item => item.name === tag.name)) {
+        return state;
+      }
+
+      return state.update('items', items => items.unshift(tag));
+    }
+    case HASHTAG_UNFOLLOW_SUCCESS:
+      return state.update('items', items => items.filter(item => item.name !== action.name));
     case FOLLOWED_HASHTAGS_FETCH_REQUEST:
       return state.set('isLoading', true);
     case FOLLOWED_HASHTAGS_FETCH_SUCCESS:

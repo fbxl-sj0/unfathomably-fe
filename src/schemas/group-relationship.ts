@@ -1,4 +1,4 @@
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 import { GroupRoles } from './group-member.ts';
 

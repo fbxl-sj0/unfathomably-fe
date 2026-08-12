@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 const locationSchema = z.object({
   url: z.string().url().catch(''),

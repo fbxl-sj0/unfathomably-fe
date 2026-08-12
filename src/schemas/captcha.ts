@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 const captchaSchema = z.object({
   bg: z.string().catch(''),

@@ -23,30 +23,44 @@
 */
 
 import { useCallback, useEffect, useState } from 'react';
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 import { useApi } from '@/hooks/useApi.ts';
 import { groupSchema, type Group, sourceSchema, type Source } from '@/schemas/index.ts';
 
 type DiscoveryTarget =
-  | { target_type: 'group'; group: Group }
-  | { target_type: 'source'; source: Source };
+  | { target_type: 'group'; group: Group; native_family?: string; curated?: boolean }
+  | { target_type: 'source'; source: Source; native_family?: string; curated?: boolean };
 
 const emptyTargets: DiscoveryTarget[] = [];
 const pageSize = 24;
 
 const targetEnvelopeSchema = z.object({
   target_type: z.enum(['group', 'source']),
+  native_family: z.string().max(32).optional(),
+  curated: z.boolean().catch(false),
 }).passthrough();
 
-const targetEnvelopeListSchema = targetEnvelopeSchema.array().catch([]);
+const targetEnvelopeListSchema = targetEnvelopeSchema.array();
+
+type TargetPage = {
+  invalidCount: number;
+  receivedCount: number;
+  targets: DiscoveryTarget[];
+};
+
+type TargetSearchOptions = {
+  nativeBrowse?: boolean;
+  nativeFamily?: string;
+  nativeMode?: boolean;
+};
 
 const parseTarget = (target: z.infer<typeof targetEnvelopeSchema>): DiscoveryTarget | null => {
   if (target.target_type === 'group') {
     const parsedGroup = groupSchema.safeParse(target);
 
     if (parsedGroup.success) {
-      return { target_type: 'group', group: parsedGroup.data };
+      return { target_type: 'group', group: parsedGroup.data, native_family: target.native_family, curated: target.curated };
     }
   }
 
@@ -54,7 +68,7 @@ const parseTarget = (target: z.infer<typeof targetEnvelopeSchema>): DiscoveryTar
     const parsedSource = sourceSchema.safeParse(target);
 
     if (parsedSource.success) {
-      return { target_type: 'source', source: parsedSource.data };
+      return { target_type: 'source', source: parsedSource.data, native_family: target.native_family, curated: target.curated };
     }
   }
 
@@ -85,19 +99,22 @@ const mergeTargets = (current: DiscoveryTarget[], incoming: DiscoveryTarget[]) =
   return next;
 };
 
-function useTargetSearch(q = '') {
+function useTargetSearch(q = '', { nativeBrowse = false, nativeFamily = 'all', nativeMode = false }: TargetSearchOptions = {}) {
   const api = useApi();
   const query = q.trim();
+  const shouldBrowseNative = nativeBrowse && !query;
+  const shouldFilterNative = nativeMode || nativeBrowse;
   const [targets, setTargets] = useState<DiscoveryTarget[]>(emptyTargets);
   const [isFetching, setIsFetching] = useState(false);
   const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [nextOffset, setNextOffset] = useState(0);
   const [isError, setIsError] = useState(false);
+  const [settledQuery, setSettledQuery] = useState('');
 
-  const loadTargetPage = useCallback(async (offset: number) => {
-    if (!query) {
-      return emptyTargets;
+  const loadTargetPage = useCallback(async (offset: number): Promise<TargetPage> => {
+    if (!query && !shouldBrowseNative) {
+      return { invalidCount: 0, receivedCount: 0, targets: emptyTargets };
     }
 
     const response = await api.get('/api/v1/discovery/targets', {
@@ -105,26 +122,33 @@ function useTargetSearch(q = '') {
         limit: pageSize,
         offset,
         q: query,
+        ...(shouldFilterNative ? { mode: 'native' } : {}),
+        ...(shouldFilterNative && nativeFamily !== 'all' ? { family: nativeFamily } : {}),
       },
     });
 
-    const data = await response.json();
-
-    return targetEnvelopeListSchema
-      .parse(data)
+    const data = targetEnvelopeListSchema.parse(await response.json());
+    const targets = data
       .map(parseTarget)
       .filter((target): target is DiscoveryTarget => target !== null);
-  }, [api, query]);
+
+    return {
+      invalidCount: data.length - targets.length,
+      receivedCount: data.length,
+      targets,
+    };
+  }, [api, nativeFamily, query, shouldBrowseNative, shouldFilterNative]);
 
   useEffect(() => {
     let cancelled = false;
 
-    if (!query) {
+    if (!query && !shouldBrowseNative) {
       setTargets(emptyTargets);
       setIsError(false);
       setHasNextPage(false);
       setNextOffset(0);
       setIsFetching(false);
+      setSettledQuery('');
       return () => {
         cancelled = true;
       };
@@ -133,26 +157,33 @@ function useTargetSearch(q = '') {
     setIsFetching(true);
     setIsError(false);
     setHasNextPage(false);
+    setTargets(emptyTargets);
 
-    loadTargetPage(0)
-      .then((parsedTargets) => {
+    const loadInitialPage = async () => {
+      try {
+        const { invalidCount, receivedCount, targets: parsedTargets } = await loadTargetPage(0);
+
         if (!cancelled) {
           setTargets(parsedTargets);
-          setNextOffset(parsedTargets.length);
-          setHasNextPage(parsedTargets.length === pageSize);
+          setNextOffset(receivedCount);
+          setHasNextPage(receivedCount === pageSize);
+          setIsError(invalidCount > 0 && parsedTargets.length === 0);
+          setSettledQuery(shouldBrowseNative ? `__native_browse__:${nativeFamily}` : query);
         }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsFetching(false);
-        }
-      })
-      .catch(() => {
+      } catch (_e) {
         if (!cancelled) {
           setTargets(emptyTargets);
           setIsError(true);
+          setSettledQuery(shouldBrowseNative ? `__native_browse__:${nativeFamily}` : query);
         }
-      });
+      } finally {
+        if (!cancelled) {
+          setIsFetching(false);
+        }
+      }
+    };
+
+    void loadInitialPage();
 
     return () => {
       cancelled = true;
@@ -166,10 +197,12 @@ function useTargetSearch(q = '') {
     setIsError(false);
 
     try {
-      const parsedTargets = await loadTargetPage(nextOffset);
+      const { receivedCount, targets: parsedTargets } = await loadTargetPage(nextOffset);
+
       setTargets((currentTargets) => mergeTargets(currentTargets, parsedTargets));
-      setNextOffset(nextOffset + parsedTargets.length);
-      setHasNextPage(parsedTargets.length === pageSize);
+      setNextOffset(nextOffset + receivedCount);
+      setHasNextPage(receivedCount === pageSize);
+      setIsError(false);
     } catch (_e) {
       setIsError(true);
     } finally {
@@ -177,15 +210,18 @@ function useTargetSearch(q = '') {
     }
   }, [hasNextPage, isFetching, isFetchingNextPage, loadTargetPage, nextOffset]);
 
+  const requestIdentity = shouldBrowseNative ? `__native_browse__:${nativeFamily}` : query;
+  const isInitialLoading = Boolean(requestIdentity) && settledQuery !== requestIdentity;
+
   return {
     count: targets.length,
     fetchNextPage,
     hasNextPage,
     isError,
-    isFetched: !isFetching,
-    isFetching: isFetching || isFetchingNextPage,
+    isFetched: !isInitialLoading,
+    isFetching: isInitialLoading || isFetching || isFetchingNextPage,
     isFetchingNextPage,
-    isLoading: isFetching,
+    isLoading: isInitialLoading,
     targets,
   };
 }

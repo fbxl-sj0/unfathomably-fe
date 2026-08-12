@@ -562,7 +562,7 @@
   "edit_profile.fields.hide_network_label": "Skjul nettverk",
   "edit_profile.fields.location_label": "Plassering",
   "edit_profile.fields.location_placeholder": "Plassering",
-  "edit_profile.fields.locked_label": "Lock account",
+  "edit_profile.fields.locked_label": "Manually review follow requests",
   "edit_profile.fields.meta_fields.content_placeholder": "Content",
   "edit_profile.fields.meta_fields.label_placeholder": "Label",
   "edit_profile.fields.meta_fields_label": "Profil felt",

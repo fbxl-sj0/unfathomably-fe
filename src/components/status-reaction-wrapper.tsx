@@ -14,10 +14,11 @@ import { getReactForStatus } from '@/utils/emoji-reacts.ts';
 interface IStatusReactionWrapper {
   statusId: string;
   children: JSX.Element;
+  disabled?: boolean;
 }
 
 /** Provides emoji reaction functionality to the underlying button component */
-const StatusReactionWrapper: React.FC<IStatusReactionWrapper> = ({ statusId, children }): JSX.Element | null => {
+const StatusReactionWrapper: React.FC<IStatusReactionWrapper> = ({ statusId, children, disabled = false }): JSX.Element | null => {
   const dispatch = useAppDispatch();
   const { account: ownAccount } = useOwnAccount();
   const status = useAppSelector(state => state.statuses.get(statusId));
@@ -39,6 +40,8 @@ const StatusReactionWrapper: React.FC<IStatusReactionWrapper> = ({ statusId, chi
   if (!status) return null;
 
   const handleMouseEnter = () => {
+    if (disabled) return;
+
     if (timeout.current) {
       clearTimeout(timeout.current);
     }
@@ -65,6 +68,8 @@ const StatusReactionWrapper: React.FC<IStatusReactionWrapper> = ({ statusId, chi
   };
 
   const handleReact = (emoji: string, custom?: string): void => {
+    if (disabled) return;
+
     if (ownAccount) {
       dispatch(simpleEmojiReact(status, emoji, custom));
     } else {
@@ -75,6 +80,12 @@ const StatusReactionWrapper: React.FC<IStatusReactionWrapper> = ({ statusId, chi
   };
 
   const handleClick: React.EventHandler<React.MouseEvent> = e => {
+    if (disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
     const meEmojiReact = getReactForStatus(status, soapboxConfig.allowedEmoji)?.name || '👍';
 
     if (userTouching.matches) {
@@ -109,7 +120,7 @@ const StatusReactionWrapper: React.FC<IStatusReactionWrapper> = ({ statusId, chi
         ref: setReferenceElement,
       })}
 
-      {visible && (
+      {visible && !disabled && (
         <Portal>
           <EmojiSelector
             placement='top-start'

@@ -174,6 +174,15 @@ const moveAccount = (targetAccount: string, password: string) =>
     });
   };
 
+const restartMoveAccount = (password: string) =>
+  (_dispatch: AppDispatch, getState: () => RootState) =>
+    api(getState).post('/api/pleroma/move_account/restart', {
+      password,
+    }).then((response) => response.json()).then((data) => {
+      if (data.error) throw data.error;
+      return data as { status: 'success'; moved_to: string };
+    });
+
 export {
   FETCH_TOKENS_REQUEST,
   FETCH_TOKENS_SUCCESS,
@@ -208,4 +217,5 @@ export {
   confirmChangedEmail,
   deleteAccount,
   moveAccount,
+  restartMoveAccount,
 };

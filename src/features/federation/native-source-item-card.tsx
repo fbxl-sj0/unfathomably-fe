@@ -74,27 +74,7 @@ const familyIntroMessages = defineMessages<FederationFamily>({
   generic: { id: 'federation.source_item.generic', defaultMessage: 'ActivityPub item' },
 });
 
-const familyClasses: Record<FederationFamily, string> = {
-  audio: 'border-amber-200 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20',
-  video: 'border-rose-200 bg-rose-50/80 dark:border-rose-900/60 dark:bg-rose-950/20',
-  longform: 'border-sky-200 bg-sky-50/80 dark:border-sky-900/60 dark:bg-sky-950/20',
-  microblog: 'border-violet-200 bg-violet-50/80 dark:border-violet-900/60 dark:bg-violet-950/20',
-  photo: 'border-emerald-200 bg-emerald-50/80 dark:border-emerald-900/60 dark:bg-emerald-950/20',
-  models: 'border-teal-200 bg-teal-50/80 dark:border-teal-900/60 dark:bg-teal-950/20',
-  games: 'border-blue-200 bg-blue-50/80 dark:border-blue-900/60 dark:bg-blue-950/20',
-  marketplace: 'border-yellow-200 bg-yellow-50/80 dark:border-yellow-900/60 dark:bg-yellow-950/20',
-  culture: 'border-fuchsia-200 bg-fuchsia-50/80 dark:border-fuchsia-900/60 dark:bg-fuchsia-950/20',
-  books: 'border-stone-200 bg-stone-50/80 dark:border-stone-700 dark:bg-stone-900/30',
-  bookmarks: 'border-cyan-200 bg-cyan-50/80 dark:border-cyan-900/60 dark:bg-cyan-950/20',
-  groups: 'border-lime-200 bg-lime-50/80 dark:border-lime-900/60 dark:bg-lime-950/20',
-  events: 'border-orange-200 bg-orange-50/80 dark:border-orange-900/60 dark:bg-orange-950/20',
-  development: 'border-indigo-200 bg-indigo-50/80 dark:border-indigo-900/60 dark:bg-indigo-950/20',
-  coordination: 'border-purple-200 bg-purple-50/80 dark:border-purple-900/60 dark:bg-purple-950/20',
-  publishing: 'border-cyan-200 bg-cyan-50/80 dark:border-cyan-900/60 dark:bg-cyan-950/20',
-  routes: 'border-green-200 bg-green-50/80 dark:border-green-900/60 dark:bg-green-950/20',
-  local: 'border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/30',
-  generic: 'border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/30',
-};
+const nativeCardClasses = 'border-primary-200 bg-primary-50/70 dark:border-primary-800 dark:bg-primary-950/25';
 
 const NativeSourceItemCard: React.FC<INativeSourceItemCard> = ({ item }) => {
   const intl = useIntl();
@@ -109,19 +89,19 @@ const NativeSourceItemCard: React.FC<INativeSourceItemCard> = ({ item }) => {
     <article
       className={clsx(
         'rounded-xl border border-solid p-3 shadow-sm',
-        familyClasses[family],
+        nativeCardClasses,
       )}
       data-family={family}
       data-testid='native-source-item-card'
     >
       <div className='mb-2 flex flex-wrap items-center gap-2'>
         <PlatformBadge family={family} label={item.platform_label} />
-        <span className='text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
+        <span className='text-xs font-medium uppercase tracking-wide text-gray-500 black:text-gray-400 dark:text-gray-400'>
           <FormattedMessage {...familyIntroMessages[family]} />
         </span>
 
         {item.source_kind_label ? (
-          <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>
+          <span className='text-xs font-medium text-gray-500 black:text-gray-400 dark:text-gray-400'>
             {item.source_kind_label}
           </span>
         ) : null}
@@ -130,7 +110,7 @@ const NativeSourceItemCard: React.FC<INativeSourceItemCard> = ({ item }) => {
       {renderVisual(item, family)}
 
       <a
-        className='block text-base font-semibold text-gray-900 hover:underline dark:text-gray-100'
+        className='block text-base font-semibold text-gray-900 black:text-white hover:underline dark:text-gray-100'
         href={href}
         target='_blank'
         rel='noopener'
@@ -139,7 +119,7 @@ const NativeSourceItemCard: React.FC<INativeSourceItemCard> = ({ item }) => {
       </a>
 
       {item.summary ? (
-        <p className='mt-1 line-clamp-3 text-sm text-gray-700 dark:text-gray-300'>
+        <p className='mt-1 line-clamp-3 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
           {item.summary}
         </p>
       ) : null}
@@ -152,13 +132,13 @@ const NativeSourceItemCard: React.FC<INativeSourceItemCard> = ({ item }) => {
         </div>
       ) : null}
 
-      <div className='mt-3 flex flex-wrap items-center gap-2'>
-        {renderMediaControl(item, family)}
+      {renderMediaControl(item, family)}
 
+      <div className='relative z-10 mt-3 flex flex-wrap items-center gap-2'>
         {dockItem ? (
           <button
             aria-label={dockLabel}
-            className='inline-flex size-9 items-center justify-center rounded-md border border-solid border-primary-200 bg-white text-primary-700 hover:bg-primary-50 dark:border-primary-800 dark:bg-gray-900 dark:text-primary-300 dark:hover:bg-primary-950/40'
+            className='inline-flex size-9 items-center justify-center rounded-md border border-solid border-primary-200 bg-white text-primary-700 hover:bg-primary-50 black:border-primary-800 black:bg-black black:text-primary-300 black:hover:bg-primary-900/40 dark:border-primary-800 dark:bg-gray-900 dark:text-primary-300 dark:hover:bg-primary-950/40'
             onClick={() => playItem(dockItem)}
             title={dockLabel}
             type='button'
@@ -226,7 +206,7 @@ function renderMediaControl(item: SourceItem, family: FederationFamily) {
 
   if (family === 'audio' || item.media_type?.startsWith('audio/')) {
     return (
-      <audio className='min-w-48 flex-1' controls preload='none' src={item.media_url}>
+      <audio className='mt-3 block w-full' controls preload='none' src={item.media_url}>
         <a href={item.media_url}>
           <FormattedMessage id='federation.source_item.open_audio' defaultMessage='Open audio' />
         </a>
@@ -236,7 +216,7 @@ function renderMediaControl(item: SourceItem, family: FederationFamily) {
 
   if (family === 'video' || item.media_type?.startsWith('video/')) {
     return (
-      <video className='max-h-56 min-w-48 flex-1 rounded-lg' controls preload='metadata' src={item.media_url}>
+      <video className='mt-3 block max-h-56 w-full rounded-lg' controls preload='metadata' src={item.media_url}>
         <a href={item.media_url}>
           <FormattedMessage id='federation.source_item.open_video' defaultMessage='Open video' />
         </a>
@@ -284,13 +264,56 @@ function floatingMediaKind(item: SourceItem, family: FederationFamily): Floating
 }
 
 function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
+  if (family === 'video' && item.native) {
+    const category = nativeField(item, 'category');
+    const channel = nativeField(item, 'channel');
+    const language = nativeField(item, 'language');
+    const license = nativeField(item, 'license') ?? item.license;
+
+    return (
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
+        {channel !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.video_channel_label' defaultMessage='Channel: ' />} value={String(channel)} /> : null}
+        {category !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.video_category_label' defaultMessage='Category: ' />} value={String(category)} /> : null}
+        {language !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.language_label' defaultMessage='Language: ' />} value={String(language)} /> : null}
+        {item.duration ? <NativeDetail label={<FormattedMessage id='federation.source_item.duration_label' defaultMessage='Duration: ' />} value={item.duration} /> : null}
+        {license !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.license_label' defaultMessage='License: ' />} value={renderLinkedValue(formatExternalLabel(String(license)), String(license))} /> : null}
+      </dl>
+    );
+  }
+
+  if (family === 'photo' && item.native) {
+    const album = nativeField(item, 'album');
+    const license = nativeField(item, 'license') ?? item.license;
+    const location = nativeField(item, 'location') ?? item.location;
+    const takenAt = nativeField(item, 'taken_at');
+
+    return (
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
+        {album !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.album_label' defaultMessage='Album: ' />} value={String(album)} /> : null}
+        {location !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.location_label' defaultMessage='Location: ' />} value={String(location)} /> : null}
+        {takenAt !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.taken_at_label' defaultMessage='Taken: ' />} value={String(takenAt)} /> : null}
+        {license !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.license_label' defaultMessage='License: ' />} value={renderLinkedValue(formatExternalLabel(String(license)), String(license))} /> : null}
+      </dl>
+    );
+  }
+
   if (family === 'games' && item.native) {
     const fen = nativeField(item, 'fen');
     const game = nativeField(item, 'game');
+    const gameKind = nativeField(item, 'game_kind');
+    const participants = nativeField(item, 'players');
+    const platform = nativeField(item, 'platform_name');
     const san = nativeField(item, 'san');
+    const startTime = nativeField(item, 'start_time');
+    const state = nativeField(item, 'state');
 
     return (
-      <dl className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
+        {gameKind !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.game_kind_label' defaultMessage='Game: ' />} value={String(gameKind)} /> : null}
+        {state !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.status_label' defaultMessage='Status: ' />} value={String(state)} /> : null}
+        {participants !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.game_players_label' defaultMessage='Players: ' />} value={String(participants)} /> : null}
+        {platform !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.game_platform_label' defaultMessage='Platform or venue: ' />} value={String(platform)} /> : null}
+        {startTime !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.event_start_label' defaultMessage='Starts: ' />} value={String(startTime)} /> : null}
         {san !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.game_move_label' defaultMessage='Move: ' />} value={String(san)} /> : null}
         {fen !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.game_position_label' defaultMessage='Position: ' />} value={String(fen)} /> : null}
         {typeof game === 'string' ? <NativeDetail label={<FormattedMessage id='federation.source_item.game_link_label' defaultMessage='Game: ' />} value={renderLinkedValue(formatExternalLabel(game), game)} /> : null}
@@ -302,15 +325,25 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
     const listingName = nativeField(item, 'listing_name');
     const price = nativeField(item, 'price');
     const currency = nativeField(item, 'currency');
+    const condition = nativeField(item, 'condition');
+    const delivery = nativeField(item, 'delivery');
+    const expires = nativeField(item, 'expires');
     const latitude = nativeField(item, 'latitude');
+    const listingType = nativeField(item, 'listing_type');
     const longitude = nativeField(item, 'longitude');
-    const location = latitude !== null && longitude !== null ? `${latitude}, ${longitude}` : null;
+    const namedLocation = nativeField(item, 'location') ?? item.location;
+    const coordinateLocation = latitude !== null && longitude !== null ? `${latitude}, ${longitude}` : null;
+    const location = namedLocation ?? coordinateLocation;
 
     return (
-      <dl className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
         {listingName !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.listing_name_label' defaultMessage='Listing: ' />} value={String(listingName)} /> : null}
+        {listingType !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.listing_type_label' defaultMessage='Type: ' />} value={String(listingType)} /> : null}
         {price !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.listing_price_label' defaultMessage='Price: ' />} value={[price, currency].filter((value) => value !== null).join(' ')} /> : null}
         {location !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.listing_location_label' defaultMessage='Location: ' />} value={location} /> : null}
+        {condition !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.listing_condition_label' defaultMessage='Condition: ' />} value={String(condition)} /> : null}
+        {delivery !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.listing_delivery_label' defaultMessage='Fulfilment: ' />} value={String(delivery)} /> : null}
+        {expires !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.listing_expires_label' defaultMessage='Expires: ' />} value={String(expires)} /> : null}
       </dl>
     );
   }
@@ -318,10 +351,15 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
   if (family === 'models' && item.native) {
     const creator = firstNativeField(item, ['attributed_to', 'creator']);
     const collections = firstNativeField(item, ['collections', 'collection']);
+    const category = nativeField(item, 'category');
+    const fileFormat = nativeField(item, 'file_format');
     const license = nativeField(item, 'license');
+    const printable = nativeField(item, 'printable');
+    const scale = nativeField(item, 'scale');
+    const version = nativeField(item, 'version');
 
     return (
-      <dl className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
         {creator !== null ? (
           <div>
             <dt className='inline font-semibold'>
@@ -348,6 +386,11 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
             <dd className='inline'>{String(license)}</dd>
           </div>
         ) : null}
+        {version !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.version_label' defaultMessage='Version: ' />} value={String(version)} /> : null}
+        {fileFormat !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.file_format_label' defaultMessage='Format: ' />} value={String(fileFormat)} /> : null}
+        {category !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.model_category_label' defaultMessage='Category: ' />} value={String(category)} /> : null}
+        {scale !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.model_scale_label' defaultMessage='Scale or dimensions: ' />} value={String(scale)} /> : null}
+        {printable !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.model_printable_label' defaultMessage='Designed for printing: ' />} value={printable === true ? 'Yes' : 'No'} /> : null}
       </dl>
     );
   }
@@ -355,13 +398,16 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
   if (family === 'culture' && item.native) {
     const catalogItem = firstNativeField(item, ['catalog_item', 'with_regard_to']);
     const catalogType = nativeField(item, 'catalog_type');
+    const creator = nativeField(item, 'creator');
+    const language = nativeField(item, 'language');
     const rating = nativeField(item, 'rating');
     const ratingBest = nativeField(item, 'rating_best');
+    const releaseYear = nativeField(item, 'release_year');
     const ratingValue = ratingBest !== null ? [rating, ratingBest].join('/') : String(rating);
     const status = nativeField(item, 'reading_status');
 
     return (
-      <dl className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
         {rating !== null ? (
           <div>
             <dt className='inline font-semibold'>
@@ -389,6 +435,10 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
           </div>
         ) : null}
 
+        {creator !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.creator_label' defaultMessage='Creator: ' />} value={String(creator)} /> : null}
+        {releaseYear !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.release_year_label' defaultMessage='Year: ' />} value={String(releaseYear)} /> : null}
+        {language !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.language_label' defaultMessage='Language: ' />} value={String(language)} /> : null}
+
         {catalogItem !== null ? (
           <div>
             <dt className='inline font-semibold'>
@@ -403,11 +453,20 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
 
   if (family === 'books' && item.native) {
     const book = firstNativeField(item, ['in_reply_to_book', 'book', 'edition', 'work']);
+    const author = nativeField(item, 'author');
+    const edition = nativeField(item, 'edition');
+    const isbn = nativeField(item, 'isbn');
     const rating = nativeField(item, 'rating');
     const readingStatus = nativeField(item, 'reading_status');
-
+    const series = firstNativeField(item, ['series', 'series_books', 'series_ids']);
+    const seriesNumber = nativeField(item, 'series_number');
     return (
-      <dl className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
+        {author !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.author_label' defaultMessage='Author: ' />} value={String(author)} /> : null}
+        {edition !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.edition_label' defaultMessage='Edition: ' />} value={String(edition)} /> : null}
+        {series !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.series_label' defaultMessage='Series: ' />} value={String(series)} /> : null}
+        {seriesNumber !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.series_number_label' defaultMessage='Series position: ' />} value={String(seriesNumber)} /> : null}
+        {isbn !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.isbn_label' defaultMessage='ISBN: ' />} value={String(isbn)} /> : null}
         {rating !== null ? (
           <div>
             <dt className='inline font-semibold'>
@@ -439,39 +498,52 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
   }
 
   if (family === 'development' && item.native) {
-    const target = firstNativeField(item, ['target', 'result', 'managed_by', 'ref']);
+    const labels = nativeField(item, 'labels');
+    const priority = nativeField(item, 'priority');
+    const state = nativeField(item, 'state');
+    const target = firstNativeField(item, ['repository', 'target', 'result', 'managed_by', 'ref']);
+    const ticketKind = nativeField(item, 'ticket_kind');
+    const version = nativeField(item, 'version');
 
     return (
-      <div className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
-        <p className='font-medium'>
-          <FormattedMessage
-            id='federation.source_item.development_read_only'
-            defaultMessage='Read-only federated {type}'
-            values={{ type: shortNativeType(item.native.type) }}
-          />
-        </p>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
+        <div className='font-medium'>
+          <dt className='sr-only'>Type</dt>
+          <dd>
+            <FormattedMessage
+              id='federation.source_item.development_type'
+              defaultMessage='{type}'
+              values={{ type: shortNativeType(item.native.type) }}
+            />
+          </dd>
+        </div>
 
         {target !== null ? (
-          <p>
-            <FormattedMessage id='federation.source_item.development_target_label' defaultMessage='Target: ' />
-            {renderLinkedValue(formatExternalLabel(String(target)), String(target))}
-          </p>
+          <NativeDetail label={<FormattedMessage id='federation.source_item.development_target_label' defaultMessage='Project: ' />} value={renderLinkedValue(formatExternalLabel(String(target)), String(target))} />
         ) : null}
-      </div>
+        {ticketKind !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.ticket_kind_label' defaultMessage='Kind: ' />} value={String(ticketKind)} /> : null}
+        {state !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.status_label' defaultMessage='Status: ' />} value={String(state)} /> : null}
+        {priority !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.priority_label' defaultMessage='Impact: ' />} value={String(priority)} /> : null}
+        {version !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.version_label' defaultMessage='Version: ' />} value={String(version)} /> : null}
+        {labels !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.labels_label' defaultMessage='Topics: ' />} value={String(labels)} /> : null}
+      </dl>
     );
   }
 
   if (family === 'coordination' && item.native) {
     const action = nativeField(item, 'action');
+    const due = firstNativeField(item, ['due', 'has_point_in_time', 'has_beginning']);
+    const location = firstNativeField(item, ['location', 'at_location', 'eligible_location']);
     const provider = nativeField(item, 'provider');
     const receiver = nativeField(item, 'receiver');
     const process = firstNativeField(item, ['input_of', 'output_of', 'planned_within']);
     const resource = firstNativeField(item, ['resource_inventoried_as', 'to_resource_inventoried_as', 'resource_conforms_to']);
     const quantity = firstNativeField(item, ['resource_quantity', 'effort_quantity', 'available_quantity', 'onhand_quantity', 'accounting_quantity']);
     const quantityUnit = firstNativeField(item, ['resource_quantity_unit', 'effort_quantity_unit', 'available_quantity_unit', 'onhand_quantity_unit', 'accounting_quantity_unit']);
+    const skills = nativeField(item, 'skills');
 
     return (
-      <dl className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
         <NativeDetail label={<FormattedMessage id='federation.source_item.valueflows_type_label' defaultMessage='ValueFlows type: ' />} value={shortNativeType(item.native.type)} />
         {action !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.valueflows_action_label' defaultMessage='Action: ' />} value={String(action)} /> : null}
         {provider !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.valueflows_provider_label' defaultMessage='Provider: ' />} value={renderLinkedValue(formatExternalLabel(String(provider)), String(provider))} /> : null}
@@ -479,6 +551,9 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
         {process !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.valueflows_process_label' defaultMessage='Process: ' />} value={renderLinkedValue(formatExternalLabel(String(process)), String(process))} /> : null}
         {resource !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.valueflows_resource_label' defaultMessage='Resource: ' />} value={renderLinkedValue(formatExternalLabel(String(resource)), String(resource))} /> : null}
         {quantity !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.valueflows_quantity_label' defaultMessage='Quantity: ' />} value={[quantity, quantityUnit].filter((value) => value !== null).join(' ')} /> : null}
+        {location !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.location_label' defaultMessage='Location: ' />} value={String(location)} /> : null}
+        {due !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.valueflows_due_label' defaultMessage='Needed by: ' />} value={String(due)} /> : null}
+        {skills !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.valueflows_skills_label' defaultMessage='Skills or topics: ' />} value={String(skills)} /> : null}
       </dl>
     );
   }
@@ -492,7 +567,7 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
     const resourceUrl = nativeField(item, 'resource_url');
 
     return (
-      <dl className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
         <NativeDetail label={<FormattedMessage id='federation.source_item.resource_type_label' defaultMessage='Resource type: ' />} value={shortNativeType(item.native.type)} />
         {author !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.resource_author_label' defaultMessage='Author: ' />} value={renderLinkedValue(formatExternalLabel(String(author)), String(author))} /> : null}
         {subject !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.resource_subject_label' defaultMessage='Subject: ' />} value={String(subject)} /> : null}
@@ -517,7 +592,7 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
     const startTime = nativeField(item, 'start_time') ?? item.event_start;
 
     return (
-      <dl className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
         {routeKind !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.route_kind_label' defaultMessage='Kind: ' />} value={String(routeKind).replaceAll('_', ' ')} /> : null}
         {category !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.route_category_label' defaultMessage='Category: ' />} value={String(category)} /> : null}
         {difficulty !== null ? <NativeDetail label={<FormattedMessage id='federation.source_item.route_difficulty_label' defaultMessage='Difficulty: ' />} value={String(difficulty)} /> : null}
@@ -539,7 +614,7 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
 
   if (family === 'events') {
     return (
-      <dl className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
         {item.event_start ? (
           <div>
             <dt className='inline font-semibold'>
@@ -557,13 +632,19 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
             <dd className='inline'>{item.location}</dd>
           </div>
         ) : null}
+        {typeof item.comments_count === 'number' ? (
+          <NativeDetail
+            label={<FormattedMessage id='federation.source_item.discussion_label' defaultMessage='Discussion: ' />}
+            value={<FormattedMessage id='federation.source_item.comments_count' defaultMessage='{count, plural, one {# comment} other {# comments}}' values={{ count: item.comments_count }} />}
+          />
+        ) : null}
       </dl>
     );
   }
 
   if (family === 'audio' && hasAudioDetails(item)) {
     return (
-      <dl className='mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300'>
+      <dl className='mt-2 space-y-1 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>
         {item.artists.length ? (
           <div>
             <dt className='inline font-semibold'>
@@ -641,7 +722,7 @@ function renderFamilyDetails(item: SourceItem, family: FederationFamily) {
 
   if (family === 'groups') {
     return (
-      <div className='mt-2 space-y-1 text-sm font-medium text-gray-700 dark:text-gray-300'>
+      <div className='mt-2 space-y-1 text-sm font-medium text-gray-700 black:text-gray-200 dark:text-gray-300'>
         <p>
           <FormattedMessage id='federation.source_item.community_hint' defaultMessage='Follow the community to bring its discussions into your timelines.' />
         </p>

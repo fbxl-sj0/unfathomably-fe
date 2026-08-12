@@ -6,19 +6,73 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta http-equiv="content-security-policy" content="<%- csp %>">
-    <link href="/manifest.webmanifest" rel="manifest">
+    <link href="/manifest.json" rel="manifest">
+    <link href="/packs/theme-bootstrap-4A52BB4.js" rel="preload" as="script">
     <!--server-generated-meta-->
+    <style>
+      html,
+      body,
+      #soapbox {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        color-scheme: light dark;
+        background: Canvas;
+        color: CanvasText;
+      }
+
+      html.light {
+        color-scheme: light;
+      }
+
+      html.dark {
+        color-scheme: dark;
+      }
+
+      html.black body {
+        background: #000;
+        color: #fff;
+      }
+
+      .bootstrap-loading-screen {
+        display: grid;
+        min-height: 100%;
+        place-items: center;
+      }
+
+      .bootstrap-loading-spinner {
+        width: 2.5rem;
+        height: 2.5rem;
+        box-sizing: border-box;
+        border: 3px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 9999px;
+        opacity: 0.7;
+        animation: bootstrap-loading-spinner 0.8s linear infinite;
+      }
+
+      @keyframes bootstrap-loading-spinner {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .bootstrap-loading-spinner {
+          animation-duration: 1.6s;
+        }
+      }
+    </style>
+    <script src="/packs/theme-bootstrap-4A52BB4.js"></script>
     <script type="module" src="./src/main.tsx"></script>
     <%- snippets %>
   </head>
-  <body class="theme-mode-black no-reduce-motion">
-    <div id="soapbox" class="h-full">
-      <div class="h-screen w-screen flex justify-center items-center">
-        <div class="loading-indicator text-gray-50 text-xs uppercase flex flex-col justify-center overflow-visible h-screen w-screen items-center">
-          <div class="size-10 relative">
-            <div class="animate-loader-figure absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-12 rounded-full bg-transparent border-6 border-solid border-gray-200"></div>
-          </div>
-        </div>
+  <body class="no-reduce-motion">
+    <div id="soapbox">
+      <div class="bootstrap-loading-screen" role="status" aria-busy="true" aria-label="Loading">
+        <div class="bootstrap-loading-spinner" aria-hidden="true"></div>
       </div>
     </div>
     <noscript class="text-center">To use this website, please enable JavaScript.</noscript>

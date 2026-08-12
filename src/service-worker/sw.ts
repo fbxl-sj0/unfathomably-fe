@@ -113,16 +113,20 @@ const notify = (options: ExtendedNotificationOptions): Promise<void> =>
 
 /** Perform an API request to the backend. */
 const fetchFromApi = (path: string, method: string, accessToken: string): Promise<APINotification> => {
-  const url = (new URL(path, self.location.href)).href;
+  const url = new URL(path, self.location.href);
 
-  return fetch(url, {
+  if (url.origin !== self.location.origin) {
+    return Promise.reject(new Error('Refusing authenticated cross-origin service-worker request'));
+  }
+
+  return fetch(url.href, {
     headers: {
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
 
     method: method,
-    credentials: 'include',
+    credentials: 'same-origin',
   }).then(res => {
     if (res.ok) {
       return res;

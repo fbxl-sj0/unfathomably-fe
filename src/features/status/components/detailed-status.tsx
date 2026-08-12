@@ -168,7 +168,7 @@ const DetailedStatus: React.FC<IDetailedStatus> = ({
               translatable
             />
 
-            <NativeStatusContext native={actualStatus.pleroma.get('native')} />
+            <NativeStatusContext authorAccountId={actualStatus.account.id} native={actualStatus.pleroma.get('native')} statusId={actualStatus.id} />
 
             <TranslateButton status={actualStatus} />
 

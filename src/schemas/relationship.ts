@@ -1,4 +1,4 @@
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 const federationStatusSchema = z.object({
   defederated: z.boolean().catch(false),

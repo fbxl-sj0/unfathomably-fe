@@ -1,7 +1,7 @@
 import LinkHeader from 'http-link-header';
 import { useEffect } from 'react';
 import { shallowEqual } from 'react-redux';
-import z from 'zod';
+import * as z from '@/zod.ts';
 
 import { useApi } from '@/hooks/useApi.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
@@ -120,7 +120,7 @@ function useEntities<TEntity extends Entity>(
     if (isInvalid || isUnset || isStale) {
       fetchEntities();
     }
-  }, [isEnabled, ...path]);
+  }, [isEnabled, isInvalid, ...path]);
 
   return {
     entities,

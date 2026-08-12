@@ -1,7 +1,7 @@
 import { Record as ImmutableRecord } from 'immutable';
 
 import { fetchInstance } from '@/actions/instance.ts';
-import { NOSTR_PUBKEY_SET } from '@/actions/nostr.ts';
+import { NOSTR_PUBKEY_SET } from '@/actions/nostr-types.ts';
 import { SW_UPDATING } from '@/actions/sw.ts';
 
 import type { AnyAction } from 'redux';

@@ -19,7 +19,7 @@ import {
   ADMIN_USERS_APPROVE_SUCCESS,
   ADMIN_USERS_REJECT_REQUEST,
   ADMIN_USERS_REJECT_SUCCESS,
-} from '@/actions/admin.ts';
+} from '@/action-types/admin.ts';
 import { normalizeAdminReport, normalizeAdminAccount } from '@/normalizers/index.ts';
 import { normalizeId } from '@/utils/normalizers.ts';
 

@@ -62,6 +62,7 @@ describe('NativeSourceItemCard', () => {
 
       expect(screen.getByTestId('native-source-item-card')).toHaveAttribute('data-family', family);
       expect(screen.getByTestId('federation-platform-badge')).toBeInTheDocument();
+      expect(screen.getByTestId('native-source-item-card')).toHaveClass('border-primary-200');
 
       unmount();
     }
@@ -272,7 +273,7 @@ describe('NativeSourceItemCard', () => {
     expect(screen.getByText('books.example.test/books/1')).toHaveAttribute('href', 'https://books.example.test/books/1');
   });
 
-  it('renders ForgeFed resources as read-only development activity', () => {
+  it('renders ForgeFed resources with their development identity', () => {
     renderCard(buildItem('development', {
       type: 'Ticket',
       native: {
@@ -287,7 +288,7 @@ describe('NativeSourceItemCard', () => {
       },
     }));
 
-    expect(screen.getByText('Read-only federated Ticket')).toBeInTheDocument();
+    expect(screen.getByText('development title')).toBeInTheDocument();
     expect(screen.getByText('forge.example.test/projects/1')).toHaveAttribute('href', 'https://forge.example.test/projects/1');
     expect(screen.queryByText(/accept ticket/i)).not.toBeInTheDocument();
   });

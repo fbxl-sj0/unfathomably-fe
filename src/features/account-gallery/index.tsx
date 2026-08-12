@@ -5,6 +5,7 @@ import { FormattedMessage } from 'react-intl';
 import { openModal } from '@/actions/modals.ts';
 import { expandAccountMediaTimeline } from '@/actions/timelines.ts';
 import { useAccountLookup } from '@/api/hooks/index.ts';
+import { useAccountStream } from '@/api/hooks/streaming/useAccountStream.ts';
 import LoadMore from '@/components/load-more.tsx';
 import MissingIndicator from '@/components/missing-indicator.tsx';
 import { Column } from '@/components/ui/column.tsx';
@@ -48,11 +49,14 @@ const AccountGallery: React.FC<IAccountGallery> = ({ params }) => {
     isUnavailable,
   } = useAccountLookup(username, { withRelationship: true });
 
+  const timelineId = `account:${account?.id}:media`;
+  useAccountStream(timelineId, account?.id || '', { onlyMedia: true });
+
   const attachments: ImmutableList<Attachment> = useAppSelector((state) => account ? getAccountGallery(state, account.id) : ImmutableList());
-  const isLoading = useAppSelector((state) => state.timelines.get(`account:${account?.id}:media`)?.isLoading);
-  const hasMore = useAppSelector((state) => state.timelines.get(`account:${account?.id}:media`)?.hasMore);
-  const next = useAppSelector(state => state.timelines.get(`account:${account?.id}:media`)?.next);
-  const loadingFailed = useAppSelector(state => state.timelines.get(`account:${account?.id}:media`)?.loadingFailed);
+  const isLoading = useAppSelector((state) => state.timelines.get(timelineId)?.isLoading);
+  const hasMore = useAppSelector((state) => state.timelines.get(timelineId)?.hasMore);
+  const next = useAppSelector(state => state.timelines.get(timelineId)?.next);
+  const loadingFailed = useAppSelector(state => state.timelines.get(timelineId)?.loadingFailed);
   const hasLoaded = attachments.size > 0 || hasMore === false || loadingFailed;
 
   const node = useRef<HTMLDivElement>(null);

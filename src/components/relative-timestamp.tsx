@@ -189,7 +189,7 @@ class RelativeTimestamp extends Component<RelativeTimestampProps, RelativeTimest
     const relativeTime = futureDate ? timeRemainingString(intl, date, this.state.now) : timeAgoString(intl, date, this.state.now, year!);
 
     return (
-      <Text {...textProps} theme={theme} tag='time' title={intl.formatDate(date, dateFormatOptions)}>
+      <Text {...textProps} dateTime={timestamp} theme={theme} tag='time' title={intl.formatDate(date, dateFormatOptions)}>
         {relativeTime}
       </Text>
     );

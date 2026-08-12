@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 
-import { useNostr } from '@/contexts/nostr-context.tsx';
+import { useConnectedNostr } from '@/contexts/nostr-context.tsx';
 import { NBunker } from '@/features/nostr/NBunker.ts';
 import { useSigner } from '@/hooks/nostr/useSigner.ts';
 
 function useBunker() {
-  const { relay } = useNostr();
   const { signer: userSigner, bunkerSigner, authorizedPubkey } = useSigner();
+  const enabled = !!userSigner && !!bunkerSigner && !!authorizedPubkey;
+  const { relay } = useConnectedNostr(enabled);
 
   useEffect(() => {
     if (!relay || !userSigner || !bunkerSigner || !authorizedPubkey) return;

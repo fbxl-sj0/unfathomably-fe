@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { autosuggestPopulate } from '@/features/emoji/search.ts';
 import { useApi } from '@/hooks/useApi.ts';
 import { CustomEmoji, customEmojiSchema } from '@/schemas/custom-emoji.ts';
 import { filteredArray } from '@/schemas/utils.ts';
@@ -14,12 +13,7 @@ export function useCustomEmojis() {
     queryFn: async () => {
       const response = await api.get('/api/v1/custom_emojis');
       const data = await response.json();
-      const customEmojis = filteredArray(customEmojiSchema).parse(data);
-
-      // Add custom emojis to the search index.
-      autosuggestPopulate(customEmojis);
-
-      return customEmojis;
+      return filteredArray(customEmojiSchema).parse(data);
     },
     placeholderData: [],
     retryOnMount: false,

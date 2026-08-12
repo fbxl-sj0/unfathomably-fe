@@ -46,7 +46,7 @@ const Rule: React.FC<IRule> = ({ rule }) => {
   };
 
   return (
-    <div key={rule.id} className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800'>
+    <div key={rule.id} className='rounded-lg bg-gray-100 p-4 dark:bg-primary-800 black:bg-primary-900/20'>
       <Stack space={2}>
         <Text>{rule.text}</Text>
         <Text tag='span' theme='muted' size='sm'>{rule.hint}</Text>
@@ -76,7 +76,7 @@ const Rules: React.FC = () => {
   const intl = useIntl();
   const dispatch = useAppDispatch();
 
-  const { data, isLoading } = useRules();
+  const { data = [], isLoading } = useRules();
 
   const handleCreateRule = () => {
     dispatch(openModal('EDIT_RULE'));
@@ -103,7 +103,7 @@ const Rules: React.FC = () => {
           isLoading={isLoading}
           showLoading={isLoading}
         >
-          {data!.map((rule) => (
+          {data.map((rule) => (
             <Rule key={rule.id} rule={rule} />
           ))}
         </ScrollableList>

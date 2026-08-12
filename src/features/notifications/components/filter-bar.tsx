@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import atIcon from '@tabler/icons/outline/at.svg';
 import bellRingingIcon from '@tabler/icons/outline/bell-ringing.svg';
 import chartBarIcon from '@tabler/icons/outline/chart-bar.svg';
@@ -25,9 +26,17 @@ const messages = defineMessages({
   follows: { id: 'notifications.filter.follows', defaultMessage: 'Follows' },
   emoji_reacts: { id: 'notifications.filter.emoji_reacts', defaultMessage: 'Emoji reacts' },
   statuses: { id: 'notifications.filter.statuses', defaultMessage: 'Updates from people you follow' },
+  groupedOn: { id: 'notifications.grouped.on', defaultMessage: 'Grouped' },
+  groupedOff: { id: 'notifications.grouped.off', defaultMessage: 'Ungrouped' },
 });
 
-const NotificationFilterBar = () => {
+interface INotificationFilterBar {
+  grouped: boolean;
+  onGroupedToggle: () => void;
+  showFilters: boolean;
+}
+
+const NotificationFilterBar = ({ grouped, onGroupedToggle, showFilters }: INotificationFilterBar) => {
   const intl = useIntl();
   const dispatch = useAppDispatch();
   const settings = useSettings();
@@ -97,7 +106,29 @@ const NotificationFilterBar = () => {
     });
   }
 
-  return <Tabs items={items} activeItem={selectedFilter} />;
+  return (
+    <div className='flex items-center border-b border-solid border-gray-200 dark:border-gray-800'>
+      {showFilters && (
+        <div className='min-w-0 flex-1'>
+          <Tabs items={items} activeItem={selectedFilter} />
+        </div>
+      )}
+
+      {features.groupedNotifications && (
+        <button
+          type='button'
+          aria-pressed={grouped}
+          className={clsx('mx-3 shrink-0 rounded-full border border-solid px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500', {
+            'border-primary-600 bg-primary-600 text-white hover:bg-primary-700': grouped,
+            'border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800': !grouped,
+          })}
+          onClick={onGroupedToggle}
+        >
+          {intl.formatMessage(grouped ? messages.groupedOn : messages.groupedOff)}
+        </button>
+      )}
+    </div>
+  );
 };
 
 export default NotificationFilterBar;

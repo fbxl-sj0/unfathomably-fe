@@ -15,6 +15,16 @@ import type { Status } from '@/types/entities.ts';
 
 const MAX_HEIGHT = 642; // 20px * 32 (+ 2px padding at the top)
 
+const normalizeLocalReferences = (value: unknown): Record<string, string> | undefined => {
+  if (!value || typeof value !== 'object') return undefined;
+
+  if ('toJS' in value && typeof value.toJS === 'function') {
+    return value.toJS() as Record<string, string>;
+  }
+
+  return value as Record<string, string>;
+};
+
 interface IReadMoreButton {
   onClick: React.MouseEventHandler;
 }
@@ -47,6 +57,7 @@ const StatusContent: React.FC<IStatusContent> = ({
 
   const node = useRef<HTMLDivElement>(null);
   const isOnlyEmoji = useMemo(() => _isOnlyEmoji(status.content, status.emojis.toJS(), 10), [status.content]);
+  const localReferences = normalizeLocalReferences(status.getIn(['pleroma', 'local_references']));
 
   const maybeSetCollapsed = (): void => {
     if (!node.current) return;
@@ -93,6 +104,7 @@ const StatusContent: React.FC<IStatusContent> = ({
         lang={status.language || undefined}
         size={textSize}
         emojis={status.emojis.toJS()}
+        localReferences={localReferences}
         mentions={status.mentions.toJS()}
         html={{ __html: parsedHtml }}
       />,
@@ -121,6 +133,7 @@ const StatusContent: React.FC<IStatusContent> = ({
         lang={status.language || undefined}
         size={textSize}
         emojis={status.emojis.toJS()}
+        localReferences={localReferences}
         mentions={status.mentions.toJS()}
         html={{ __html: parsedHtml }}
       />,

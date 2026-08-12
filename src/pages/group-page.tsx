@@ -60,10 +60,10 @@ const DeletedBlankslate = () => (
 
 const PrivacyBlankslate = () => (
   <Stack space={4} className='py-10' alignItems='center'>
-    <div className='rounded-full bg-gray-200 p-3 dark:bg-gray-800'>
+    <div className='rounded-full bg-gray-200 p-3 black:bg-primary-900/50 dark:bg-gray-800'>
       <Icon
         src={eyeOffIcon}
-        className='size-6 text-gray-600 dark:text-gray-600'
+        className='size-6 text-gray-600 black:text-gray-300 dark:text-gray-400'
       />
     </div>
 

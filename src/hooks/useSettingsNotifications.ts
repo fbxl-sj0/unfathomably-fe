@@ -16,7 +16,7 @@ export function useSettingsNotifications(): Set<SettingsNotification> {
     !dismissedSettingsNotifications.includes('needsNip05')
     && account
     && features.nip05
-    && account.acct !== account.source?.nostr?.nip05
+    && !account.nostr.nip05
   ) {
     notifications.add('needsNip05');
   }

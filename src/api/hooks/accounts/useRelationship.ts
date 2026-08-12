@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 import { Entities } from '@/entity-store/entities.ts';
 import { useEntity } from '@/entity-store/hooks/index.ts';

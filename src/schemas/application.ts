@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from '@/zod.ts';
 
 const applicationSchema = z.object({
   name: z.string().catch(''),
