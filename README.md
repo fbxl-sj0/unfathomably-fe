@@ -1,165 +1,313 @@
+<!--
+  Project: Unfathomably FE
+  File: README.md
+  Purpose: Introduce the frontend, its product model, system boundaries, and
+           the supported paths for development and deployment.
+  This file does not document backend installation, ActivityPub internals, or
+  the complete release history.
+-->
+
 ![Unfathomably galaxy logo](src/assets/images/unfathomably-logo.svg)
 
 # Unfathomably FE
 
 > Your corner of the Fediverse is the whole thing
 
-**Unfathomably FE** is a modern Fediverse frontend derived from Soapbox. It keeps the practical parts that made Soapbox useful for real communities: instance branding, custom navigation, moderation tools, chats, quote posts where the backend supports them, mobile-friendly layouts, and a PWA build that can sit in front of Mastodon-compatible APIs.
+Unfathomably FE is the browser application for the Unfathomably social
+platform. It presents familiar profiles, timelines, conversations, and
+moderation tools, but it is built for a Fediverse that contains much more than
+microblogging.
 
-This fork is being maintained for the Unfathomably/Rebased family of deployments while preserving compatibility with Pleroma, Akkoma, Mastodon-style, and Rebased-style backends where the API surface allows it.
+Communities, forums, blogs, podcasts, video channels, events, books, cultural
+catalogues, software projects, marketplaces, routes, games, and coordination
+records can retain their own useful shape instead of being flattened into fake
+user profiles or generic posts. The frontend uses ordinary social controls
+where they remain truthful and provides specialized discovery or presentation
+where the underlying object needs it.
 
-## What Makes It Different
+The project began as a Soapbox fork. It now serves as the frontend half of a
+larger system whose reference backend is
+[`unfathomably-be`](https://github.com/fbxl-sj0/unfathomably-be), a descendant
+of Rebased and Pleroma. Soapbox remains visible in parts of the internal
+architecture, but it no longer describes the project's product boundary.
 
-Soapbox was built around a Mastodon-compatible social UI with strong instance branding. Unfathomably FE keeps that inheritance, but the fork is aimed at a wider Fediverse shape.
+## What the project provides
 
-The largest difference is that the UI treats remote things that are not ordinary user profiles as first-class browsing targets:
+Unfathomably keeps the normal Mastodon-style social experience and adds three
+first-class ways to navigate the wider network.
 
-- **Groups** collect group-like actors such as Lemmy communities, PieFed communities, Mbin magazines, Lotide groups, and PeerTube channels where the backend can expose them.
-- **Sources** collect source-like actors such as publishing, media, music, image, and other feed-style accounts that do not fit neatly into a normal profile timeline.
-- Group and source previews are designed to show remote posts as actionable status items when the backend has enough information to support replies, comments, likes, shares, and navigation.
-- The frontend has dedicated federation tests for native group/source item cards, source item schemas, source previews, and websocket stream behavior.
-- Composer draft persistence is kept for crash recovery, but sent posts clear the saved draft and users can discard stale drafts.
-- The public brand can be Unfathomably FE, but ordinary sites should be able to use their own configured logo, theme, accent colors, and footer links.
+| Surface | What belongs there |
+| --- | --- |
+| Social | Accounts, timelines, posts, threads, media, polls, reactions, quotes, chats, notifications, lists, search, filters, and translation |
+| Groups | Local and remote communities, followed-group timelines, tags, media, membership, recommendations, and authorized moderation |
+| Feeds | Blogs, RSS or Atom subscriptions, channels, libraries, podcasts, and other source-like actors, with a combined followed-source timeline |
+| Worlds | Native discovery and presentation for books, culture, audio, video, events, photos, software, 3D models, games, markets, bookmarks, publishing, routes, and coordination |
 
-Compared with a plain Pleroma or Rebased frontend deployment, Unfathomably FE expects more of the backend: group/source APIs, richer status metadata, translation capability discovery, websocket streams, and compatibility hints. When those capabilities are absent, the UI should degrade instead of pretending unsupported actions are available.
+These are not separate clients joined by a menu. A remote object that can be
+represented as a normal account, status, discussion, or attachment continues
+through the normal lifecycle for replies, reactions, sharing, filtering,
+moderation, and live updates. Specialized cards add the context that an
+ordinary microblog post cannot express.
 
-## Recent Stack Work
+### Native federation without background crawling
 
-Recent work has moved Unfathomably well past a cosmetic frontend fork. The
-frontend and the paired backend have both been pushed toward treating the wider
-Fediverse as ordinary, navigable site content rather than a set of special
-cases.
+Worlds is local-first and deliberate by design. Passive browsing uses records
+already known to the backend. Remote actor resolution, connected catalogues,
+and reviewed public directories are contacted only through an explicit user
+action when the corresponding backend capability is available.
 
-On the frontend side:
+This distinction matters in the interface:
 
-- Groups and Feeds are now day-to-day navigation surfaces, with followed group
-  timelines, followed feed timelines, group attribution on statuses, combined
-  group/feed discovery search, per-account landing preferences, and feed-type
-  filters.
-- Remote group and feed previews render closer to normal status cards when the
-  backend exposes enough information for replies, likes, boosts, bookmarks,
-  quotes, and navigation.
-- RSS and Atom subscriptions can appear through the same feed UI as other
-  source-like actors, so blogs, libraries, podcasts, channels, and media feeds
-  do not need to look like fake user profiles.
-- PeerTube and Funkwhale media can keep their in-card presentation while also
-  offering a persistent docked player for listening or watching while browsing.
-- Thread views, desktop column sizing, profile media revisit behavior, form
-  labels, checkbox contrast, and other daily-use details have been tightened up
-  so the broader federation work still feels like a normal social interface.
-- Streaming and notification paths have been hardened with aggregate
-  Groups/Feeds websocket subscriptions, visible-tab reconnects, silent-stall
-  recovery, safer push notification formatting, and better handling for grouped
-  notification identifiers.
-- Translation controls follow backend capability metadata, including
-  provider-side source-language detection, slower OpenTranslate requests, and
-  unknown-language remote posts.
-- The build and release path has been refreshed with current frontend
-  dependencies, a stricter ESLint/Vite setup, regenerated locale data, and
-  generated release archives kept out of the Git tree.
+- a locally known object can open through a local route;
+- a canonical source link remains visibly external;
+- a reviewed directory is identified as a directory, not as a federated peer;
+- resolving an actor or object does not silently follow it;
+- source-only records do not receive interaction buttons the backend cannot
+  support.
 
-On the backend side, the sibling
-[`unfathomably-be`](https://github.com/fbxl-sj0/unfathomably-be) project has
-grown into the other half of the same compatibility push:
+The current family model covers software and object shapes encountered across
+the Threadiverse and services such as PeerTube, Funkwhale, Mobilizon, Gancio,
+BookWyrm, NeoDB, Pixelfed, WriteFreely, WordPress, ForgeFed implementations,
+Manyfold, Flohmarkt, Wanderer, Castling, Owncast, and ValueFlows-oriented
+systems. Unknown or incomplete records retain a bounded generic fallback.
 
-- Broad federation smoke coverage now exercises Lemmy, PieFed, Mbin, Lotide,
-  PeerTube, NodeBB, Discourse, Friendica, Hubzilla, FediGroups, Mastodon-style,
-  Pleroma-style, and Rebased-style behavior where those platforms support the
-  relevant operations.
-- Group and Threadiverse handling has been expanded around follows, top-level
-  group posts, replies, likes, unlikes, deletes, unfollows, local group
-  discovery, and moderation fanout.
-- Remote discussion hydration, actor refresh jobs, duplicate-fetch collapse,
-  stale-data janitors, federation health reporting, and safer prune paths help
-  long-running instances deal with remote content without turning every missed
-  delivery into permanent local damage.
-- Translation, search, media, and archive-portability work now covers
-  OpenTranslate-compatible source detection, Meilisearch health and setup,
-  media proxy and upload improvements, ActivityPub backup exports, and post
-  archive import policy.
-- Compatibility backports from Pleroma and related projects have filled in
-  Mastodon-style followed hashtags, rule metadata, instance metadata, settings
-  storage, websocket behavior, mail handling, upload behavior, ActivityPub actor
-  metadata, and other API details that clients expect.
-- Misskey-family, NodeBB, Hubzilla, Discourse, Friendica, Funkwhale, PeerTube,
-  and Threadiverse quirks are handled as explicit compatibility surfaces rather
-  than accidental one-off fixes.
+### Daily-use and operator workflows
 
-Together, the two repositories are meant to make a small or medium Fediverse
-site feel less isolated. Unfathomably FE gives operators a browser interface for
-that wider world; unfathomably-be does the federation, policy, search,
-translation, cleanup, and compatibility work needed to make those screens
-truthful.
+The wider federation model is supported by normal application machinery, not
+only by discovery cards:
 
-## Compatibility Notes
+- HTTP timelines and WebSocket updates share group, source, family, account,
+  and discussion-root filters;
+- visible-tab reconnects and silent-stream recovery restore live updates
+  without accumulating duplicate subscriptions;
+- audio and video can move into a persistent docked player during navigation;
+- composer drafts survive accidental interruption and are cleared after a
+  confirmed send or deliberate discard;
+- account migration, archive import, data export, backups, multi-factor
+  authentication, and token management have dedicated workflows when exposed
+  by the backend;
+- administrators can inspect federation health, manage communities and
+  discovery providers, moderate users and reports, configure branding, and
+  perform supported cleanup operations;
+- internationalized, right-to-left, keyboard, focus, reduced-motion, live
+  region, and sensitive-media behavior are treated as application contracts.
 
-Unfathomably FE is the frontend: it owns the browser UI, themes, configuration screens, client-side routes, service worker, and static assets.
+Optional Nostr, AT Protocol, diaspora*, and other bridge-related identity or
+account surfaces appear only when the connected backend advertises the
+required support. Their presence in the interface does not mean the browser is
+independently federating on behalf of the server.
 
-The backend owns accounts, timelines, posts, media, federation, moderation APIs, OAuth, ActivityPub endpoints, and server-side policy. Different backends expose different features, so the frontend detects capabilities and only shows supported controls.
+## How the system is divided
 
-Some internal paths and identifiers still use `soapbox` names for compatibility. Examples include `soapbox.json`, `/soapbox/config`, and `useSoapboxConfig`. These names are implementation details, not public branding.
+Unfathomably FE is a static React application. It communicates with its
+backend over HTTP APIs and live streams. It does not implement ActivityPub or
+make federation trust decisions in the browser.
 
-## Relationship To Soapbox, Rebased, And Pleroma
+```text
+Browser
+  |
+  +-- Unfathomably FE
+  |     routes, presentation, local preferences, drafts, PWA and push UI
+  |
+  +-- authenticated HTTP API and WebSocket streams
+          |
+          v
+Unfathomably BE or another compatible backend
+  |     accounts, permissions, policy, search, media and persistence
+  |
+  +-- ActivityPub and optional protocol bridges
+          |
+          v
+Remote services
+```
 
-Unfathomably FE is closest to Soapbox in code structure and user-interface ancestry. It is intended to pair especially well with unfathomably-be, which descends from Rebased and Pleroma.
+The frontend may reject malformed data or decline to render an unsafe action,
+but the backend remains authoritative for identity, object ownership,
+visibility, permissions, moderation policy, signature verification, remote
+fetching, and delivery.
 
-That means some names remain intentionally historical. Keeping stable config paths and API expectations matters more than renaming every internal symbol. Public-facing names, repository links, default metadata, and operator documentation should refer to Unfathomably FE.
+The main frontend data paths are:
 
-The project is not trying to replace every Fediverse client. It is trying to be a practical web frontend for servers that want Mastodon-style usability plus better day-to-day interaction with group, source, and Threadiverse-style software.
+- Redux for inherited application workflows, timelines, composition,
+  notifications, and route-spanning state;
+- a normalized entity store for newer shared records;
+- React Query for request-oriented server state and mutations;
+- Zod schemas and normalizers at API compatibility boundaries;
+- feature detection derived from instance metadata and backend capabilities.
+
+Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) before changing API
+boundaries, state ownership, streaming, routing compatibility, or native
+federation behavior.
+
+## Compatibility
+
+The complete feature set is developed against Unfathomably BE. Compatibility
+with another backend depends on the endpoints, response shapes, streaming
+channels, and capability metadata that backend supplies.
+
+| Backend | Expected frontend behavior |
+| --- | --- |
+| Unfathomably BE | Reference backend and complete product contract |
+| Rebased, Pleroma, and Akkoma families | Core social interface plus the extensions each server actually advertises |
+| Other Mastodon-compatible servers | Many core account, timeline, posting, and settings paths can work, but complete compatibility is not assumed without testing |
+
+ActivityPub compatibility with remote software belongs to the backend. A
+Worlds presentation means the frontend understands data supplied by its local
+backend; it is not a claim that every server can fetch, authorize, transform,
+or deliver every operation for that remote platform.
+
+Unsupported features should disappear or degrade to an honest read-only or
+generic presentation. Backend product names alone are never treated as
+permission checks.
+
+Some internal identifiers intentionally retain the `soapbox` name, including
+`soapbox.json`, `/soapbox/config`, and `useSoapboxConfig`. Existing deployments
+and backend APIs depend on these names. Public branding, metadata, repository
+links, and documentation should use Unfathomably FE or the operator's
+configured site identity.
+
+## Browser security boundary
+
+All federated text, URLs, metadata, embeds, and media locations are treated as
+untrusted input even though they arrive through the local backend.
+
+The shared frontend boundary includes:
+
+- attaching OAuth and service-worker credentials only to the configured
+  backend origin;
+- resolving remote and configured links through shared URL checks that reject
+  malformed, credential-bearing, and non-HTTP destinations;
+- preserving proxy boundaries instead of silently falling back to direct
+  cross-origin media requests;
+- sandboxing rich-preview frames and suppressing unnecessary referrer data;
+- validating optional extension data before it reaches interactive controls;
+- keeping remote catalogue access behind explicit user actions.
+
+These controls protect the browser. ActivityPub signatures, replay protection,
+SSRF defenses, actor and object ownership, federation policy, and canonical
+remote identifiers are backend responsibilities. See the paired backend for
+their implementation and security history.
 
 ## Development
 
-Use Node 26.3.1 or newer.
+### Prerequisites
+
+- Node.js 26.3.1 or newer, as pinned in `.tool-versions`
+- Corepack and the repository's Yarn 4 release
+- a compatible backend for authenticated, streaming, or federation-backed
+  pages
+
+Install the exact dependency set and start Vite:
 
 ```sh
-yarn install
-yarn start
+corepack yarn install --immutable
+corepack yarn start
 ```
 
-Useful checks:
+The development server listens on port 3036 unless `PORT` is set. For a local
+frontend connected to a backend on another origin:
 
 ```sh
-npm run lint
-npm run i18n:check
-npm run check
-npm run test:run
-npm run build
-npm run strict
+BACKEND_URL=https://social.example corepack yarn start
 ```
 
-`npm run strict` is the release gate. It runs JavaScript linting, stylesheet linting, i18n validation, TypeScript, Vitest, and a production build with warnings treated as errors.
+The backend must allow the development origin. Vite deliberately does not
+pretend to be a backend or silently proxy authentication traffic.
 
-## Deployment
+### Verification
 
-The built frontend can be served as static files in front of a compatible Fediverse backend. The `installation/` directory contains Nginx examples for Docker and Mastodon-style deployments.
+| Command | Purpose |
+| --- | --- |
+| `npm run lint` | JavaScript, TypeScript, React, accessibility, and stylesheet linting |
+| `npm run i18n:check` | Message identifier and locale validation |
+| `npm run check` | TypeScript checking without emitted files |
+| `npm run test:run` | Complete Vitest suite |
+| `npm run test:federation` | Focused group, feed, schema, platform, and media compatibility suite |
+| `npm run build` | Production static build in `dist/` |
+| `npm run strict` | Release gate containing lint, i18n, types, tests, and the production build |
 
-Operators should customize `/instance/soapbox.json` or the admin configuration UI with their own site name, colors, logo, footer links, and policy pages. The software should disappear behind the site's identity in ordinary use.
+Use the smallest relevant test while working, then run `npm run strict` for a
+release or cross-cutting change. Production builds treat unexpected bundler
+warnings as errors.
 
-## Project Philosophy
+[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) contains the repository map,
+backend setup notes, state ownership rules, testing guidance, and change
+checklists.
 
-Unfathomably FE exists to let a Fediverse site look and feel like itself. The frontend should keep backend compatibility, but the public experience should be shaped by the operator's community rather than by a default upstream brand.
+## Configuration and deployment
 
-That means the fork has two deliberate constraints:
+The normal production topology serves the static frontend and dynamic backend
+from the same origin. Leave `BACKEND_URL` unset for that arrangement. The
+backend supplies accounts, APIs, streams, the deployed `/manifest.json`, and
+operator-managed instance configuration.
 
-- preserve stable compatibility names where backends, configs, or old deployments depend on them
-- present Unfathomably FE, or the operator's configured site identity, to users and outside tooling
+Operators can customize the site without changing the default source files:
 
-## License And Credits
+| Path | Purpose |
+| --- | --- |
+| `/instance/soapbox.json` | Deployed site name, appearance, navigation, footer, and related instance settings |
+| `custom/app.json` | Build-specific OAuth application metadata |
+| `custom/features.json` | Explicit build-time feature overrides |
+| `custom/locales/` | Deployment-specific message overrides |
+| `custom/instance/` | Files copied over the built instance assets |
+| `custom/snippets.html` | Deliberate operator-controlled additions to the document head |
 
-(C) Alex Gleason and other Soapbox contributors
-(C) Eugen Rochko and other Mastodon contributors
-(C) Trump Media & Technology Group
-(C) Gab AI, Inc.
+The frontend can be built and copied into a backend-managed frontend directory
+or served as ordinary static files in front of a compatible API. Start with
+[`docs/INSTALLATION.MD`](docs/INSTALLATION.MD). The complete production install
+and upgrade order is owned by the Unfathomably BE documentation because it
+also covers the database, server configuration, migrations, media, federation,
+and services.
 
-Unfathomably FE is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+Example Nginx configurations for the supported deployment shapes live in
+[`installation/`](installation/).
 
-Unfathomably FE is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
+## Documentation
 
-You should have received a copy of the GNU Affero General Public License
-along with Unfathomably FE. If not, see <https://www.gnu.org/licenses/>.
+| Document | Audience and purpose |
+| --- | --- |
+| [`docs/README.md`](docs/README.md) | Documentation index for operators and maintainers |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Runtime, data ownership, backend boundary, streaming, and compatibility |
+| [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Local workflow, repository map, tests, and change checklists |
+| [`docs/INSTALLATION.MD`](docs/INSTALLATION.MD) | Frontend portion of a source installation |
+| [`docs/UPGRADE.MD`](docs/UPGRADE.MD) | Frontend rebuild and deployment procedure |
+| [`FEDERATION_TESTING.md`](FEDERATION_TESTING.md) | Focused federation UI contract tests |
+| [`docs/NATIVE_FEDERATION_UX_AUDIT.md`](docs/NATIVE_FEDERATION_UX_AUDIT.md) | Source-platform workflows used to design native presentations |
+| [`docs/WORLDS_UPSTREAM_AUDIT_2026.md`](docs/WORLDS_UPSTREAM_AUDIT_2026.md) | Backend ecosystem findings with frontend consequences |
+| [`CHANGELOG.md`](CHANGELOG.md) | Unfathomably releases followed by inherited Soapbox history |
+
+## Project history and philosophy
+
+Unfathomably FE retains mature Soapbox and Mastodon client foundations where
+they still fit. It also retains stable compatibility names where renaming them
+would break deployments. Neither choice limits the public product to its
+upstream ancestry.
+
+The project follows four practical rules:
+
+1. Let the operator's community identity replace the software's default brand.
+2. Preserve the useful structure of non-microblog federated objects.
+3. Show only interactions the backend can truthfully authorize and perform.
+4. Prefer local knowledge and deliberate remote discovery over invisible
+   background traffic.
+
+This is intended to make a small or medium Fediverse site feel connected to a
+larger social web without pretending that every network has the same objects,
+permissions, or user workflows.
+
+## License and credits
+
+- (C) Alex Gleason and other Soapbox contributors
+- (C) Eugen Rochko and other Mastodon contributors
+- (C) Trump Media & Technology Group
+- (C) Gab AI, Inc.
+
+Unfathomably FE is free software. You can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or, at your option,
+any later version.
+
+The software is distributed in the hope that it will be useful, but without
+any warranty. See [`LICENSE`](LICENSE) for the complete license text.
+
+<!-- end of README.md -->
