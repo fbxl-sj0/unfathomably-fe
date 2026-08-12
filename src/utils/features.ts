@@ -1,4 +1,20 @@
-﻿/* eslint sort-keys: "error" */
+﻿/*
+  Project: Unfathomably FE
+  File: utils/features.ts
+
+  Purpose:
+    Translate instance version and advertised metadata into frontend
+    capability flags.
+
+  Responsibilities:
+    Recognize compatible backend families, capability aliases, and versioned
+    API contracts used to expose frontend features safely.
+
+  This file intentionally does NOT contain:
+    API requests or feature-specific presentation code.
+*/
+
+/* eslint sort-keys: "error" */
 import { greaterOrEqual as gte } from '@std/semver/greater-or-equal';
 import { lessThan as lt } from '@std/semver/less-than';
 import { parse } from '@std/semver/parse';
@@ -283,6 +299,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     bookmarkFolders: any([
       features.includes('bookmark_folders'),
+      features.includes('pleroma:bookmark_folders'),
       isRebasedFamily(v),
       v.software === PLEROMA && v.build === AKKOMA,
     ]),
@@ -333,6 +350,13 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Ability to add reactions to chat messages.
      */
     chatEmojiReactions: v.software === TRUTHSOCIAL,
+
+    /**
+     * Ability to pin chats to the top of the inbox.
+     * @see POST /api/v1/pleroma/chats/:id/pin
+     * @see POST /api/v1/pleroma/chats/:id/unpin
+     */
+    chatPinning: features.includes('pleroma:pin_chats'),
 
     /**
      * Pleroma chats API.
@@ -624,7 +648,11 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      */
     followHashtags: any([
       v.software === MASTODON && gte(v.compatVersion, parse('4.0.0')),
-      v.software === PLEROMA && v.build === AKKOMA,
+      isRebasedFamily(v),
+      v.software === PLEROMA && any([
+        v.build === AKKOMA,
+        gte(v.version, parse('2.9.0')),
+      ]),
       v.software === TAKAHE && gte(v.version, parse('0.9.0')),
     ]),
 
@@ -641,7 +669,14 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Ability to list followed hashtags.
      * @see GET /api/v1/followed_tags
      */
-    followedHashtagsList: v.software === MASTODON && gte(v.compatVersion, parse('4.1.0')),
+    followedHashtagsList: any([
+      v.software === MASTODON && gte(v.compatVersion, parse('4.1.0')),
+      isRebasedFamily(v),
+      v.software === PLEROMA && any([
+        v.build === AKKOMA,
+        gte(v.version, parse('2.9.0')),
+      ]),
+    ]),
 
     /**
      * Whether client settings can be retrieved from the API.
@@ -657,6 +692,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see GET /api/v2/notifications
      */
     groupedNotifications: any([
+      features.includes('mastodon_api_grouped_notifications'),
       features.includes('notifications_v2'),
       v.software === MASTODON && gte(v.compatVersion, parse('4.3.0')),
       isRebasedFamily(v),
@@ -1235,3 +1271,5 @@ export const parseVersion = (version: string): Backend => {
     };
   }
 };
+
+/* end of utils/features.ts */

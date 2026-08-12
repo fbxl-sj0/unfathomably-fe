@@ -1,3 +1,18 @@
+/*
+  Project: Unfathomably FE
+  File: reducers/list-editor.ts
+
+  Purpose:
+    Hold the transient state used by list create and edit forms.
+
+  Responsibilities:
+    Restore list fields from API responses and track form and membership
+    changes while an editor is open.
+
+  This file intentionally does NOT contain:
+    API requests or list form presentation.
+*/
+
 import { List as ImmutableList, Record as ImmutableRecord } from 'immutable';
 
 import {
@@ -78,6 +93,7 @@ export default function listEditorReducer(state: State = ReducerRecord(), action
 
       return state.withMutations(map => {
         map.set('title', action.list.title);
+        map.set('emoji', action.list.pleroma?.emoji || '');
         map.set('exclusive', !!action.list.exclusive);
       });
     case LIST_EDITOR_TITLE_CHANGE:
@@ -150,3 +166,5 @@ export default function listEditorReducer(state: State = ReducerRecord(), action
       return state;
   }
 }
+
+/* end of reducers/list-editor.ts */

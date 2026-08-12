@@ -1,3 +1,18 @@
+/*
+  Project: Unfathomably FE
+  File: utils/features.test.ts
+
+  Purpose:
+    Verify backend version parsing and frontend capability detection.
+
+  Responsibilities:
+    Cover backend families, advertised aliases, and version boundaries that
+    control whether UI routes and actions are exposed.
+
+  This file intentionally does NOT contain:
+    API request or component rendering tests.
+*/
+
 import { describe, expect, it } from 'vitest';
 
 import { buildInstance } from '@/jest/factory.ts';
@@ -113,6 +128,68 @@ describe('getInstanceScopes', () => {
 });
 
 describe('getFeatures', () => {
+  describe('Pleroma capability aliases', () => {
+    it.each([
+      'mastodon_api_grouped_notifications',
+      'notifications_v2',
+    ])('recognizes %s as grouped notifications', (capability) => {
+      const instance = buildInstance({
+        version: '2.7.2 (compatible; Pleroma 2.10.0)',
+        pleroma: { metadata: { features: [capability] } },
+      });
+
+      expect(getFeatures(instance).groupedNotifications).toBe(true);
+    });
+
+    it.each([
+      'bookmark_folders',
+      'pleroma:bookmark_folders',
+    ])('recognizes %s as bookmark folders', (capability) => {
+      const instance = buildInstance({
+        version: '2.7.2 (compatible; Pleroma 2.10.0)',
+        pleroma: { metadata: { features: [capability] } },
+      });
+
+      expect(getFeatures(instance).bookmarkFolders).toBe(true);
+    });
+
+    it('exposes chat pinning only when Pleroma advertises it', () => {
+      const supported = buildInstance({
+        version: '2.7.2 (compatible; Pleroma 2.10.0)',
+        pleroma: { metadata: { features: ['pleroma:pin_chats'] } },
+      });
+      const unsupported = buildInstance({
+        version: '2.7.2 (compatible; Pleroma 2.10.0)',
+        pleroma: { metadata: { features: [] } },
+      });
+
+      expect(getFeatures(supported).chatPinning).toBe(true);
+      expect(getFeatures(unsupported).chatPinning).toBe(false);
+    });
+  });
+
+  describe('Pleroma followed hashtags', () => {
+    it('enables the existing hashtag UI on Pleroma 2.9 and newer', () => {
+      const instance = buildInstance({
+        version: '2.7.2 (compatible; Pleroma 2.9.0)',
+      });
+      const features = getFeatures(instance);
+
+      expect(features.followHashtags).toBe(true);
+      expect(features.followedHashtagsList).toBe(true);
+    });
+
+    it('keeps the hashtag UI hidden on older stock Pleroma', () => {
+      const instance = buildInstance({
+        version: '2.7.2 (compatible; Pleroma 2.8.0)',
+      });
+      const features = getFeatures(instance);
+
+      expect(features.followHashtags).toBe(false);
+      expect(features.followedHashtagsList).toBe(false);
+    });
+  });
+
   describe('ditto', () => {
     it('is false for Pleroma without a relay', () => {
       const instance = buildInstance({
@@ -337,3 +414,5 @@ describe('getFeatures', () => {
     });
   });
 });
+
+/* end of utils/features.test.ts */

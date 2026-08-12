@@ -1,8 +1,24 @@
+/*
+  Project: Unfathomably FE
+  File: features/lists/components/new-list-form.tsx
+
+  Purpose:
+    Present the form used to create a list.
+
+  Responsibilities:
+    Collect the title, optional emoji, and exclusive-list preference, then
+    submit those values through the shared list editor.
+
+  This file intentionally does NOT contain:
+    List API requests or list timeline rendering.
+*/
+
 import { defineMessages, useIntl } from 'react-intl';
 
-import { changeListEditorExclusive, changeListEditorTitle, submitListEditor } from '@/actions/lists.ts';
+import { changeListEditorEmoji, changeListEditorExclusive, changeListEditorTitle, submitListEditor } from '@/actions/lists.ts';
 import Button from '@/components/ui/button.tsx';
 import Form from '@/components/ui/form.tsx';
+import FormGroup from '@/components/ui/form-group.tsx';
 import HStack from '@/components/ui/hstack.tsx';
 import Input from '@/components/ui/input.tsx';
 import Text from '@/components/ui/text.tsx';
@@ -14,6 +30,8 @@ const messages = defineMessages({
   label: { id: 'lists.new.title_placeholder', defaultMessage: 'New list title' },
   title: { id: 'lists.new.create', defaultMessage: 'Add list' },
   create: { id: 'lists.new.create_title', defaultMessage: 'Add list' },
+  emoji: { id: 'lists.emoji', defaultMessage: 'List emoji' },
+  emojiHint: { id: 'lists.emoji_hint', defaultMessage: 'Enter one emoji or a local custom emoji name without colons. Leave blank for the default list icon.' },
   exclusive: { id: 'lists.exclusive', defaultMessage: 'Exclusive list' },
   exclusiveHint: { id: 'lists.exclusive_hint', defaultMessage: 'Hide members of this list from your Home feed.' },
 });
@@ -23,6 +41,7 @@ const NewListForm: React.FC = () => {
   const intl = useIntl();
 
   const value = useAppSelector((state) => state.listEditor.get('title'));
+  const emoji = useAppSelector((state) => state.listEditor.get('emoji'));
   const exclusive = useAppSelector((state) => state.listEditor.get('exclusive'));
   const disabled = useAppSelector((state) => !!state.listEditor.get('isSubmitting'));
 
@@ -32,6 +51,10 @@ const NewListForm: React.FC = () => {
 
   const handleExclusiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(changeListEditorExclusive(e.target.checked));
+  };
+
+  const handleEmojiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(changeListEditorEmoji(e.target.value));
   };
 
   const handleSubmit = (e: React.FormEvent<Element>) => {
@@ -67,6 +90,19 @@ const NewListForm: React.FC = () => {
         </Button>
       </HStack>
 
+      <FormGroup
+        labelText={intl.formatMessage(messages.emoji)}
+        hintText={intl.formatMessage(messages.emojiHint)}
+      >
+        <Input
+          name='new-list-emoji'
+          value={emoji}
+          disabled={disabled}
+          onChange={handleEmojiChange}
+          placeholder={intl.formatMessage(messages.emoji)}
+        />
+      </FormGroup>
+
       <div className='flex items-start gap-3 rounded-lg bg-gray-100 p-3 dark:bg-gray-900 black:bg-black'>
         <Toggle
           id='new-list-exclusive'
@@ -89,3 +125,5 @@ const NewListForm: React.FC = () => {
 };
 
 export default NewListForm;
+
+/* end of features/lists/components/new-list-form.tsx */

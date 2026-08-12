@@ -1,3 +1,19 @@
+/*
+  Project: Unfathomably FE
+  File: actions/lists.ts
+
+  Purpose:
+    Manage list loading, editing, membership, and persistence.
+
+  Responsibilities:
+    Build list API payloads, dispatch list editor actions, and synchronize
+    list and membership responses with Redux.
+
+  This file intentionally does NOT contain:
+    List form markup or timeline rendering.
+*/
+
+import { createList as createListApi, updateList as updateListApi } from '@/api/rebased/interop.ts';
 import { selectAccount } from '@/selectors/index.ts';
 import toast from '@/toast.tsx';
 import { isLoggedIn } from '@/utils/auth.ts';
@@ -108,14 +124,15 @@ const submitListEditor = (shouldReset?: boolean) => (dispatch: AppDispatch, getS
   const listEditor = getState().listEditor;
   const listId = listEditor.listId!;
   const title = listEditor.title.trim();
+  const emoji = listEditor.emoji;
   const exclusive = listEditor.exclusive;
 
   if (!title) return;
 
   if (listId === null) {
-    dispatch(createList(title, exclusive, shouldReset));
+    dispatch(createList(title, exclusive, shouldReset, emoji));
   } else {
-    dispatch(updateList(listId, title, exclusive, shouldReset));
+    dispatch(updateList(listId, title, exclusive, shouldReset, emoji));
   }
 };
 
@@ -150,17 +167,25 @@ const changeListEditorExclusive = (value: boolean) => ({
   value,
 });
 
-const listParams = (title: string, exclusive: boolean) => ({
+const buildListParams = (title: string, exclusive: boolean, emoji?: string) => ({
   title,
   exclusive,
+  ...(emoji === undefined ? {} : { emoji: emoji.trim() || null }),
 });
 
-const createList = (title: string, exclusive = false, shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
+const createList = (title: string, exclusive = false, shouldReset?: boolean, emoji?: string) => (dispatch: AppDispatch, getState: () => RootState) => {
   if (!isLoggedIn(getState)) return;
 
   dispatch(createListRequest());
 
-  api(getState).post('/api/v1/lists', listParams(title, exclusive)).then((response) => response.json()).then((data) => {
+  /*
+    Omit an empty extension field when creating a list. This preserves the
+    standard Mastodon request shape for strict implementations. Updates keep
+    the empty value so Pleroma can remove an existing emoji with JSON null.
+  */
+  const createEmoji = emoji?.trim() || undefined;
+
+  createListApi(api(getState), buildListParams(title, exclusive, createEmoji)).then((response) => response.json()).then((data) => {
     dispatch(createListSuccess(data));
 
     if (shouldReset) {
@@ -183,12 +208,12 @@ const createListFail = (error: unknown) => ({
   error,
 });
 
-const updateList = (id: string | number, title: string, exclusive = false, shouldReset?: boolean) => (dispatch: AppDispatch, getState: () => RootState) => {
+const updateList = (id: string | number, title: string, exclusive = false, shouldReset?: boolean, emoji?: string) => (dispatch: AppDispatch, getState: () => RootState) => {
   if (!isLoggedIn(getState)) return;
 
   dispatch(updateListRequest(id));
 
-  api(getState).put(`/api/v1/lists/${id}`, listParams(title, exclusive)).then((response) => response.json()).then((data) => {
+  updateListApi(api(getState), id, buildListParams(title, exclusive, emoji)).then((response) => response.json()).then((data) => {
     dispatch(updateListSuccess(data));
 
     if (shouldReset) {
@@ -472,6 +497,7 @@ export {
   fetchListsRequest,
   fetchListsSuccess,
   fetchListsFail,
+  buildListParams,
   submitListEditor,
   setupListEditor,
   changeListEditorTitle,
@@ -517,3 +543,5 @@ export {
   addToListAdder,
   removeFromListAdder,
 };
+
+/* end of actions/lists.ts */

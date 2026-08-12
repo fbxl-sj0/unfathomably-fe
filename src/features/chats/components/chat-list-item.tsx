@@ -1,5 +1,22 @@
+/*
+  Project: Unfathomably FE
+  File: features/chats/components/chat-list-item.tsx
+
+  Purpose:
+    Render one chat inbox row and its available actions.
+
+  Responsibilities:
+    Show chat identity and unread state, expose advertised pin controls, and
+    provide the supported leave-chat action.
+
+  This file intentionally does NOT contain:
+    Chat API endpoint construction or inbox query management.
+*/
+
 import dotsIcon from '@tabler/icons/outline/dots.svg';
 import logoutIcon from '@tabler/icons/outline/logout.svg';
+import pinIcon from '@tabler/icons/outline/pin.svg';
+import pinnedOffIcon from '@tabler/icons/outline/pinned-off.svg';
 import { useMemo } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import { useHistory } from 'react-router-dom';
@@ -9,6 +26,7 @@ import DropdownMenu from '@/components/dropdown-menu/index.ts';
 import RelativeTimestamp from '@/components/relative-timestamp.tsx';
 import Avatar from '@/components/ui/avatar.tsx';
 import HStack from '@/components/ui/hstack.tsx';
+import Icon from '@/components/ui/icon.tsx';
 import IconButton from '@/components/ui/icon-button.tsx';
 import Stack from '@/components/ui/stack.tsx';
 import Text from '@/components/ui/text.tsx';
@@ -28,6 +46,9 @@ const messages = defineMessages({
   leaveHeading: { id: 'chat_settings.leave.heading', defaultMessage: 'Leave Chat' },
   leaveConfirm: { id: 'chat_settings.leave.confirm', defaultMessage: 'Leave Chat' },
   leaveChat: { id: 'chat_settings.options.leave_chat', defaultMessage: 'Leave Chat' },
+  pinChat: { id: 'chat_settings.options.pin_chat', defaultMessage: 'Pin chat' },
+  pinnedChat: { id: 'chat_list_item.pinned', defaultMessage: 'Pinned chat' },
+  unpinChat: { id: 'chat_settings.options.unpin_chat', defaultMessage: 'Unpin chat' },
 });
 
 interface IChatListItemInterface {
@@ -42,33 +63,52 @@ const ChatListItem: React.FC<IChatListItemInterface> = ({ chat, onClick }) => {
   const history = useHistory();
 
   const { isUsingMainChatPage } = useChatContext();
-  const { deleteChat } = useChatActions(chat?.id as string);
+  const { deleteChat, toggleChatPin } = useChatActions(chat?.id as string);
   const isBlocked = useAppSelector((state) => state.relationships.getIn([chat.account.id, 'blocked_by']));
   const isBlocking = useAppSelector((state) => state.relationships.getIn([chat?.account?.id, 'blocking']));
 
-  const menu = useMemo((): Menu => [{
-    text: intl.formatMessage(messages.leaveChat),
-    action: (event) => {
-      event.stopPropagation();
+  const menu = useMemo((): Menu => {
+    const items: Menu = [];
 
-      dispatch(openModal('CONFIRM', {
-        heading: intl.formatMessage(messages.leaveHeading),
-        message: intl.formatMessage(messages.leaveMessage),
-        confirm: intl.formatMessage(messages.leaveConfirm),
-        confirmationTheme: 'primary',
-        onConfirm: () => {
-          deleteChat.mutate(undefined, {
-            onSuccess() {
-              if (isUsingMainChatPage) {
-                history.push('/chats');
-              }
-            },
-          });
+    if (features.chatPinning) {
+      items.push({
+        text: intl.formatMessage(chat.pinned ? messages.unpinChat : messages.pinChat),
+        action: (event) => {
+          event.stopPropagation();
+          toggleChatPin.mutate(!!chat.pinned);
         },
-      }));
-    },
-    icon: logoutIcon,
-  }], []);
+        icon: chat.pinned ? pinnedOffIcon : pinIcon,
+      });
+    }
+
+    if (features.chatsDelete) {
+      items.push({
+        text: intl.formatMessage(messages.leaveChat),
+        action: (event) => {
+          event.stopPropagation();
+
+          dispatch(openModal('CONFIRM', {
+            heading: intl.formatMessage(messages.leaveHeading),
+            message: intl.formatMessage(messages.leaveMessage),
+            confirm: intl.formatMessage(messages.leaveConfirm),
+            confirmationTheme: 'primary',
+            onConfirm: () => {
+              deleteChat.mutate(undefined, {
+                onSuccess() {
+                  if (isUsingMainChatPage) {
+                    history.push('/chats');
+                  }
+                },
+              });
+            },
+          }));
+        },
+        icon: logoutIcon,
+      });
+    }
+
+    return items;
+  }, [chat.pinned, deleteChat, dispatch, features.chatPinning, features.chatsDelete, history, intl, isUsingMainChatPage, toggleChatPin]);
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -93,6 +133,14 @@ const ChatListItem: React.FC<IChatListItemInterface> = ({ chat, onClick }) => {
           <Stack alignItems='start' className='overflow-hidden'>
             <div className='flex w-full grow items-center space-x-1'>
               <Text weight='bold' size='sm' align='left' truncate>{chat.account?.display_name || `@${chat.account.username}`}</Text> {/* eslint-disable-line formatjs/no-literal-string-in-jsx */}
+              {chat.pinned && (
+                <Icon
+                  src={pinIcon}
+                  alt={intl.formatMessage(messages.pinnedChat)}
+                  className='size-4 text-primary-600 dark:text-primary-400'
+                  data-testid='chat-pinned-indicator'
+                />
+              )}
               {chat.account?.verified && <VerificationBadge />}
             </div>
 
@@ -128,7 +176,7 @@ const ChatListItem: React.FC<IChatListItemInterface> = ({ chat, onClick }) => {
         </HStack>
 
         <HStack alignItems='center' space={2}>
-          {features.chatsDelete && (
+          {menu.length > 0 && (
             <div className='hidden text-gray-600 hover:text-gray-100 group-hover:block'>
               <DropdownMenu items={menu}>
                 <IconButton
@@ -166,3 +214,5 @@ const ChatListItem: React.FC<IChatListItemInterface> = ({ chat, onClick }) => {
 };
 
 export default ChatListItem;
+
+/* end of features/chats/components/chat-list-item.tsx */

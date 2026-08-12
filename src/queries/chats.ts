@@ -1,6 +1,22 @@
+/*
+  Project: Unfathomably FE
+  File: queries/chats.ts
+
+  Purpose:
+    Load Pleroma-compatible chats and coordinate chat mutations.
+
+  Responsibilities:
+    Maintain chat query caches, messages, read state, reactions, settings,
+    deletion, and advertised pinning operations.
+
+  This file intentionally does NOT contain:
+    Chat presentation or feature detection rules.
+*/
+
 import { InfiniteData, keepPreviousData, useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 
 import { importFetchedAccount, importFetchedAccounts } from '@/actions/importer/index.ts';
+import { pinChat, unpinChat } from '@/api/rebased/interop.ts';
 import { ChatWidgetScreens, useChatContext } from '@/contexts/chat-context.tsx';
 import { useStatContext } from '@/contexts/stat-context.tsx';
 import { useApi } from '@/hooks/useApi.ts';
@@ -53,6 +69,7 @@ export interface IChat {
   }[];
   latest_read_message_created_at: null | string;
   message_expiration?: MessageExpirationValues;
+  pinned?: boolean;
   unread: number;
 }
 
@@ -367,6 +384,21 @@ const useChatActions = (chatId: string) => {
     },
   });
 
+  const toggleChatPin = useMutation({
+    mutationFn: async (currentlyPinned: boolean) => {
+      const response = currentlyPinned
+        ? await unpinChat(api, chatId)
+        : await pinChat(api, chatId);
+
+      return response.json() as Promise<IChat>;
+    },
+    onSuccess(data) {
+      updatePageItem(ChatKeys.chatSearch(), data, (oldChat, newChat) => oldChat.id === newChat.id);
+      queryClient.setQueryData(ChatKeys.chat(data.id), data);
+      queryClient.invalidateQueries({ queryKey: ChatKeys.chatSearch() });
+    },
+  });
+
   const createReaction = useMutation({
     mutationFn: (data: CreateReactionVariables) => api.post(`/api/v1/pleroma/chats/${chatId}/messages/${data.messageId}/reactions`, {
       json: {
@@ -394,8 +426,11 @@ const useChatActions = (chatId: string) => {
     deleteChatMessage,
     deleteReaction,
     markChatAsRead,
+    toggleChatPin,
     updateChat,
   };
 };
 
 export { ChatKeys, useChat, useChatActions, useChats, useChatMessages, isLastMessage };
+
+/* end of queries/chats.ts */

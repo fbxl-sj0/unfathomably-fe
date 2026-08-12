@@ -1,3 +1,17 @@
+/*
+  Project: Unfathomably FE
+  File: features/chats/components/chat-list-item.test.tsx
+
+  Purpose:
+    Verify the visible state of a chat inbox row.
+
+  Responsibilities:
+    Cover chat identity, message, unread, and pinned indicators.
+
+  This file intentionally does NOT contain:
+    Chat endpoint contract or query cache tests.
+*/
+
 import { describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@/jest/test-helpers.tsx';
@@ -36,6 +50,12 @@ describe('<ChatListItem />', () => {
     expect(screen.getByTestId('chat-list-item')).toHaveTextContent(chat.account.display_name);
   });
 
+  it('marks a pinned chat', () => {
+    render(<ChatListItem chat={{ ...chat, pinned: true } as IChat} onClick={vi.fn()} />);
+
+    expect(screen.getByTestId('chat-pinned-indicator')).toBeInTheDocument();
+  });
+
   describe('last message content', () => {
     it('renders the last message', () => {
       render(<ChatListItem chat={chat as IChat} onClick={vi.fn()} />);
@@ -66,3 +86,5 @@ describe('<ChatListItem />', () => {
     });
   });
 });
+
+/* end of features/chats/components/chat-list-item.test.tsx */

@@ -1,8 +1,24 @@
+/*
+  Project: Unfathomably FE
+  File: api/rebased/interop.ts
+
+  Purpose:
+    Keep optional Pleroma and Rebased API extensions behind small, typed
+    request helpers.
+
+  Responsibilities:
+    Define extension request payloads and their exact HTTP endpoints.
+
+  This file intentionally does NOT contain:
+    React state, feature detection, or presentation logic.
+*/
+
 import type { MastodonClient } from '@/api/MastodonClient.ts';
 
 interface RebasedListParams {
   title: string;
   exclusive?: boolean;
+  emoji?: string | null;
 }
 
 interface RebasedBookmarkFolderParams {
@@ -37,8 +53,18 @@ const bookmarkStatusPath = (statusId: string) => `/api/v1/statuses/${statusId}/b
 const updateBookmarkFolderPath = (folderId: string) =>
   `${REBASED_INTEROP_PATHS.bookmarkFolders}/${folderId}`;
 
+const updateListPath = (listId: string | number) =>
+  `${REBASED_INTEROP_PATHS.lists}/${listId}`;
+
+const updateChatPinPath = (chatId: string, action: 'pin' | 'unpin') =>
+  `/api/v1/pleroma/chats/${chatId}/${action}`;
+
 function createList(api: MastodonClient, params: RebasedListParams) {
   return api.post(REBASED_INTEROP_PATHS.lists, params);
+}
+
+function updateList(api: MastodonClient, listId: string | number, params: RebasedListParams) {
+  return api.put(updateListPath(listId), params);
 }
 
 function getBookmarks(api: MastodonClient, folderId?: string | null) {
@@ -71,6 +97,14 @@ function deleteBookmarkFolder(api: MastodonClient, folderId: string) {
   return api.delete(updateBookmarkFolderPath(folderId));
 }
 
+function pinChat(api: MastodonClient, chatId: string) {
+  return api.post(updateChatPinPath(chatId, 'pin'));
+}
+
+function unpinChat(api: MastodonClient, chatId: string) {
+  return api.post(updateChatPinPath(chatId, 'unpin'));
+}
+
 function getGroupedNotifications(api: MastodonClient, params: RebasedGroupedNotificationParams = {}) {
   return api.get(REBASED_INTEROP_PATHS.groupedNotifications, { searchParams: params });
 }
@@ -89,7 +123,10 @@ export {
   getGroupedNotificationUnreadCount,
   getGroupedNotifications,
   listBookmarkFolders,
+  pinChat,
+  unpinChat,
   updateBookmarkFolder,
+  updateList,
 };
 
 export type {
@@ -97,3 +134,5 @@ export type {
   RebasedGroupedNotificationParams,
   RebasedListParams,
 };
+
+/* end of api/rebased/interop.ts */

@@ -1,3 +1,17 @@
+/*
+  Project: Unfathomably FE
+  File: api/rebased/interop.test.ts
+
+  Purpose:
+    Lock down the HTTP contracts used for Pleroma and Rebased extensions.
+
+  Responsibilities:
+    Verify request methods, paths, query parameters, and JSON payloads.
+
+  This file intentionally does NOT contain:
+    Component behavior or feature detection tests.
+*/
+
 import { describe, expect, it, vi } from 'vitest';
 
 import { MastodonClient } from '@/api/MastodonClient.ts';
@@ -11,7 +25,10 @@ import {
   getGroupedNotificationUnreadCount,
   getGroupedNotifications,
   listBookmarkFolders,
+  pinChat,
+  unpinChat,
   updateBookmarkFolder,
+  updateList,
 } from './interop.ts';
 
 interface RecordedRequest {
@@ -43,16 +60,24 @@ function createRecordingClient() {
 }
 
 describe('Rebased interop API contract', () => {
-  it('creates exclusive lists with the backend-supported payload', async () => {
+  it('creates and updates lists with extension fields intact', async () => {
     const { api, requests } = createRecordingClient();
 
-    await createList(api, { title: 'Quiet list', exclusive: true });
+    await createList(api, { title: 'Quiet list', exclusive: true, emoji: 'quiet' });
+    await updateList(api, 'list-1', { title: 'Louder list', exclusive: false, emoji: null });
 
-    expect(requests).toEqual([{
-      method: 'POST',
-      url: 'https://rebased.test/api/v1/lists',
-      body: JSON.stringify({ title: 'Quiet list', exclusive: true }),
-    }]);
+    expect(requests).toEqual([
+      {
+        method: 'POST',
+        url: 'https://rebased.test/api/v1/lists',
+        body: JSON.stringify({ title: 'Quiet list', exclusive: true, emoji: 'quiet' }),
+      },
+      {
+        method: 'PUT',
+        url: 'https://rebased.test/api/v1/lists/list-1',
+        body: JSON.stringify({ title: 'Louder list', exclusive: false, emoji: null }),
+      },
+    ]);
   });
 
   it('uses the Rebased bookmark folder endpoints', async () => {
@@ -126,4 +151,26 @@ describe('Rebased interop API contract', () => {
       },
     ]);
   });
+
+  it('uses the advertised Pleroma chat pin endpoints', async () => {
+    const { api, requests } = createRecordingClient();
+
+    await pinChat(api, 'chat-1');
+    await unpinChat(api, 'chat-1');
+
+    expect(requests).toEqual([
+      {
+        method: 'POST',
+        url: 'https://rebased.test/api/v1/pleroma/chats/chat-1/pin',
+        body: '',
+      },
+      {
+        method: 'POST',
+        url: 'https://rebased.test/api/v1/pleroma/chats/chat-1/unpin',
+        body: '',
+      },
+    ]);
+  });
 });
+
+/* end of api/rebased/interop.test.ts */
