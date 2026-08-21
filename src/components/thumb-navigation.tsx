@@ -89,7 +89,7 @@ const ThumbNavigation: React.FC = (): JSX.Element => {
         exact
       />
 
-      {features.federating && (
+      {features.nativeFederation && (
         <ThumbNavigationLink
           src={worldIcon}
           text={<FormattedMessage id='tabs_bar.native_federation' defaultMessage='Worlds' />}

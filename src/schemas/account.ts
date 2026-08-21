@@ -11,6 +11,7 @@ import * as z from '@/zod.ts';
 
 import avatarMissing from '@/assets/images/avatar-missing.png';
 import headerMissing from '@/assets/images/header-missing.png';
+import { getAvatarURL, getHeaderURL } from '@/utils/accounts.ts';
 
 import { customEmojiSchema } from './custom-emoji.ts';
 import { federationStatusSchema, Relationship } from './relationship.ts';
@@ -255,13 +256,15 @@ const transformAccount = <T extends TransformableAccount>({ pleroma, other_setti
   return {
     ...account,
     admin: pleroma?.is_admin || false,
-    avatar_static: account.avatar_static || account.avatar,
+    avatar: getAvatarURL(account.avatar, account.avatar_static),
+    avatar_static: getAvatarURL(account.avatar_static, account.avatar),
     discoverable: account.discoverable || account.source?.pleroma?.discoverable || false,
     indexable: account.indexable ?? account.source?.pleroma?.indexable ?? false,
     display_name: displayName,
     domain,
     fqn: account.fqn || (account.acct.includes('@') ? account.acct : `${account.acct}@${domain}`),
-    header_static: account.header_static || account.header,
+    header: getHeaderURL(account.header, account.header_static),
+    header_static: getHeaderURL(account.header_static, account.header),
     moderator: pleroma?.is_moderator || false,
     local: pleroma?.is_local !== undefined ? pleroma.is_local : account.acct.split('@')[1] === undefined,
     location: account.location || pleroma?.location || other_settings?.location || '',

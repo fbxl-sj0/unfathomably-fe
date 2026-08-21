@@ -39,6 +39,13 @@ const messages = defineMessages({
   mediaFallback: { id: 'floating_media_player.media_fallback', defaultMessage: 'Open media' },
   minimize: { id: 'floating_media_player.minimize', defaultMessage: 'Minimize player' },
   openOriginal: { id: 'floating_media_player.open_original', defaultMessage: 'Open original' },
+  next: { id: 'floating_media_player.next', defaultMessage: 'Next' },
+  position: { id: 'floating_media_player.position', defaultMessage: '{current} of {total}' },
+  previous: { id: 'floating_media_player.previous', defaultMessage: 'Previous' },
+  queue: { id: 'floating_media_player.queue', defaultMessage: 'Queue' },
+  queueSummary: { id: 'floating_media_player.queue_summary', defaultMessage: 'Queue, {count} items' },
+  remove: { id: 'floating_media_player.remove', defaultMessage: 'Remove' },
+  removeItem: { id: 'floating_media_player.remove_item', defaultMessage: 'Remove {title}' },
   restore: { id: 'floating_media_player.restore', defaultMessage: 'Restore player' },
 });
 
@@ -48,6 +55,12 @@ const FloatingMediaPlayer: React.FC = () => {
     close,
     isMinimized,
     item,
+    currentIndex,
+    playAt,
+    playNext,
+    playPrevious,
+    queue,
+    removeAt,
     toggleMinimized,
   } = useFloatingMediaPlayer();
 
@@ -116,8 +129,26 @@ const FloatingMediaPlayer: React.FC = () => {
         </button>
       </div>
 
-      <div className='bg-gray-50 p-3 black:bg-black dark:bg-gray-950/70'>
-        {renderMedia(item, isMinimized, intl.formatMessage(messages.mediaFallback))}
+      <div className='bg-primary-50/50 p-3 black:bg-black dark:bg-primary-950/20'>
+        {renderMedia(item, isMinimized, intl.formatMessage(messages.mediaFallback), playNext)}
+        <div className='mt-2 flex items-center justify-between gap-2'>
+          <button className='text-xs font-bold text-primary-700 disabled:opacity-40 black:text-primary-300 dark:text-primary-300' disabled={currentIndex <= 0} onClick={playPrevious} type='button'>{intl.formatMessage(messages.previous)}</button>
+          <span className='text-xs text-gray-600 black:text-gray-300 dark:text-gray-300'>{intl.formatMessage(messages.position, { current: currentIndex + 1, total: queue.length })}</span>
+          <button className='text-xs font-bold text-primary-700 disabled:opacity-40 black:text-primary-300 dark:text-primary-300' disabled={currentIndex >= queue.length - 1} onClick={playNext} type='button'>{intl.formatMessage(messages.next)}</button>
+        </div>
+        {!isMinimized && queue.length > 1 && (
+          <details className='mt-2 border-t border-primary-200 pt-2 black:border-primary-800 dark:border-primary-800'>
+            <summary className='cursor-pointer text-xs font-black uppercase tracking-wide text-primary-700 black:text-primary-300 dark:text-primary-300'>{intl.formatMessage(messages.queueSummary, { count: queue.length })}</summary>
+            <ol className='mt-2 max-h-48 space-y-1 overflow-y-auto'>
+              {queue.map((queuedItem, index) => (
+                <li className='flex min-w-0 items-center gap-2' key={`${queuedItem.id}:${queuedItem.mediaUrl}:${index}`}>
+                  <button className={clsx('min-w-0 flex-1 truncate text-left text-sm hover:underline', index === currentIndex ? 'font-black text-primary-700 black:text-primary-300 dark:text-primary-300' : 'text-gray-800 black:text-gray-200 dark:text-gray-200')} onClick={() => playAt(index)} type='button'>{queuedItem.title}</button>
+                  <button aria-label={intl.formatMessage(messages.removeItem, { title: queuedItem.title })} className='px-1 text-xs font-bold text-danger-600' onClick={() => removeAt(index)} type='button'>{intl.formatMessage(messages.remove)}</button>
+                </li>
+              ))}
+            </ol>
+          </details>
+        )}
       </div>
     </aside>
   );
@@ -137,7 +168,7 @@ function renderSubtitle(item: FloatingMediaItem) {
   );
 }
 
-function renderMedia(item: FloatingMediaItem, isMinimized: boolean, fallbackLabel: string) {
+function renderMedia(item: FloatingMediaItem, isMinimized: boolean, fallbackLabel: string, onEnded: () => void) {
   if (item.kind === 'audio') {
     return (
       <audio
@@ -146,6 +177,7 @@ function renderMedia(item: FloatingMediaItem, isMinimized: boolean, fallbackLabe
         className='h-9 w-full'
         controls
         key={item.mediaUrl}
+        onEnded={onEnded}
         preload='none'
         src={item.mediaUrl}
       >
@@ -164,6 +196,7 @@ function renderMedia(item: FloatingMediaItem, isMinimized: boolean, fallbackLabe
       )}
       controls
       key={item.mediaUrl}
+      onEnded={onEnded}
       playsInline
       poster={item.thumbnailUrl || undefined}
       preload='metadata'

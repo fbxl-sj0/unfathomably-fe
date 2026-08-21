@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { lazy, useEffect } from 'react';
 
 import { useLocale } from '@/hooks/useLocale.ts';
+import { useFeatures } from '@/hooks/useFeatures.ts';
 import { useSettings } from '@/hooks/useSettings.ts';
 import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
 import { useTheme } from '@/hooks/useTheme.ts';
@@ -18,6 +19,7 @@ interface ISoapboxHead {
 /** Injects metadata into site head with Helmet. */
 const SoapboxHead: React.FC<ISoapboxHead> = ({ children }) => {
   const { locale, direction } = useLocale();
+  const features = useFeatures();
   const { demo, reduceMotion, underlineLinks, demetricator } = useSettings();
   const soapboxConfig = useSoapboxConfig();
   const theme = useTheme();
@@ -51,6 +53,7 @@ const SoapboxHead: React.FC<ISoapboxHead> = ({ children }) => {
         {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
         {['dark', 'black'].includes(theme) && <style type='text/css'>{':root { color-scheme: dark; }'}</style>}
         <meta name='theme-color' content={soapboxConfig.brandColor} />
+        {features.nativeFederation && <link href='/manifest.json' rel='manifest' />}
       </Helmet>
 
       {children}

@@ -80,6 +80,8 @@ export function connectStream(
     let subscription: StreamSubscription | undefined;
     let closed = false;
     let lastActivityAt = Date.now();
+    let websocketConnected = false;
+    let useEventSource = false;
 
     const isCurrentStream = (epoch: number) => !closed && epoch === streamEpoch;
 
@@ -95,50 +97,7 @@ export function connectStream(
     };
 
     const createSubscription = (epoch: number): StreamSubscription | undefined => {
-      // If the WebSocket fails to be created, don't crash the whole page,
-      // and fall back to EventSource when the browser supports it. Some
-      // reverse proxies are friendlier to long-lived HTTP responses than
-      // WebSocket upgrades, and the backend exposes the same Mastodon
-      // streaming events over both transports.
-      try {
-        return getStream(streamingAPIBaseURL, accessToken, path, {
-          connected() {
-            if (isCurrentStream(epoch)) {
-              touchActivity();
-              connection.connect();
-            }
-          },
-
-          disconnected() {
-            if (isCurrentStream(epoch)) {
-              connection.disconnect();
-
-              /*
-               * websocket-ts owns ordinary close recovery through its
-               * exponential backoff. Scheduling another replacement here
-               * creates overlapping sockets after a failed handshake.
-               */
-            }
-          },
-
-          received(data) {
-            if (isCurrentStream(epoch)) {
-              touchActivity();
-              onReceive(data);
-            }
-          },
-
-          reconnected() {
-            if (isCurrentStream(epoch)) {
-              touchActivity();
-              connection.connect();
-            }
-          },
-
-        });
-      } catch (e) {
-        console.error(e);
-
+      const createEventSourceSubscription = (): StreamSubscription | undefined => {
         if (typeof EventSource === 'undefined') {
           return undefined;
         }
@@ -170,6 +129,57 @@ export function connectStream(
           console.error(eventSourceError);
           return undefined;
         }
+      };
+
+      // Most installations use WebSockets. If a browser or intermediary
+      // rejects the initial upgrade, however, websocket-ts retries the same
+      // failed handshake indefinitely. Switch that connection to the
+      // Mastodon-compatible EventSource transport instead, so a timeline can
+      // continue to receive updates without requiring a page refresh.
+      if (useEventSource) {
+        return createEventSourceSubscription();
+      }
+
+      try {
+        return getStream(streamingAPIBaseURL, accessToken, path, {
+          connected() {
+            if (isCurrentStream(epoch)) {
+              websocketConnected = true;
+              touchActivity();
+              connection.connect();
+            }
+          },
+
+          disconnected() {
+            if (isCurrentStream(epoch)) {
+              connection.disconnect();
+
+              if (!websocketConnected) {
+                useEventSource = true;
+                scheduleRestart(STREAM_DISCONNECTED_RECONNECT_DELAY);
+              }
+            }
+          },
+
+          received(data) {
+            if (isCurrentStream(epoch)) {
+              touchActivity();
+              onReceive(data);
+            }
+          },
+
+          reconnected() {
+            if (isCurrentStream(epoch)) {
+              touchActivity();
+              connection.connect();
+            }
+          },
+
+        });
+      } catch (e) {
+        console.error(e);
+        useEventSource = true;
+        return createEventSourceSubscription();
       }
     };
 
@@ -177,6 +187,7 @@ export function connectStream(
       if (browserIsOffline()) return;
 
       touchActivity();
+      websocketConnected = false;
 
       const epoch = ++streamEpoch;
 

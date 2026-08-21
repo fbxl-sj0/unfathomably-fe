@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { instanceV1Schema } from './instance.ts';
+import { instanceV1Schema, instanceV2Schema, mergeInstance } from './instance.ts';
 
 describe('instanceV1Schema.parse()', () => {
   it('normalizes an empty Map', () => {
@@ -127,6 +127,31 @@ describe('instanceV1Schema.parse()', () => {
     expect(result).toMatchObject(expected);
   });
 
+  it('normalizes the v1 streaming URL into current configuration', () => {
+    const result = instanceV1Schema.parse({
+      urls: {
+        streaming_api: 'wss://social.example/streaming',
+      },
+    });
+
+    expect(result.configuration.urls.streaming).toBe('wss://social.example/streaming');
+  });
+
+  it('preserves a current streaming URL when both formats are present', () => {
+    const result = instanceV1Schema.parse({
+      configuration: {
+        urls: {
+          streaming: 'wss://social.example/current',
+        },
+      },
+      urls: {
+        streaming_api: 'wss://social.example/legacy',
+      },
+    });
+
+    expect(result.configuration.urls.streaming).toBe('wss://social.example/current');
+  });
+
   it('normalizes Mastodon 3.0.0 instance with default configuration', async () => {
     const { default: instance } = await import('@/__fixtures__/mastodon-3.0.0-instance.json');
 
@@ -214,5 +239,43 @@ describe('instanceV1Schema.parse()', () => {
 
     expect(result.version).toEqual('2.7.2 (compatible; Pleroma 2.4.50+akkoma)');
 
+  });
+});
+
+describe('instanceV2Schema.parse()', () => {
+  it('normalizes the top-level v2 streaming URL', () => {
+    const result = instanceV2Schema.parse({
+      urls: {
+        streaming: 'wss://social.example/streaming',
+      },
+    });
+
+    expect(result.configuration.urls.streaming).toBe('wss://social.example/streaming');
+  });
+
+  it('preserves a streaming URL from current configuration', () => {
+    const result = instanceV2Schema.parse({
+      configuration: {
+        urls: {
+          streaming: 'wss://social.example/current',
+        },
+      },
+      urls: {
+        streaming: 'wss://social.example/alias',
+      },
+    });
+
+    expect(result.configuration.urls.streaming).toBe('wss://social.example/current');
+  });
+
+  it('fills incomplete v2 metadata from the normalized v1 instance', () => {
+    const v1 = instanceV1Schema.parse({
+      urls: {
+        streaming_api: 'wss://social.example/fallback',
+      },
+    });
+    const v2 = instanceV2Schema.parse({});
+
+    expect(mergeInstance(v2, v1).configuration.urls.streaming).toBe('wss://social.example/fallback');
   });
 });

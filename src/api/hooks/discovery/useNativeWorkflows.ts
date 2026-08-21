@@ -19,6 +19,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useApi } from '@/hooks/useApi.ts';
+import { useFeatures } from '@/hooks/useFeatures.ts';
 
 export type NativeWorkflowFamily =
   | 'audio'
@@ -143,6 +144,7 @@ const normalizeResponse = (value: unknown): NativeWorkflowResponse => {
 
 export const useNativeWorkflows = () => {
   const api = useApi();
+  const features = useFeatures();
   const result = useQuery<NativeWorkflowResponse>({
     queryKey: ['nativeWorkflows', api.baseUrl],
     queryFn: async () => {
@@ -153,6 +155,7 @@ export const useNativeWorkflows = () => {
     staleTime: 24 * 60 * 60 * 1000,
     retry: false,
     placeholderData: fallbackResponse,
+    enabled: features.nativeFederation,
   });
 
   return result.data || fallbackResponse;

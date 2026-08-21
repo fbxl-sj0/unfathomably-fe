@@ -212,6 +212,7 @@ interface WorldsWorkflowHubProps {
 
 const WorldsWorkflowHub: React.FC<WorldsWorkflowHubProps> = ({ embedded = false }) => {
   const intl = useIntl();
+  const manifest = useNativeWorkflows();
 
   const content = (
     <>
@@ -238,6 +239,9 @@ const WorldsWorkflowHub: React.FC<WorldsWorkflowHubProps> = ({ embedded = false 
               {group.families.map(family => {
                 const copy = workflowCopy[family];
                 const description = intl.formatMessage(copy.description);
+                const workflow = manifest.workflows.find(item => item.family === family);
+                const objectLabels = workflow?.objects.slice(0, 4) || [];
+                const actionLabels = workflow?.participation.slice(0, 2) || [];
 
                 return (
                   <Link
@@ -249,6 +253,20 @@ const WorldsWorkflowHub: React.FC<WorldsWorkflowHubProps> = ({ embedded = false 
                     <h3 className='font-bold text-gray-950 group-hover:text-primary-700 black:text-white black:group-hover:text-primary-300 dark:text-white dark:group-hover:text-primary-300'>
                       {intl.formatMessage(copy.title)}
                     </h3>
+                    {objectLabels.length > 0 && (
+                      <div className='mt-2 flex flex-wrap gap-1.5' aria-label='World objects'>
+                        {objectLabels.map(object => (
+                          <span key={object} className='rounded-full border border-primary-200 px-2 py-0.5 text-xs font-bold text-primary-700 black:border-primary-800 black:text-primary-300 dark:border-primary-700 dark:text-primary-300'>
+                            {object}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {actionLabels.length > 0 && (
+                      <p className='mt-2 text-xs font-bold text-gray-500 black:text-gray-400 dark:text-gray-400'>
+                        {actionLabels.join(' / ')}
+                      </p>
+                    )}
                     <span className='sr-only'>{description}</span>
                   </Link>
                 );

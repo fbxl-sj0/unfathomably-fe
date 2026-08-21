@@ -72,9 +72,10 @@ const measurementLabel = (value: number | undefined, mode: string | undefined): 
 
 const BookContext: React.FC<{ book: ReadingBookContext }> = ({ book }) => {
   const authors = book.authors.flatMap(author => author.name || []);
-  const details = [
-    book.type,
-    book.physical_format,
+    const details = [
+      book.type,
+      book.series && book.series_number ? `${book.series} #${book.series_number}` : book.series,
+      book.physical_format,
     typeof book.pages === 'number' ? `${book.pages} pages` : undefined,
     book.published_date,
     book.isbn_13 ? `ISBN ${book.isbn_13}` : (book.isbn_10 ? `ISBN ${book.isbn_10}` : undefined),

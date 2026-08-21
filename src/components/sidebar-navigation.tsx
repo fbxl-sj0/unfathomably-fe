@@ -196,7 +196,7 @@ const SidebarNavigation = () => {
             text={<FormattedMessage id='tabs_bar.search' defaultMessage='Search' />}
           />
 
-          {features.federating && (
+          {features.nativeFederation && (
             <SidebarNavigationLink
               to='/worlds'
               paths={['/worlds', '/federation']}

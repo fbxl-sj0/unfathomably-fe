@@ -9,6 +9,7 @@ import SvgIcon from '@/components/ui/svg-icon.tsx';
 import useMediaSourceFallback from '@/hooks/useMediaSourceFallback.ts';
 import { useSettings } from '@/hooks/useSettings.ts';
 import { isIOS } from '@/is-mobile.ts';
+import { playMedia } from '@/utils/media.ts';
 
 import type { Attachment } from '@/types/entities.ts';
 
@@ -32,7 +33,7 @@ const MediaItem: React.FC<IMediaItem> = ({ attachment, onOpenMedia }) => {
   const handleMouseEnter: React.MouseEventHandler<HTMLVideoElement> = e => {
     const video = e.target as HTMLVideoElement;
     if (hoverToPlay()) {
-      video.play();
+      playMedia(video);
     }
   };
 

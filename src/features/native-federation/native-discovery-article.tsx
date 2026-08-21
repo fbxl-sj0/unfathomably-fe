@@ -28,6 +28,8 @@ import { makeGetStatus } from '@/selectors/index.ts';
 
 import { queueNativeStatus } from './native-status-batcher.ts';
 
+const statusHydrationTimeoutMs = 8_000;
+
 interface NativeDiscoveryArticleProps extends React.ComponentPropsWithoutRef<'article'> {
   item: unknown;
 }
@@ -50,16 +52,45 @@ const NativeDiscoveryArticle: React.FC<NativeDiscoveryArticleProps> = ({ item, c
     }
 
     setFinished(false);
-    queueNativeStatus(statusId, dispatch).then(() => {
+
+    const finish = () => {
       if (!cancelled) setFinished(true);
-    });
+    };
+
+    const timeout = window.setTimeout(finish, statusHydrationTimeoutMs);
+
+    queueNativeStatus(statusId, dispatch).then(
+      () => {
+        window.clearTimeout(timeout);
+        finish();
+      },
+      () => {
+        window.clearTimeout(timeout);
+        finish();
+      },
+    );
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
     };
   }, [dispatch, status, statusId]);
 
-  if (status) return <Status status={status} />;
+  if (status) {
+    return (
+      <>
+        <Status status={status} />
+        {children ? (
+          <article
+            {...articleProps}
+            className={`border-t border-gray-200 black:border-gray-800 dark:border-gray-800 ${articleProps.className || ''}`}
+          >
+            {children}
+          </article>
+        ) : null}
+      </>
+    );
+  }
 
   if (statusId && !finished) {
     return <PlaceholderStatus />;

@@ -19,6 +19,7 @@
 import { FormattedMessage } from 'react-intl';
 
 import type { NativeResolvedResource } from '@/api/hooks/discovery/useNativeObjectResolve.ts';
+import WorldObjectStateControl from '@/components/world-object-state-control.tsx';
 
 interface NativeResolvedObjectCardProps {
   resource: NativeResolvedResource;
@@ -221,6 +222,12 @@ const NativeResolvedObjectCard: React.FC<NativeResolvedObjectCardProps> = ({ res
         <p className='mt-4 text-sm leading-6 text-gray-600 black:text-gray-300 dark:text-gray-300'>
           <SourceOnlyHint resource={resource} />
         </p>
+
+        <WorldObjectStateControl
+          family={resource.family}
+          objectUri={resource.source_url}
+          presentation={{ ...resource.fields, source_host: resource.source_host, title: resource.title }}
+        />
 
         <div className='mt-4 flex flex-wrap gap-2'>
           <a href={resource.source_url} target='_blank' rel='noopener noreferrer' className='inline-flex rounded-lg bg-primary-600 px-3 py-2 text-sm font-black text-white hover:bg-primary-500'>

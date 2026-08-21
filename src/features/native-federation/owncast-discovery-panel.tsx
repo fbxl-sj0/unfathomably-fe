@@ -21,6 +21,7 @@ import { useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { Link } from 'react-router-dom';
 
+import WorldObjectStateControl from '@/components/world-object-state-control.tsx';
 import NativeDiscoveryLoading from '@/features/native-federation/native-discovery-loading.tsx';
 import NativeDiscoveryState from '@/features/native-federation/native-discovery-state.tsx';
 import { useOwncastDiscovery } from '@/api/hooks/discovery/useOwncastDiscovery.ts';
@@ -140,6 +141,16 @@ const OwncastDiscoveryPanel: React.FC<OwncastDiscoveryPanelProps> = ({ enabled, 
                       ))}
                     </div>
                   )}
+
+                  <WorldObjectStateControl
+                    family='video'
+                    objectUri={item.activitypub_url}
+                    presentation={{
+                      source_host: item.source_host,
+                      title: item.title,
+                      url: item.url,
+                    }}
+                  />
 
                   <div className='mt-4 flex flex-wrap gap-2'>
                     <a href={item.url} target='_blank' rel='noopener noreferrer' className='rounded-lg bg-primary-600 px-3 py-2 text-sm font-black text-white hover:bg-primary-500'>

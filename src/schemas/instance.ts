@@ -229,6 +229,10 @@ const instanceV1Schema = instanceV1BaseSchema.transform((instance) => {
     statuses: {
       ...instance.configuration.statuses,
     },
+    urls: {
+      ...instance.configuration.urls,
+      streaming: instance.configuration.urls.streaming ?? instance.urls.streaming_api,
+    },
   };
 
   if (typeof instance.max_toot_chars === 'number') {
@@ -251,7 +255,7 @@ const instanceV1Schema = instanceV1BaseSchema.transform((instance) => {
   };
 });
 
-const instanceV2Schema = coerceObject({
+const instanceV2BaseSchema = coerceObject({
   api_versions: z.record(z.string(), z.number()).catch({}),
   atproto: selectiveBridgeSchema.optional().catch(undefined),
   configuration: configurationSchema,
@@ -270,8 +274,26 @@ const instanceV2Schema = coerceObject({
   source_url: z.string().url().optional().catch(undefined),
   thumbnail: thumbnailSchema,
   title: z.string().catch(''),
+  urls: coerceObject({
+    streaming: z.string().url().optional().catch(undefined),
+  }),
   usage: usageSchema,
   version: versionSchema,
+});
+
+const instanceV2Schema = instanceV2BaseSchema.transform((instance) => {
+  const { urls, ...result } = instance;
+
+  return {
+    ...result,
+    configuration: {
+      ...instance.configuration,
+      urls: {
+        ...instance.configuration.urls,
+        streaming: instance.configuration.urls.streaming ?? urls.streaming,
+      },
+    },
+  };
 });
 
 function upgradeInstance(v1: InstanceV1): InstanceV2 {
@@ -311,7 +333,26 @@ function upgradeInstance(v1: InstanceV1): InstanceV2 {
   };
 }
 
+function mergeInstance(v2: InstanceV2, v1?: InstanceV1): InstanceV2 {
+  const streaming = v2.configuration.urls.streaming ?? v1?.configuration.urls.streaming;
+
+  if (streaming === v2.configuration.urls.streaming) {
+    return v2;
+  }
+
+  return {
+    ...v2,
+    configuration: {
+      ...v2.configuration,
+      urls: {
+        ...v2.configuration.urls,
+        streaming,
+      },
+    },
+  };
+}
+
 type InstanceV1 = z.infer<typeof instanceV1Schema>;
 type InstanceV2 = z.infer<typeof instanceV2Schema>;
 
-export { instanceV1Schema, type InstanceV1, instanceV2Schema, type InstanceV2, upgradeInstance, thumbnailSchema };
+export { instanceV1Schema, type InstanceV1, instanceV2Schema, type InstanceV2, mergeInstance, upgradeInstance, thumbnailSchema };

@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { Link } from 'react-router-dom';
 
+import WorldObjectStateControl from '@/components/world-object-state-control.tsx';
 import NativeDiscoveryLoading from '@/features/native-federation/native-discovery-loading.tsx';
 import NativeDiscoveryState from '@/features/native-federation/native-discovery-state.tsx';
 import { useReceivedAudioDiscovery, type ReceivedAudioDiscoveryItem } from '@/api/hooks/discovery/useReceivedAudioDiscovery.ts';
@@ -35,8 +36,8 @@ interface ReceivedAudioDiscoveryPanelProps {
 
 const pageSize = 12;
 
-const PlayReceivedAudioButton: React.FC<{ item: ReceivedAudioDiscoveryItem }> = ({ item }) => {
-  const { playItem } = useFloatingMediaPlayer();
+const ReceivedAudioQueueButtons: React.FC<{ item: ReceivedAudioDiscoveryItem }> = ({ item }) => {
+  const { appendItem, enqueueNext, playItem } = useFloatingMediaPlayer();
 
   if (!item.media_url) return null;
 
@@ -53,13 +54,17 @@ const PlayReceivedAudioButton: React.FC<{ item: ReceivedAudioDiscoveryItem }> = 
   };
 
   return (
-    <button
-      type='button'
-      onClick={() => playItem(playerItem)}
-      className='rounded-lg bg-primary-600 px-3 py-2 text-sm font-black text-white hover:bg-primary-500'
-    >
-      <FormattedMessage id='native_discovery.received_audio.play' defaultMessage='Play docked' />
-    </button>
+    <>
+      <button type='button' onClick={() => playItem(playerItem)} className='rounded-lg bg-primary-600 px-3 py-2 text-sm font-black text-white hover:bg-primary-500'>
+        <FormattedMessage id='native_discovery.received_audio.play' defaultMessage='Play' />
+      </button>
+      <button type='button' onClick={() => enqueueNext(playerItem)} className='rounded-lg border border-primary-300 black:border-primary-700 px-3 py-2 text-sm font-black text-primary-800 black:text-primary-200 hover:bg-primary-50 black:hover:bg-primary-950 dark:border-primary-600 dark:text-primary-200 dark:hover:bg-primary-800'>
+        <FormattedMessage id='native_discovery.received_audio.play_next' defaultMessage='Play next' />
+      </button>
+      <button type='button' onClick={() => appendItem(playerItem)} className='rounded-lg border border-primary-300 black:border-primary-700 px-3 py-2 text-sm font-black text-primary-800 black:text-primary-200 hover:bg-primary-50 black:hover:bg-primary-950 dark:border-primary-600 dark:text-primary-200 dark:hover:bg-primary-800'>
+        <FormattedMessage id='native_discovery.received_audio.queue' defaultMessage='Add to queue' />
+      </button>
+    </>
   );
 };
 
@@ -166,8 +171,20 @@ const ReceivedAudioDiscoveryPanel: React.FC<ReceivedAudioDiscoveryPanelProps> = 
                 </div>
               )}
 
+              <div className='px-4 pb-3'>
+                <WorldObjectStateControl
+                  family='audio'
+                  objectUri={item.activitypub_url}
+                  presentation={{
+                    source_host: item.source_host,
+                    title: item.title,
+                    url: item.url,
+                  }}
+                />
+              </div>
+
               <div className='flex flex-wrap gap-2 border-t border-gray-200 black:border-gray-800 p-4 dark:border-gray-700'>
-                <PlayReceivedAudioButton item={item} />
+                <ReceivedAudioQueueButtons item={item} />
                 <Link to={nativeResolvePath('audio', item.activitypub_url)} className='rounded-lg bg-primary-600 px-3 py-2 text-sm font-black text-white hover:bg-primary-500'>
                   <FormattedMessage id='native_discovery.received_audio.open' defaultMessage='Open locally' />
                 </Link>

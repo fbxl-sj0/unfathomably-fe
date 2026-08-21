@@ -51,6 +51,18 @@ const getVideoDuration = (file: File): Promise<number> => {
   return promise;
 };
 
+/**
+ * Start browser media without leaking a rejected play promise to the app.
+ * Browsers reject while a source fallback is changing, after route teardown,
+ * or when playback policy blocks an otherwise valid user-interface action.
+ * The media element's error and state events remain responsible for the UI.
+ */
+const playMedia = (media: HTMLMediaElement | null | undefined): void => {
+  if (!media) return;
+
+  void media.play().catch(() => undefined);
+};
+
 const domParser = new DOMParser();
 
 enum VideoProviders {
@@ -94,4 +106,4 @@ const addAutoPlay = (html: string): string => {
   return html;
 };
 
-export { getVideoDuration, formatBytes, truncateFilename, addAutoPlay };
+export { getVideoDuration, formatBytes, truncateFilename, addAutoPlay, playMedia };

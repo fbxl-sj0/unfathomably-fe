@@ -13,6 +13,7 @@ import Blurhash from '@/components/blurhash.tsx';
 import SvgIcon from '@/components/ui/svg-icon.tsx';
 import useMediaSourceFallback from '@/hooks/useMediaSourceFallback.ts';
 import { useIsMobile } from '@/hooks/useIsMobile.ts';
+import { playMedia } from '@/utils/media.ts';
 import { isPanoramic, isPortrait, minimumAspectRatio, maximumAspectRatio } from '@/utils/media-aspect-ratio.ts';
 
 import { isFullscreen, requestFullscreen, exitFullscreen } from '../ui/util/fullscreen.ts';
@@ -269,7 +270,7 @@ const Video: React.FC<IVideo> = ({
     document.removeEventListener('touchend', handleMouseUp, true);
 
     setDragging(false);
-    video.current?.play();
+    playMedia(video.current);
   };
 
   const handleMouseMove = throttle(e => {
@@ -365,7 +366,7 @@ const Video: React.FC<IVideo> = ({
     setPaused(!paused);
 
     if (paused) {
-      video.current?.play();
+      playMedia(video.current);
     } else {
       video.current?.pause();
     }
@@ -462,7 +463,7 @@ const Video: React.FC<IVideo> = ({
   const handleLoadedData = () => {
     if (video.current && startTime) {
       video.current.currentTime = startTime;
-      video.current.play();
+      playMedia(video.current);
     }
   };
 

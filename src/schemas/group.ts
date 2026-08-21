@@ -3,6 +3,7 @@ import * as z from '@/zod.ts';
 
 import avatarMissing from '@/assets/images/avatar-missing.png';
 import headerMissing from '@/assets/images/header-missing.png';
+import { getAvatarURL, getHeaderURL } from '@/utils/accounts.ts';
 
 import { accountSchema } from './account.ts';
 import { customEmojiSchema } from './custom-emoji.ts';
@@ -78,8 +79,10 @@ const groupSchema = z.object({
   federation: federationStatusSchema.optional().catch(undefined),
   nostr: nostrGroupSchema.nullable().optional().catch(undefined),
 }).transform(group => {
-  group.avatar_static = group.avatar_static || group.avatar;
-  group.header_static = group.header_static || group.header;
+  group.avatar = getAvatarURL(group.avatar, group.avatar_static);
+  group.avatar_static = getAvatarURL(group.avatar_static, group.avatar);
+  group.header = getHeaderURL(group.header, group.header_static);
+  group.header_static = getHeaderURL(group.header_static, group.header);
   group.locked = group.locked || group.group_visibility === 'members_only'; // TruthSocial
   group.slug = group.slug || group.id;
 

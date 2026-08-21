@@ -315,7 +315,7 @@ const SidebarMenu: React.FC = (): JSX.Element | null => {
                     count={settingsNotifications.size}
                   />
 
-                  {features.federating && (
+                  {features.nativeFederation && (
                     <SidebarLink
                       to='/domain_blocks'
                       icon={banIcon}

@@ -21,6 +21,7 @@ import { useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { Link } from 'react-router-dom';
 
+import WorldObjectStateControl from '@/components/world-object-state-control.tsx';
 import NativeDiscoveryLoading from '@/features/native-federation/native-discovery-loading.tsx';
 import NativeDiscoveryState from '@/features/native-federation/native-discovery-state.tsx';
 import { openComposeWithText } from '@/actions/compose.ts';
@@ -93,6 +94,11 @@ const ReceivedGameCard: React.FC<{ game: ReceivedChessGameDiscoveryItem }> = ({ 
       </p>
       {game.content && <p className='mt-3 line-clamp-3 text-sm text-gray-700 black:text-gray-200 dark:text-gray-200'>{game.content}</p>}
       <ChessPositionDetails item={game} />
+      <WorldObjectStateControl
+        family='games'
+        objectUri={game.latest_move_url}
+        presentation={{ source_host: game.source_host, title: game.title, url: game.url }}
+      />
       {game.participants.length > 0 && (
         <div className='mt-3 flex flex-wrap gap-2'>
           {game.participants.map(participant => (
@@ -308,6 +314,11 @@ const ChessDiscoveryPanel: React.FC<ChessDiscoveryPanelProps> = ({ enabled, fami
                       </p>
                       {game.setup_note && <p className='mt-3 line-clamp-3 text-sm text-gray-700 black:text-gray-200 dark:text-gray-200'>{game.setup_note}</p>}
                       <ChessPositionDetails item={game} />
+                      <WorldObjectStateControl
+                        family='games'
+                        objectUri={game.url}
+                        presentation={{ title: `${playerName(game, 'white')} vs. ${playerName(game, 'black')}`, url: game.url }}
+                      />
                       <div className='mt-4 flex flex-wrap gap-2'>
                         <a href={game.url} target='_blank' rel='noopener noreferrer' className='rounded-lg bg-primary-600 px-3 py-2 text-sm font-black text-white hover:bg-primary-500'>
                           <FormattedMessage id='native_discovery.games.open_game' defaultMessage='Open game' />

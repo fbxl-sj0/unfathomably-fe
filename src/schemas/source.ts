@@ -3,6 +3,7 @@ import * as z from '@/zod.ts';
 
 import avatarMissing from '@/assets/images/avatar-missing.png';
 import headerMissing from '@/assets/images/header-missing.png';
+import { getAvatarURL, getHeaderURL } from '@/utils/accounts.ts';
 
 import { customEmojiSchema } from './custom-emoji.ts';
 import { federationStatusSchema } from './relationship.ts';
@@ -47,8 +48,10 @@ const sourceSchema = z.object({
   url: z.string().catch(''),
   username: z.string().catch(''),
 }).transform(source => {
-  source.avatar_static = source.avatar_static || source.avatar;
-  source.header_static = source.header_static || source.header;
+  source.avatar = getAvatarURL(source.avatar, source.avatar_static);
+  source.avatar_static = getAvatarURL(source.avatar_static, source.avatar);
+  source.header = getHeaderURL(source.header, source.header_static);
+  source.header_static = getHeaderURL(source.header_static, source.header);
 
   return {
     ...source,

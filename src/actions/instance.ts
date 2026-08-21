@@ -3,6 +3,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { instanceV1Schema, instanceV2Schema, upgradeInstance } from '@/schemas/instance.ts';
 import { RootState } from '@/store.ts';
 import { getAuthUserUrl, getMeUrl } from '@/utils/auth.ts';
+import { getFeatures } from '@/utils/features.ts';
 
 import api from '../api/index.ts';
 
@@ -26,17 +27,23 @@ export const fetchInstance = createAsyncThunk<InstanceData, InstanceData['host']
   'instance/fetch',
   async(host, { getState, rejectWithValue }) => {
     try {
-      try {
-        const response = await api(getState).get('/api/v2/instance');
-        const data = await response.json();
-        const instance = instanceV2Schema.parse(data);
-        return { instance, host };
-      } catch {
-        const response = await api(getState).get('/api/v1/instance');
-        const data = await response.json();
-        const instance = upgradeInstance(instanceV1Schema.parse(data));
-        return { instance, host };
+      const v1Response = await api(getState).get('/api/v1/instance');
+      const v1Data = await v1Response.json();
+      const v1Instance = instanceV1Schema.parse(v1Data);
+      const fallbackInstance = upgradeInstance(v1Instance);
+
+      if (getFeatures(v1Instance).instanceV2) {
+        try {
+          const v2Response = await api(getState).get('/api/v2/instance');
+          const v2Data = await v2Response.json();
+          return { instance: instanceV2Schema.parse(v2Data), host };
+        } catch {
+          // A backend may overstate v2 support during an upgrade. V1 remains
+          // the universal compatibility contract and is already validated.
+        }
       }
+
+      return { instance: fallbackInstance, host };
     } catch (e) {
       return rejectWithValue(e);
     }

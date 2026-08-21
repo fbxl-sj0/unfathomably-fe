@@ -27,6 +27,7 @@ import clsx from 'clsx';
 import { defineMessages, FormattedMessage, useIntl } from 'react-intl';
 
 import SvgIcon from '@/components/ui/svg-icon.tsx';
+import WorldObjectStateControl from '@/components/world-object-state-control.tsx';
 import { useFloatingMediaPlayer, type FloatingMediaItem, type FloatingMediaKind } from '@/contexts/floating-media-player-context.tsx';
 import type { SourceItem } from '@/schemas/source-item.ts';
 
@@ -117,6 +118,15 @@ const NativeSourceItemCard: React.FC<INativeSourceItemCard> = ({ item }) => {
       >
         {item.title}
       </a>
+
+      <WorldObjectStateControl
+        family={family}
+        objectUri={item.id}
+        presentation={{
+          media_url: item.media_url,
+          title: item.title,
+        }}
+      />
 
       {item.summary ? (
         <p className='mt-1 line-clamp-3 text-sm text-gray-700 black:text-gray-200 dark:text-gray-300'>

@@ -10,9 +10,8 @@ import {
   fromJS,
 } from 'immutable';
 
-import avatarMissing from '@/assets/images/avatar-missing.png';
-import headerMissing from '@/assets/images/header-missing.png';
 import { normalizeEmoji } from '@/normalizers/emoji.ts';
+import { getAvatarURL, getHeaderURL } from '@/utils/accounts.ts';
 import { mergeDefined } from '@/utils/normalizers.ts';
 
 import type { PatronAccount } from '@/reducers/patron.ts';
@@ -91,10 +90,11 @@ const normalizePleromaLegacyFields = (account: ImmutableMap<string, any>) => {
 const normalizeAvatar = (account: ImmutableMap<string, any>) => {
   const avatar = account.get('avatar');
   const avatarStatic = account.get('avatar_static');
+  const usableAvatar = getAvatarURL(avatar, avatarStatic);
 
   return account.withMutations(account => {
-    account.set('avatar', avatar || avatarStatic || avatarMissing);
-    account.set('avatar_static', avatarStatic || avatar || avatarMissing);
+    account.set('avatar', usableAvatar);
+    account.set('avatar_static', usableAvatar);
   });
 };
 
@@ -102,10 +102,11 @@ const normalizeAvatar = (account: ImmutableMap<string, any>) => {
 const normalizeHeader = (account: ImmutableMap<string, any>) => {
   const header = account.get('header');
   const headerStatic = account.get('header_static');
+  const usableHeader = getHeaderURL(header, headerStatic);
 
   return account.withMutations(account => {
-    account.set('header', header || headerStatic || headerMissing);
-    account.set('header_static', headerStatic || header || headerMissing);
+    account.set('header', usableHeader);
+    account.set('header_static', usableHeader);
   });
 };
 

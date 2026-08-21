@@ -6,8 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta http-equiv="content-security-policy" content="<%- csp %>">
-    <link href="/manifest.json" rel="manifest">
-    <link href="/packs/theme-bootstrap-4A52BB4.js" rel="preload" as="script">
+    <link href="/packs/theme-bootstrap-4A52BB4.js" rel="modulepreload">
     <!--server-generated-meta-->
     <style>
       html,
@@ -65,7 +64,7 @@
         }
       }
     </style>
-    <script src="/packs/theme-bootstrap-4A52BB4.js"></script>
+    <script type="module" src="/packs/theme-bootstrap-4A52BB4.js"></script>
     <script type="module" src="./src/main.tsx"></script>
     <%- snippets %>
   </head>

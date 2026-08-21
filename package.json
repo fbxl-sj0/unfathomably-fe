@@ -20,6 +20,7 @@
   "scripts": {
     "start": "vite serve",
     "audit:pages": "node scripts/audit-live-pages.mjs",
+    "audit:backends": "node scripts/audit-backend-compat.mjs",
     "dev": "yarn && yarn start",
     "build": "vite build --emptyOutDir",
     "check": "tsc --noEmit",
@@ -30,10 +31,12 @@
     "test:run": "vitest run",
     "test:migration": "vitest run src/components/scrollable-list.behavior.test.tsx src/components/status-list.behavior.test.tsx",
     "test:federation": "vitest run src/features/federation/platform.test.ts src/features/federation/floating-media-player.test.tsx src/features/federation/native-source-item-card.test.tsx src/features/group/components/group-action-button.test.tsx src/features/sources/index.test.tsx src/features/sources/source-items-preview.test.tsx src/schemas/source-item.test.ts src/schemas/group.test.ts",
-    "strict": "npm run lint && npm run i18n:check && tsc --noEmit && vitest run && vite build --emptyOutDir",
+    "strict": "npm run lint:js:strict && npm run lint:styles && npm run i18n:check && npm run check && npm run test:run && npm run build && npm run deps:check",
     "baseline": "npm run strict",
     "lint": "npm run lint:js && npm run lint:styles",
     "lint:js": "eslint --ext .js,.jsx,.cjs,.mjs,.ts,.tsx . --cache --max-warnings 0",
+    "lint:js:strict": "eslint --ext .js,.jsx,.cjs,.mjs,.ts,.tsx . --no-cache --max-warnings 0",
+    "deps:check": "yarn constraints && yarn dedupe --check && yarn npm audit --all --recursive",
     "lint:styles": "stylelint \"src/**/*.{css,scss}\" \"tailwind/**/*.{css,scss}\" --allow-empty-input --max-warnings 0",
     "ci": "concurrently --kill-others-on-fail \"npm run lint\" \"npm run i18n:check\" \"npm run check\" \"npm run build\"",
     "prepare": "husky"
@@ -41,10 +44,18 @@
   "license": "AGPL-3.0-or-later",
   "packageManager": "yarn@4.17.0",
   "resolutions": {
+    "brace-expansion@npm:^1.1.7": "npm:1.1.18",
+    "brace-expansion@npm:^2.0.1": "npm:2.1.4",
+    "brace-expansion@npm:^5.0.5": "npm:5.0.9",
+    "dompurify": "3.4.13",
     "esbuild": "^0.28.1",
+    "fast-uri": "3.1.5",
     "glob": "^13.0.6",
+    "js-yaml": "4.3.1",
     "source-map": "^0.7.6",
-    "typescript": "^6.0.3"
+    "tar": "7.5.22",
+    "typescript": "^6.0.3",
+    "undici@npm:^6.25.0": "npm:6.28.0"
   },
   "engines": {
     "node": ">=26.3.1"

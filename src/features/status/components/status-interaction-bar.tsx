@@ -101,7 +101,10 @@ const StatusInteractionBar: React.FC<IStatusInteractionBar> = ({ status }): JSX.
   const getQuotes = () => {
     if (status.quotes_count) {
       return (
-        <InteractionCounter count={status.quotes_count} to={`/@${status.getIn(['account', 'acct'])}/posts/${status.id}/quotes`}>
+        <InteractionCounter
+          count={status.quotes_count}
+          to={features.quotePostListing ? `/@${status.getIn(['account', 'acct'])}/posts/${status.id}/quotes` : undefined}
+        >
           <FormattedMessage
             id='status.interactions.quotes'
             defaultMessage='{count, plural, one {Quote} other {Quotes}}'

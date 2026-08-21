@@ -33,6 +33,7 @@ import TargetSearchResults from '@/features/groups/components/discover/search/re
 import { useNativeFederationStream } from '@/api/hooks/streaming/useNativeFederationStream.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
+import { useFeatures } from '@/hooks/useFeatures.ts';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
 import { PERMISSION_CREATE_GROUPS, hasPermission } from '@/utils/permissions.ts';
 
@@ -75,12 +76,30 @@ const NativeObjectComposer = lazy(() => import('./native-object-composer.tsx'));
 const WorldsSearchPanel = lazy(() => import('./worlds-search-panel.tsx'));
 const NativeFamilyGuide = lazy(() => import('./native-family-guide.tsx'));
 const NativeResolvedObjectCard = lazy(() => import('./native-resolved-object-card.tsx'));
+const WorldObjectLibrary = lazy(() => import('./world-object-library.tsx'));
 const BookLibrary = lazy(() => import('@/components/book-shelf-control.tsx').then(module => ({ default: module.BookLibrary })));
 
 const TIMELINE_ID = 'native-federation';
 type WorldView = 'feed' | 'browse' | 'search' | 'library' | 'create';
 
 const cultureCategories = new Set(['film', 'series', 'album', 'podcast', 'performance', 'exhibition', 'game', 'other']);
+const familyNamesForLibrary: Partial<Record<PresentationFamily, string>> = {
+  audio: 'audio',
+  video: 'videos',
+  longform: 'reading',
+  photo: 'photos',
+  bookmarks: 'bookmarks',
+  groups: 'communities',
+  events: 'events',
+  development: 'projects',
+  models: 'models',
+  marketplace: 'listings',
+  games: 'games',
+  routes: 'routes',
+  culture: 'culture',
+  coordination: 'coordination',
+  publishing: 'publications',
+};
 const familiesWithSpecializedDiscovery = new Set<PresentationFamily>([
   'audio', 'books', 'coordination', 'culture', 'development', 'events', 'games',
   'longform', 'marketplace', 'models', 'photo', 'publishing', 'routes', 'video',
@@ -281,6 +300,7 @@ const NativeFederationTimeline: React.FC<INativeFederationTimeline> = ({ params 
   const location = useLocation();
   const routeFamily = resolveWorldsRouteFamily(params?.family, location.pathname);
   const { account } = useOwnAccount();
+  const features = useFeatures();
   const canCreateGroup = useAppSelector((state) => hasPermission(state, PERMISSION_CREATE_GROUPS));
   const searchParams = new URLSearchParams(location.search);
   const selectedFamily = (routeFamily || searchParams.get('family') || 'all') as PresentationFamily;
@@ -308,7 +328,7 @@ const NativeFederationTimeline: React.FC<INativeFederationTimeline> = ({ params 
 
   if (family === 'all') {
     activeView = requestedView === 'browse' ? 'browse' : 'feed';
-  } else if (requestedView === 'feed' || requestedView === 'search' || (requestedView === 'library' && family === 'books' && Boolean(account)) || (requestedView === 'create' && hasCreateView)) {
+  } else if (requestedView === 'feed' || requestedView === 'search' || (requestedView === 'library' && Boolean(account)) || (requestedView === 'create' && hasCreateView)) {
     activeView = requestedView;
   } else if ((createRequested || initialReferenceUrl) && hasCreateView) {
     activeView = 'create';
@@ -319,7 +339,8 @@ const NativeFederationTimeline: React.FC<INativeFederationTimeline> = ({ params 
   }
   const familyTimelineId = family === 'all' ? TIMELINE_ID : `${TIMELINE_ID}:${family}`;
   const timelineId = nativeQuery ? `${familyTimelineId}:search:${encodeURIComponent(nativeQuery.toLowerCase())}` : familyTimelineId;
-  useNativeFederationStream(timelineId, family, activeView === 'feed' && !nativeQuery);
+  const canLoadFeed = Boolean(account) || features.anonymousPublicTimeline;
+  useNativeFederationStream(timelineId, family, activeView === 'feed' && !nativeQuery && canLoadFeed);
   const [targetQuery, setTargetQuery] = useState(initialResolveQuery);
   const [submittedTargetQuery, setSubmittedTargetQuery] = useState(initialResolveQuery);
   const [browsingKnownTargets, setBrowsingKnownTargets] = useState(false);
@@ -379,9 +400,9 @@ const NativeFederationTimeline: React.FC<INativeFederationTimeline> = ({ params 
       name: 'create',
     }]
     : [];
-  const libraryTabItems: Item[] = family === 'books' && account
+  const libraryTabItems: Item[] = family !== 'all' && account
     ? [{
-      text: intl.formatMessage(messages.libraryTab),
+      text: family === 'books' ? intl.formatMessage(messages.libraryTab) : `My ${familyNamesForLibrary[family] || 'items'}`,
       action: () => switchView('library'),
       name: 'library',
     }]
@@ -458,10 +479,10 @@ const NativeFederationTimeline: React.FC<INativeFederationTimeline> = ({ params 
   }, [initialResolveQuery]);
 
   useEffect(() => {
-    if (activeView !== 'feed') return;
+    if (activeView !== 'feed' || !canLoadFeed) return;
 
     dispatch(expandNativeFederationTimeline({ family, query: nativeQuery, timelineId }));
-  }, [activeView, family, nativeQuery]);
+  }, [activeView, canLoadFeed, family, nativeQuery]);
 
   return (
     <Column withHeader={family === 'all'} label={intl.formatMessage(messages.title)} slim>
@@ -472,13 +493,25 @@ const NativeFederationTimeline: React.FC<INativeFederationTimeline> = ({ params 
 
       {activeView === 'browse' && <WorldsWorkflowHub embedded />}
 
-      {activeView === 'library' && (
+      {activeView === 'library' && family === 'books' && (
         <Suspense fallback={<NativeDiscoveryLoading />}>
           <BookLibrary />
         </Suspense>
       )}
 
-      {activeView === 'feed' && (
+      {activeView === 'feed' && !canLoadFeed && (
+        <NativeDiscoveryState
+          action={(
+            <Link className='inline-flex rounded-lg bg-primary-600 px-4 py-2 text-sm font-black text-white hover:bg-primary-500' to='/login'>
+              <FormattedMessage id='native_federation.feed.sign_in' defaultMessage='Sign in' />
+            </Link>
+          )}
+        >
+          <FormattedMessage id='native_federation.feed.authentication_required' defaultMessage='Sign in to view this server&apos;s Worlds feed.' />
+        </NativeDiscoveryState>
+      )}
+
+      {activeView === 'feed' && canLoadFeed && (
         <PullToRefresh onRefresh={handleRefresh}>
           <Timeline
             scrollKey={timelineId}
@@ -521,6 +554,12 @@ const NativeFederationTimeline: React.FC<INativeFederationTimeline> = ({ params 
             )}
           />
         </PullToRefresh>
+      )}
+
+      {activeView === 'library' && family !== 'books' && account && (
+        <Suspense fallback={<NativeDiscoveryLoading />}>
+          <WorldObjectLibrary family={family} />
+        </Suspense>
       )}
 
       {activeView === 'search' && (

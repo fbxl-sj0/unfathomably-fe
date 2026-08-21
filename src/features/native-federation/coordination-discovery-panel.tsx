@@ -22,6 +22,7 @@ import { Link } from 'react-router-dom';
 
 import NativeDiscoveryLoading from '@/features/native-federation/native-discovery-loading.tsx';
 import NativeDiscoveryState from '@/features/native-federation/native-discovery-state.tsx';
+import WorldObjectStateControl from '@/components/world-object-state-control.tsx';
 import {
   useCoordinationDiscovery,
   type CoordinationDiscoveryItem,
@@ -237,6 +238,16 @@ const CoordinationDiscoveryPanel: React.FC<CoordinationDiscoveryPanelProps> = ({
                     {item.tags.map(tag => <span key={tag} className='rounded-full bg-primary-100 black:bg-primary-900 px-2 py-1 text-xs font-bold text-primary-800 black:text-primary-200 dark:bg-primary-700 dark:text-primary-100'>{tag}</span>)}
                   </div>
                 )}
+
+                <WorldObjectStateControl
+                  family='coordination'
+                  objectUri={item.activitypub_url}
+                  presentation={{
+                    source_host: item.source_host,
+                    subtitle: item.location || item.action,
+                    title: item.title,
+                  }}
+                />
 
                 <div className='mt-4 flex flex-wrap gap-2'>
                   <Link to={nativeResolvePath(family, item.activitypub_url)} className='rounded-lg bg-primary-600 px-3 py-2 text-sm font-black text-white hover:bg-primary-500'>

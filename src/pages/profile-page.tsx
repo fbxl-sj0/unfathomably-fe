@@ -80,7 +80,7 @@ const ProfilePage: React.FC<IProfilePage> = ({ params, children }) => {
       const response = await api.get(`/api/v1/accounts/${account!.id}/worlds`);
       return worldParticipationSchema.parse(await response.json());
     },
-    enabled: Boolean(account?.id),
+    enabled: features.nativeFederation && Boolean(account?.id),
     staleTime: 60_000,
   });
 

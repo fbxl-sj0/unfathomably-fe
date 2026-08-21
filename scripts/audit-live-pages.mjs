@@ -30,9 +30,28 @@ const token = process.env.UNFATHOMABLY_AUDIT_TOKEN;
 const auditScopes = process.env.UNFATHOMABLY_AUDIT_SCOPES || 'read write follow push';
 const accountHandle = process.env.UNFATHOMABLY_AUDIT_ACCOUNT || 'sj_zero';
 const settleMs = Number.parseInt(process.env.UNFATHOMABLY_AUDIT_SETTLE_MS || '900', 10);
+const requestSettleMs = Number.parseInt(
+  process.env.UNFATHOMABLY_AUDIT_REQUEST_SETTLE_MS || '5000',
+  10,
+);
+const requestQuietMs = Number.parseInt(
+  process.env.UNFATHOMABLY_AUDIT_REQUEST_QUIET_MS || '250',
+  10,
+);
+// Chrome may report the service-worker alias after its network request completes.
+const serviceWorkerAliasWindowMs = 1000;
+const streamingSettleMs = Number.parseInt(process.env.UNFATHOMABLY_AUDIT_STREAM_SETTLE_MS || '3000', 10);
 const includeMedia = ['1', 'true', 'yes'].includes(
   (process.env.UNFATHOMABLY_AUDIT_INCLUDE_MEDIA || '').trim().toLowerCase(),
 );
+const requireStreaming = ['1', 'true', 'yes'].includes(
+  (process.env.UNFATHOMABLY_AUDIT_REQUIRE_STREAMING || '').trim().toLowerCase(),
+);
+const expectedText = process.env.UNFATHOMABLY_AUDIT_EXPECT_TEXT || '';
+const requestedRoutes = (process.env.UNFATHOMABLY_AUDIT_ROUTES || '')
+  .split(',')
+  .map((route) => route.trim())
+  .filter(Boolean);
 
 const publicRoutes = [
   '/', '/timeline/local', '/timeline/global', '/timeline/fediverse', '/worlds', '/federation',
@@ -65,6 +84,22 @@ const authenticatedRoutes = [
   '/developers', '/developers/apps/create', '/developers/settings_store',
   '/developers/timeline', '/developers/sw', '/share',
 ];
+
+const streamingRoutePatterns = [
+  /^\/$/,
+  /^\/timeline\//,
+  /^\/notifications$/,
+  /^\/conversations$/,
+  /^\/messages$/,
+  /^\/chats(?:\/|$)/,
+  /^\/groups\/(?:feed|my|popular|suggested|pending-requests)$/,
+  /^\/feeds\/feed$/,
+  /^\/sources\/feed$/,
+];
+
+const routeExpectsStreaming = (path) => token && requireStreaming && streamingRoutePatterns.some((pattern) =>
+  pattern.test(path.split('?')[0]),
+);
 
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
@@ -195,6 +230,12 @@ const main = async() => {
   if (!Number.isFinite(settleMs) || settleMs < 100 || settleMs > 30000) {
     throw new Error('UNFATHOMABLY_AUDIT_SETTLE_MS must be between 100 and 30000.');
   }
+  if (!Number.isFinite(requestSettleMs) || requestSettleMs < 100 || requestSettleMs > 30000) {
+    throw new Error('UNFATHOMABLY_AUDIT_REQUEST_SETTLE_MS must be between 100 and 30000.');
+  }
+  if (!Number.isFinite(requestQuietMs) || requestQuietMs < 50 || requestQuietMs > 5000) {
+    throw new Error('UNFATHOMABLY_AUDIT_REQUEST_QUIET_MS must be between 50 and 5000.');
+  }
 
   const browser = findBrowser();
   const port = await reservePort();
@@ -235,18 +276,91 @@ const main = async() => {
     if (!includeMedia) {
       await devtools.send('Network.setBlockedURLs', { urls: [`${site.origin}/proxy/*`] });
     }
+    await devtools.send('Page.addScriptToEvaluateOnNewDocument', {
+      source: `(() => {
+        const responseJson = Response.prototype.json;
+        Response.prototype.json = async function auditResponseJson() {
+          try {
+            return await responseJson.call(this);
+          } catch (error) {
+            console.error(
+              'Response JSON parse failed',
+              this.url,
+              this.status,
+              this.headers.get('content-type') || 'unknown-content-type',
+            );
+            throw error;
+          }
+        };
+
+        const jsonParse = JSON.parse;
+        JSON.parse = function auditJsonParse(value, reviver) {
+          try {
+            return jsonParse.call(this, value, reviver);
+          } catch (error) {
+            const text = typeof value === 'string' ? value : '';
+            console.error(
+              'JSON.parse failed',
+              'length=' + text.length,
+              'first=' + (text.charAt(0) || 'empty'),
+              error.stack || error.message,
+            );
+            throw error;
+          }
+        };
+      })();`,
+    });
 
     let currentRoute;
     let routeEvents = [];
+    let routeRequests = new Map();
+    let routeCompletedUrls = new Map();
+    let routeWebSockets = new Map();
     const requestUrls = new Map();
 
+    const finishRouteRequest = (requestId, url) => {
+      routeRequests.delete(requestId);
+      if (!url) return;
+      routeCompletedUrls.set(url, Date.now());
+
+      for (const [aliasId, requestUrl] of routeRequests.entries()) {
+        if (requestUrl === url) routeRequests.delete(aliasId);
+      }
+    };
+
     devtools.listeners.add(({ method, params }) => {
-      if (method === 'Network.requestWillBeSent') requestUrls.set(params.requestId, params.request.url);
+      if (method === 'Network.requestWillBeSent') {
+        requestUrls.set(params.requestId, params.request.url);
+        if (
+          currentRoute &&
+          ['Fetch', 'XHR'].includes(params.type) &&
+          params.request.url.startsWith(site.origin) &&
+          new URL(params.request.url).pathname.startsWith('/api/')
+        ) {
+          const completedAt = routeCompletedUrls.get(params.request.url);
+          if (!completedAt || Date.now() - completedAt > serviceWorkerAliasWindowMs) {
+            routeRequests.set(params.requestId, params.request.url);
+          }
+        }
+      } else if (method === 'Network.loadingFinished' || method === 'Network.loadingFailed') {
+        finishRouteRequest(params.requestId, requestUrls.get(params.requestId));
+      } else if (method === 'Network.requestServedFromCache') {
+        finishRouteRequest(params.requestId, requestUrls.get(params.requestId));
+      }
       if (!currentRoute) return;
       if (method === 'Runtime.exceptionThrown') {
         const details = params.exceptionDetails || {};
         const exception = details.exception || {};
-        routeEvents.push({ kind: 'exception', text: exception.description || details.text });
+        const frames = (details.stackTrace?.callFrames || [])
+          .slice(0, 4)
+          .map(({ functionName, url, lineNumber, columnNumber }) =>
+            `${functionName || '<anonymous>'} at ${url}:${lineNumber + 1}:${columnNumber + 1}`)
+          .join(' <- ');
+        const description = exception.description || details.text;
+        routeEvents.push({
+          kind: 'exception',
+          text: frames ? `${description} | ${frames}` : description,
+        });
       } else if (method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(params.type)) {
         routeEvents.push({
           kind: `console-${params.type}`,
@@ -260,6 +374,7 @@ const main = async() => {
         routeEvents.push({ kind: `log-${params.entry.level}`, text: params.entry.text });
       } else if (method === 'Network.responseReceived') {
         const response = params.response;
+        finishRouteRequest(params.requestId, response.url);
         if (response.url.startsWith(site.origin) && response.status >= 400) {
           routeEvents.push({ kind: `http-${response.status}`, text: response.url });
         }
@@ -269,12 +384,35 @@ const main = async() => {
         if (url && url.startsWith(site.origin) && params.errorText !== 'net::ERR_ABORTED' && !auditMediaBlock) {
           routeEvents.push({ kind: 'network-failed', text: `${params.errorText}: ${url}` });
         }
+      } else if (method === 'Network.webSocketCreated') {
+        routeWebSockets.set(params.requestId, {
+          url: params.url,
+          status: undefined,
+          framesReceived: 0,
+          expectedTextFrameReceived: false,
+        });
+      } else if (method === 'Network.webSocketHandshakeResponseReceived') {
+        const socket = routeWebSockets.get(params.requestId);
+        if (socket) socket.status = params.response.status;
+      } else if (method === 'Network.webSocketFrameReceived') {
+        const socket = routeWebSockets.get(params.requestId);
+        if (socket) {
+          socket.framesReceived += 1;
+          socket.expectedTextFrameReceived ||= Boolean(
+            expectedText && params.response.payloadData.includes(expectedText),
+          );
+        }
+      } else if (method === 'Network.webSocketFrameError') {
+        routeEvents.push({ kind: 'websocket-error', text: params.errorMessage });
       }
     });
 
     const navigate = async(path) => {
       currentRoute = path;
       routeEvents = [];
+      routeRequests = new Map();
+      routeCompletedUrls = new Map();
+      routeWebSockets = new Map();
       const loaded = devtools.waitFor('Page.loadEventFired');
       const navigation = await devtools.send('Page.navigate', { url: new URL(path, site).href });
       let loadTimedOut = false;
@@ -293,6 +431,7 @@ const main = async() => {
               title: document.title,
               textLength: text.length,
               sample: text.slice(0, 240),
+              expectedTextVisible: !${JSON.stringify(expectedText)} || text.includes(${JSON.stringify(expectedText)}),
               visibleError: /something went wrong|communication error|invalid value for enum|native_query|internal server error/i.test(text),
             };
           })()`,
@@ -300,12 +439,49 @@ const main = async() => {
         });
         return inspected.result && inspected.result.value ? inspected.result.value : {};
       };
+      const waitForRouteRequests = async() => {
+        const deadline = Date.now() + requestSettleMs;
+        let quietSince = routeRequests.size === 0 ? Date.now() : undefined;
+
+        while (Date.now() < deadline) {
+          if (routeRequests.size > 0) {
+            quietSince = undefined;
+          } else if (quietSince === undefined) {
+            quietSince = Date.now();
+          } else if (Date.now() - quietSince >= requestQuietMs) {
+            return;
+          }
+
+          await sleep(50);
+        }
+
+        if (routeRequests.size > 0) {
+          routeEvents.push({
+            kind: 'request-settle-timeout',
+            text: [...new Set(routeRequests.values())].slice(0, 10).join(', '),
+          });
+        }
+      };
 
       await sleep(settleMs);
       let page = await inspectPage();
+      const expectsStreaming = routeExpectsStreaming(path);
+      if (expectsStreaming && ![...routeWebSockets.values()].some(({ status }) => status === 101)) {
+        await sleep(streamingSettleMs);
+        page = await inspectPage();
+      }
       for (let attempt = 0; page.textLength < 20 && attempt < 10; attempt += 1) {
         await sleep(500);
         page = await inspectPage();
+      }
+      await waitForRouteRequests();
+      page = await inspectPage();
+      const webSockets = [...routeWebSockets.values()];
+      if (expectsStreaming && !webSockets.some(({ status }) => status === 101)) {
+        routeEvents.push({ kind: 'streaming-missing', text: 'No authenticated WebSocket completed its handshake.' });
+      }
+      if (expectedText && !page.expectedTextVisible) {
+        routeEvents.push({ kind: 'expected-text-missing', text: 'Expected live-page text did not appear.' });
       }
       const uniqueEvents = [];
       const seen = new Set();
@@ -320,10 +496,12 @@ const main = async() => {
       }
       const failed = loadTimedOut || page.visibleError || page.textLength < 20 || uniqueEvents.some(({ kind }) =>
         kind === 'exception' || kind === 'console-error' || kind === 'network-failed' ||
-        kind === 'navigation' || kind.startsWith('http-5'),
+         kind === 'expected-text-missing' || kind === 'navigation' || kind === 'streaming-missing' ||
+         kind === 'websocket-error' || kind === 'request-settle-timeout' ||
+         kind.startsWith('http-5'),
       );
       currentRoute = undefined;
-      return { requestedPath: path, loadTimedOut, failed, ...page, events: uniqueEvents };
+      return { requestedPath: path, loadTimedOut, failed, ...page, webSockets, events: uniqueEvents };
     };
 
     await navigate('/login');
@@ -335,8 +513,10 @@ const main = async() => {
     }
 
     const account = ownAccount || await requestJson(`/api/v1/accounts/lookup?acct=${encodeURIComponent(accountHandle)}`);
-    const routes = [...publicRoutes, ...authenticatedRoutes];
-    if (account && account.acct) {
+    const routes = requestedRoutes.length > 0
+      ? requestedRoutes
+      : [...publicRoutes, ...authenticatedRoutes];
+    if (requestedRoutes.length === 0 && account && account.acct) {
       const handle = account.acct;
       routes.push(`/@${handle}`, `/@${handle}/with_replies`, `/@${handle}/followers`, `/@${handle}/following`, `/@${handle}/media`);
       const statuses = await requestJson(`/api/v1/accounts/${encodeURIComponent(account.id)}/statuses?limit=1`);
@@ -344,7 +524,7 @@ const main = async() => {
         routes.push(`/posts/${statuses[0].id}`, `/@${handle}/posts/${statuses[0].id}`, `/@${handle}/posts/${statuses[0].id}/quotes`);
       }
     }
-    if (token) {
+    if (requestedRoutes.length === 0 && token) {
       const lists = await requestJson('/api/v1/lists');
       if (Array.isArray(lists) && lists[0] && lists[0].id) routes.push(`/list/${lists[0].id}`);
       const chats = await requestJson('/api/v1/pleroma/chats?limit=1');
@@ -357,10 +537,13 @@ const main = async() => {
       site: site.origin,
       authenticated: Boolean(token),
       includeMedia,
+      requireStreaming,
+      expectedTextRequired: Boolean(expectedText),
       account: account && account.acct,
       auditedRoutes: results.length,
       failures: results.filter(({ failed }) => failed),
       signals: results.filter(({ failed, events }) => !failed && events.length > 0),
+      streaming: results.map(({ requestedPath, webSockets }) => ({ requestedPath, webSockets })),
       emptyPages: results.filter(({ failed, pathname, textLength }) => !failed && pathname !== '/login' && textLength < 20),
     };
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);

@@ -7,6 +7,134 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Entries before the Unfathomably FE fork are inherited from Soapbox history.
 
 ## [Unreleased]
+### Fixed
+- Kept quoted-post details useful while a modern remote authorization is being
+  verified by linking to the locally cached quote target when available, with
+  the original URL as a compatibility fallback for older backends.
+- Made the live page audit collapse duplicate service-worker request aliases
+  and require a stable API quiet interval after response reconciliation,
+  preventing false pending requests and audit-induced PostgreSQL connection
+  replacement during rapid profile navigation.
+- Stopped followed-group panels from issuing an empty group-search request,
+  preventing unrelated feed pages from waiting on `/api/v1/groups?q=` during
+  authenticated navigation.
+### Added
+- Added BookWyrm-aware series and series-position fields to book creation and
+  received-book displays, keeping edition and work context visible while
+  retaining the existing shelf, review, and discussion workflow.
+- Added a private, family-specific Worlds workspace for received and locally
+  resolved objects. Users can maintain watchlists, reading/listening progress,
+  route plans, event attendance, model printing, game state, marketplace
+  follow-up, project work, ratings, and notes without creating timeline posts;
+  participation appears on profiles only through an explicit public opt-in.
+- Added native workflow views based on the specialized projects themselves:
+  an agenda for events, a lane-based ForgeFed project board, route planning,
+  live-stream and chess tracking, and state controls on ordinary post-backed
+  and discovery-backed objects.
+- Added a route-persistent audio and video queue with play-now, play-next,
+  append, remove, previous/next, automatic advance, and reload persistence.
+  Received audio search now exposes those queue actions directly.
+
+### Fixed
+- Made the live page audit reconcile service-worker request aliases before
+  reporting pending APIs, while retaining its strict response-time guard for
+  genuinely slow pages.
+- Made the live page audit wait for bounded same-origin API work to finish
+  before leaving each route, so late browser failures are observed without
+  manufacturing PostgreSQL connection churn by abandoning healthy requests.
+
+### Security
+
+- Reconciled the frontend with the complete Mastodon and Pleroma CVE audit,
+  confirmed server-side authentication, streaming, parsing, and fetch controls
+  remain backend-enforced, and retained strict dependency, lint, type, test,
+  and production-build gates for the deployed bundle.
+
+### Added
+
+- Added compact object and participation cues to the Worlds chooser from the
+  backend workflow manifest, so each world communicates what can actually be
+  found and done without another block of explanatory prose.
+- Added backend capability-aware presentation so Worlds, specialized groups
+  and sources, account Worlds tabs, quote listings, and federation admin tools
+  are only exposed when the connected server advertises the required API.
+- Added v1-first instance discovery with selective v2 metadata loading, keeping
+  current Mastodon metadata while avoiding unsupported v2 probes on Pleroma,
+  Akkoma, and older Rebased backends.
+- Added a reusable, read-only Chromium compatibility audit that serves the
+  current FE through isolated same-origin HTTP and WebSocket gateways for
+  Mastodon, Pleroma, Rebased, and Akkoma backends.
+- Added a compact protocol-address list to local profiles so visitors can see,
+  open, and copy the account's ActivityPub address, Nostr `npub`, and optional
+  Bluesky and Diaspora addresses without exposing unprovisioned identities.
+
+### Fixed
+
+- Stopped logged-out Worlds feeds from requesting an access-controlled public
+  timeline when the backend disables anonymous public timelines; the page now
+  offers sign-in without producing browser 401 errors.
+- Fixed non-book Worlds libraries so they render only their family-specific
+  workspace instead of mounting the BookWyrm library above it.
+- Fixed status-backed Worlds results so ordinary Soapbox post controls remain
+  visible while the world-specific book, media, event, project, route, and
+  catalog details stay available beneath the post. Added a bounded status
+  hydration timeout so a delayed local fetch falls back to the specialized
+  result instead of leaving an endless placeholder.
+- Stopped enabling the trending-status panel on Unfathomably merely through
+  inherited backend-family assumptions; the FE now requires the explicit
+  `trending_statuses` capability and avoids unsupported API requests.
+- Restored authenticated browser streaming against v2-capable backends by
+  normalizing both standard and top-level v2 streaming URL shapes and falling
+  back to the validated v1 URL when v2 metadata is incomplete; read-only
+  live-page audits now require and report a completed WebSocket handshake only
+  on stream-capable routes and allow a bounded browser handshake window.
+- Removed the status-creating streaming probe so browser verification cannot
+  create timeline content; page audits use existing read-only traffic and
+  capture handshake, frame, DOM, console, and network evidence.
+- Fixed account, group, and source schema normalization so legacy Pleroma
+  default avatar and header URLs resolve to the FE's bundled fallback assets
+  instead of generating browser 404s for `/images/avi.png` and
+  `/images/banner.png`.
+- Restored WebSocket and EventSource timeline connections when instance
+  discovery uses the Mastodon v1 API by carrying `urls.streaming_api` into the
+  frontend's normalized streaming configuration while preserving newer v2
+  metadata when both forms are available.
+- Restored reliable live timeline updates by falling back to EventSource after
+  a failed initial WebSocket upgrade and reconciling home, local, global, and
+  landing timelines while the reader is at the top of the list.
+- Prevented rejected audio and video playback promises from surfacing as
+  uncaught navigation or media errors while a remote source fallback is being
+  selected or a player is being removed.
+- Strengthened the release gate with uncached zero-warning linting, dependency
+  constraints, lockfile deduplication, recursive security auditing, the full
+  test suite, type and localization checks, and a production build.
+- Updated the ESLint parser target for modern Node audit scripts and corrected
+  shared instance-query test setup so capability-aware navigation tests model
+  completed v1 and v2 probes.
+- Pinned patched transitive releases for brace expansion, DOM sanitization,
+  URI parsing, YAML parsing, tar handling, and Undici so the recursive
+  dependency audit remains clean even when parent constraints lag a security
+  patch.
+- Split anonymous local and federated timeline and streaming support into
+  explicit backend capabilities, keeping restricted Unfathomably deployments
+  behind login without weakening authenticated streams.
+- Fixed logged-out compatibility pages that started unsupported local timeline
+  streams, malformed unsupported quote-list URLs through a legacy redirect,
+  public-stream transports that briefly connected while routes changed, and
+  blank deep links during transient instance-metadata failures.
+- Completed a full compatibility page audit by suppressing invalid legacy
+  backend manifests, routing access-controlled public screens through login on
+  generic backends, and retrying transient instance-metadata failures during
+  frontend bootstrap.
+
+- Restored the pre-React theme bootstrap asset and module preload so saved
+  light, dark, and black modes apply without a missing-script console error.
+- Stopped ordinary profile pages from probing the account Worlds endpoint when
+  the connected backend does not advertise native federation support.
+- Stopped sending false-valued optional media filters to strict timeline APIs,
+  while retaining media-only filtering where the user actually requests it.
+- Stopped treating every Rebased-family or federating backend as if it exposed
+  Unfathomably Worlds, group discovery, source, and quote-listing extensions.
 
 ## [3.5.0] - 2026-08-12
 

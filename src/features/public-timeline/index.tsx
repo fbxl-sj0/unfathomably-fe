@@ -54,7 +54,7 @@ const PublicTimeline = () => {
   };
 
   const handleRefresh = () => {
-    return dispatch(expandPublicTimeline({ onlyMedia }));
+    return dispatch(expandPublicTimeline({ onlyMedia, language }));
   };
 
   usePublicStream({ onlyMedia, language });
@@ -113,6 +113,7 @@ const PublicTimeline = () => {
           timelineId={`${timelineId}${onlyMedia ? ':media' : ''}`}
           prefix='home'
           onLoadMore={handleLoadMore}
+          onRefreshAtTop={handleRefresh}
           emptyMessage={<FormattedMessage id='empty_column.public' defaultMessage='There is nothing here! Write something publicly, or manually follow users from other servers to fill it up' />}
         />
       </PullToRefresh>

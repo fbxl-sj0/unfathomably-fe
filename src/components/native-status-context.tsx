@@ -36,6 +36,7 @@ import NativeLiveVideoContext from '@/components/native-live-video-context.tsx';
 import NativeModelResource from '@/components/native-model-resource.tsx';
 import NativeObjectStateControl from '@/components/native-object-state-control.tsx';
 import NativeRouteMap from '@/components/native-route-map.tsx';
+import WorldObjectStateControl from '@/components/world-object-state-control.tsx';
 import { useApi } from '@/hooks/useApi.ts';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
 import { useReplyCompose } from '@/hooks/useReplyCompose.ts';
@@ -89,6 +90,7 @@ const NativeStatusContext: React.FC<INativeStatusContext> = ({ authorAccountId, 
 
   const type = shortNativeType(presentation.type);
   const platform = fieldValue(presentation, 'platform');
+  const workspaceFamily = fieldValue(presentation, 'family');
   const family = fieldValue(presentation, 'family');
   const kind = fieldValue(presentation, 'kind');
   const action = fieldValue(presentation, 'action');
@@ -278,6 +280,13 @@ const NativeStatusContext: React.FC<INativeStatusContext> = ({ authorAccountId, 
           ) : null}
 
           <NativeObjectStateControl authorAccountId={authorAccountId} native={presentation} statusId={statusId} />
+          {typeof workspaceFamily === 'string' && workspaceFamily !== 'books' ? (
+            <WorldObjectStateControl
+              family={workspaceFamily}
+              objectUri={presentation.canonical_id}
+              presentation={presentation as unknown as Record<string, unknown>}
+            />
+          ) : null}
           {statusId ? <NativeContextActions presentation={presentation} statusId={statusId} /> : null}
 
           {statusId && presentation.controls.includes('listen') ? (

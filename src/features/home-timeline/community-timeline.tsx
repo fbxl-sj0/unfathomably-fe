@@ -45,6 +45,7 @@ const CommunityTimeline = () => {
           timelineId={`${timelineId}${onlyMedia ? ':media' : ''}`}
           prefix='home'
           onLoadMore={handleLoadMore}
+          onRefreshAtTop={handleRefresh}
           emptyMessage={<FormattedMessage id='empty_column.community' defaultMessage='The local timeline is empty. Write something publicly to get the ball rolling!' />}
         />
       </PullToRefresh>

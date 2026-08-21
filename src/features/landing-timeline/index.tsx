@@ -7,6 +7,7 @@ import PullToRefresh from '@/components/pull-to-refresh.tsx';
 import { Column } from '@/components/ui/column.tsx';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useAppSelector } from '@/hooks/useAppSelector.ts';
+import { useFeatures } from '@/hooks/useFeatures.ts';
 import { useInstance } from '@/hooks/useInstance.ts';
 import { useIsMobile } from '@/hooks/useIsMobile.ts';
 
@@ -17,10 +18,11 @@ import { SiteBanner } from './components/site-banner.tsx';
 
 const LandingTimeline = () => {
   const dispatch = useAppDispatch();
+  const features = useFeatures();
   const { instance } = useInstance();
   const isMobile = useIsMobile();
 
-  const timelineEnabled = !instance.pleroma.metadata.restrict_unauthenticated.timelines.local;
+  const timelineEnabled = features.anonymousLocalTimeline && !instance.pleroma.metadata.restrict_unauthenticated.timelines.local;
   const next = useAppSelector(state => state.timelines.get('community')?.next);
 
   const timelineId = 'community';
@@ -59,6 +61,7 @@ const LandingTimeline = () => {
             timelineId={timelineId}
             prefix='home'
             onLoadMore={handleLoadMore}
+            onRefreshAtTop={handleRefresh}
             emptyMessage={<FormattedMessage id='empty_column.community' defaultMessage='The local timeline is empty. Write something publicly to get the ball rolling!' />}
           />
         </PullToRefresh>

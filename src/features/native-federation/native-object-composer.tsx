@@ -228,6 +228,8 @@ const workflows: Record<TemplateKey, WorkflowDefinition> = {
       { key: 'author', label: 'Author', placeholder: 'Author or editor' },
       { key: 'isbn', label: 'ISBN', hint: 'Optional identifier printed near the barcode or copyright page.', placeholder: 'ISBN-10 or ISBN-13' },
       { key: 'edition', label: 'Edition', hint: 'Only needed when the publisher, translation, or revision matters.', placeholder: 'Publisher, translation, or edition' },
+      { key: 'series', label: 'Series', placeholder: 'Series name, if this is part of one' },
+      { key: 'series_number', label: 'Series position', hint: 'Use the number or label readers see, such as 2 or 1.5.', placeholder: '2' },
       { key: 'rating', label: 'Rating', input: 'select', options: [option('No rating', ''), ...[1, 2, 3, 4, 5].map((value) => option(`${value} of 5`, String(value)))] },
       { key: 'language', label: 'Book language', placeholder: 'English, French, Polish...' },
     ],

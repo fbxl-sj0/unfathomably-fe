@@ -128,6 +128,41 @@ describe('getInstanceScopes', () => {
 });
 
 describe('getFeatures', () => {
+  describe('anonymous public access capabilities', () => {
+    it('requires each timeline and streaming capability to be advertised explicitly', () => {
+      const supported = buildInstance({
+        version: '2.7.2 (compatible; unfathomably-be 3.5.0+unfathomably-be)',
+        pleroma: {
+          metadata: {
+            features: [
+              'anonymous_public_timeline',
+              'anonymous_local_timeline',
+              'anonymous_public_streaming',
+              'anonymous_local_streaming',
+            ],
+          },
+        },
+      });
+      const restricted = buildInstance({
+        version: '2.7.2 (compatible; unfathomably-be 3.5.0+unfathomably-be)',
+        pleroma: { metadata: { features: [] } },
+      });
+
+      expect(getFeatures(supported)).toMatchObject({
+        anonymousPublicTimeline: true,
+        anonymousLocalTimeline: true,
+        anonymousPublicStreaming: true,
+        anonymousLocalStreaming: true,
+      });
+      expect(getFeatures(restricted)).toMatchObject({
+        anonymousPublicTimeline: false,
+        anonymousLocalTimeline: false,
+        anonymousPublicStreaming: false,
+        anonymousLocalStreaming: false,
+      });
+    });
+  });
+
   describe('Pleroma capability aliases', () => {
     it.each([
       'mastodon_api_grouped_notifications',
@@ -350,7 +385,17 @@ describe('getFeatures', () => {
       expect(features.suggestions).toBe(true);
       expect(features.suggestionsV2).toBe(true);
       expect(features.sources).toBe(true);
+      expect(features.trendingStatuses).toBe(false);
       expect(features.unrestrictedLists).toBe(true);
+    });
+
+    it('enables trending statuses only when Unfathomably advertises them', () => {
+      const instance = buildInstance({
+        version: '2.7.2 (compatible; unfathomably-be 3.5.0+unfathomably-be)',
+        pleroma: { metadata: { features: ['trending_statuses'] } },
+      });
+
+      expect(getFeatures(instance).trendingStatuses).toBe(true);
     });
   });
 

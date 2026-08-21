@@ -60,6 +60,12 @@ const Timeline: React.FC<ITimeline> = ({
 
   const [isInTop, setIsInTop] = useState<boolean>(window.scrollY < 50);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshAtTopRef = useRef(onRefreshAtTop);
+  const hasRefreshAtTop = Boolean(onRefreshAtTop);
+
+  useEffect(() => {
+    refreshAtTopRef.current = onRefreshAtTop;
+  }, [onRefreshAtTop]);
 
 
   const handleDequeueTimeline = useCallback(() => {
@@ -108,7 +114,7 @@ const Timeline: React.FC<ITimeline> = ({
   }, [dispatch, handleDequeueTimeline, isInTop, timelineId]);
 
   useEffect(() => {
-    if (!onRefreshAtTop || !isInTop) {
+    if (!hasRefreshAtTop || !isInTop) {
       return;
     }
 
@@ -117,13 +123,13 @@ const Timeline: React.FC<ITimeline> = ({
         return;
       }
 
-      onRefreshAtTop();
+      refreshAtTopRef.current?.();
     };
 
     const interval = setInterval(refresh, refreshAtTopInterval);
 
     return () => clearInterval(interval);
-  }, [isInTop, onRefreshAtTop, refreshAtTopInterval]);
+  }, [hasRefreshAtTop, isInTop, refreshAtTopInterval]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);

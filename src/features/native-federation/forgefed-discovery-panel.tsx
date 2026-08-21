@@ -22,6 +22,7 @@ import { Link } from 'react-router-dom';
 
 import NativeDiscoveryLoading from '@/features/native-federation/native-discovery-loading.tsx';
 import NativeDiscoveryState from '@/features/native-federation/native-discovery-state.tsx';
+import WorldObjectStateControl from '@/components/world-object-state-control.tsx';
 import { useForgeFedDiscovery } from '@/api/hooks/discovery/useForgeFedDiscovery.ts';
 
 import { nativeResolvePath } from './native-resolve-path.ts';
@@ -65,10 +66,20 @@ const createPath = (template: 'software' | 'software_project', reference?: strin
   return `/worlds/development?${params.toString()}#worlds-create`;
 };
 
+const projectLane = (item: { is_archived?: boolean; is_wip?: boolean; kind: string; status?: string }): 'backlog' | 'active' | 'completed' => {
+  const status = item.status?.toLowerCase() || '';
+
+  if (item.is_archived || /^(closed|completed|done|merged|released|resolved)$/.test(status)) return 'completed';
+  if (item.is_wip || /^(active|in progress|in_progress|open|review|reviewing)$/.test(status) || /ticket|issue|merge_request|patch/.test(item.kind)) return 'active';
+
+  return 'backlog';
+};
+
 const ForgeFedDiscoveryPanel: React.FC<ForgeFedDiscoveryPanelProps> = ({ enabled, family }) => {
   const [draftQuery, setDraftQuery] = useState('');
   const [query, setQuery] = useState('');
   const [offset, setOffset] = useState(0);
+  const [view, setView] = useState<'cards' | 'board'>('cards');
   const visible = enabled && family === 'development';
   const result = useForgeFedDiscovery(visible, query, offset);
 
@@ -91,6 +102,22 @@ const ForgeFedDiscoveryPanel: React.FC<ForgeFedDiscoveryPanelProps> = ({ enabled
             <FormattedMessage id='native_discovery.forgefed.create_project' defaultMessage='Create project' />
           </Link>
           <p className='self-center text-sm text-gray-600 black:text-gray-300 dark:text-gray-300'>To file an issue, find its project below and use that project's File issue action.</p>
+        </div>
+
+        <div className='mt-3 inline-flex overflow-hidden rounded-lg border border-primary-300 black:border-primary-700 dark:border-primary-700'>
+          {(['cards', 'board'] as const).map(option => (
+            <button
+              aria-pressed={view === option}
+              className={view === option
+                ? 'bg-primary-600 px-3 py-2 text-sm font-black text-white'
+                : 'bg-white black:bg-black px-3 py-2 text-sm font-black text-gray-900 black:text-white hover:bg-primary-50 black:hover:bg-primary-950 dark:bg-primary-900 dark:text-white dark:hover:bg-primary-800'}
+              key={option}
+              type='button'
+              onClick={() => setView(option)}
+            >
+              {option === 'cards' ? 'Activity' : 'Project board'}
+            </button>
+          ))}
         </div>
 
         <NativeDiscoverySearchForm
@@ -134,6 +161,39 @@ const ForgeFedDiscoveryPanel: React.FC<ForgeFedDiscoveryPanelProps> = ({ enabled
             <FormattedMessage id='native_discovery.forgefed.empty' defaultMessage='No projects or issues have reached your server yet. Find a project below, then follow its owner for updates.' />
           )}
         </NativeDiscoveryState>
+      ) : view === 'board' ? (
+        <div className='grid gap-3 p-4 lg:grid-cols-3 sm:p-5'>
+          {([
+            ['backlog', 'Backlog'],
+            ['active', 'Active'],
+            ['completed', 'Completed'],
+          ] as const).map(([lane, label]) => {
+            const items = result.data.items.filter(item => projectLane(item) === lane);
+
+            return (
+              <section className='min-w-0 rounded-xl border border-primary-200 black:border-primary-800 bg-primary-50 black:bg-primary-950 p-3 dark:border-primary-800 dark:bg-primary-950/30' key={lane}>
+                <h3 className='flex items-center justify-between text-sm font-black uppercase tracking-wide text-gray-900 black:text-white dark:text-white'>
+                  <span>{label}</span>
+                  <span className='rounded-full bg-primary-600 px-2 py-0.5 text-xs text-white'>{items.length}</span>
+                </h3>
+                <div className='mt-3 space-y-2'>
+                  {items.length === 0 ? (
+                    <p className='py-4 text-center text-sm text-gray-600 black:text-gray-300 dark:text-gray-300'>No items</p>
+                  ) : items.map(item => (
+                    <Link
+                      className='block rounded-lg border border-primary-200 black:border-primary-800 bg-white black:bg-black p-3 hover:border-primary-500 dark:border-primary-700 dark:bg-primary-900'
+                      key={item.id}
+                      to={nativeResolvePath('development', item.activitypub_url)}
+                    >
+                      <p className='line-clamp-2 text-sm font-black text-gray-950 black:text-white dark:text-white'>{item.title}</p>
+                      <p className='mt-1 truncate text-xs font-bold text-primary-700 black:text-primary-300 dark:text-primary-300'>{item.status || kindLabel(item.kind)}</p>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
       ) : (
         <div className='divide-y divide-solid divide-gray-200 black:divide-gray-800 dark:divide-gray-800'>
           {result.data.items.map(item => {
@@ -215,6 +275,11 @@ const ForgeFedDiscoveryPanel: React.FC<ForgeFedDiscoveryPanelProps> = ({ enabled
                   </div>
                 )}
 
+                <WorldObjectStateControl
+                  family='development'
+                  objectUri={item.activitypub_url}
+                  presentation={{ source_host: item.source_host, title: item.title }}
+                />
                 <div className='mt-4 flex flex-wrap gap-2'>
                   {item.can_file_locally && (
                     <Link to={createPath('software', item.activitypub_url)} className='rounded-lg bg-primary-600 px-3 py-2 text-sm font-black text-white hover:bg-primary-500'>

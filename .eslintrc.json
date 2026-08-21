@@ -31,7 +31,7 @@
       "experimentalObjectRestSpread": true,
       "jsx": true
     },
-    "ecmaVersion": 2018
+    "ecmaVersion": "latest"
   },
   "settings": {
     "react": {

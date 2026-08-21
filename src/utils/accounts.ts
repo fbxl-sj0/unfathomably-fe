@@ -52,3 +52,22 @@ const DEFAULT_AVATARS = [
 export const isDefaultAvatar = (url: string) => {
   return DEFAULT_AVATARS.some(avatar => url.endsWith(avatar));
 };
+
+/** Return the first usable avatar URL, or the bundled fallback asset. */
+const firstUsableURL = (
+  urls: unknown[],
+  fallback: string,
+  isDefault: (url: string) => boolean,
+): string => {
+  const url = urls.find(value => typeof value === 'string' && value.length > 0 && !isDefault(value));
+  return typeof url === 'string' ? url : fallback;
+};
+
+export const getAvatarURL = (...urls: unknown[]): string => (
+  firstUsableURL(urls, avatarMissing, isDefaultAvatar)
+);
+
+/** Return the first usable header URL, or the bundled fallback asset. */
+export const getHeaderURL = (...urls: unknown[]): string => (
+  firstUsableURL(urls, headerMissing, isDefaultHeader)
+);

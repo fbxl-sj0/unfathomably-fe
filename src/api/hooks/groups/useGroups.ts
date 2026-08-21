@@ -14,7 +14,7 @@ function useGroups(q: string = '') {
 
   const { entities, ...result } = useEntities<Group>(
     [Entities.GROUPS, 'search', q],
-    () => api.get('/api/v1/groups', { searchParams: { q } }),
+    () => api.get('/api/v1/groups', { searchParams: q ? { q } : undefined }),
     { enabled: features.groups && isLoggedIn, schema: groupSchema },
   );
   const { relationships } = useGroupRelationships(

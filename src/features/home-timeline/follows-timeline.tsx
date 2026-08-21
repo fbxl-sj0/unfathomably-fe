@@ -69,6 +69,7 @@ const FollowsTimeline: React.FC = () => {
         <Timeline
           scrollKey='home_timeline'
           onLoadMore={handleLoadMore}
+          onRefreshAtTop={handleRefresh}
           timelineId='home'
           emptyMessage={
             <Stack space={1}>

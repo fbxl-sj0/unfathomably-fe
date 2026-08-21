@@ -21,6 +21,7 @@ import { capitalize } from '@/utils/strings.ts';
 import ProfileFamiliarFollowers from './profile-familiar-followers.tsx';
 import ProfileField from './profile-field.tsx';
 import ProfileIdentityProofs from './profile-identity-proofs.tsx';
+import ProfileProtocolAddresses from './profile-protocol-addresses.tsx';
 import ProfileStats from './profile-stats.tsx';
 import NostrProfileMetadata from './nostr-profile-metadata.tsx';
 
@@ -166,20 +167,34 @@ const ProfileInfoPanel: React.FC<IProfileInfoPanel> = ({ account, username }) =>
             )}
           </HStack>
 
-          <HStack alignItems='center' space={0.5}>
-            {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
-            <Text size='sm' theme='muted' direction='ltr' truncate>
-              @{displayFqn ? account.fqn : account.acct}
-            </Text>
+          {account.local ? (
+            <HStack alignItems='start' space={1}>
+              <ProfileProtocolAddresses account={account} />
 
-            {account.locked && (
-              <Icon
-                src={lockIcon}
-                alt={intl.formatMessage(messages.account_locked)}
-                className='size-4 text-gray-600'
-              />
-            )}
-          </HStack>
+              {account.locked && (
+                <Icon
+                  src={lockIcon}
+                  alt={intl.formatMessage(messages.account_locked)}
+                  className='mt-1 size-4 shrink-0 text-gray-600'
+                />
+              )}
+            </HStack>
+          ) : (
+            <HStack alignItems='center' space={0.5}>
+              {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
+              <Text size='sm' theme='muted' direction='ltr' truncate>
+                @{displayFqn ? account.fqn : account.acct}
+              </Text>
+
+              {account.locked && (
+                <Icon
+                  src={lockIcon}
+                  alt={intl.formatMessage(messages.account_locked)}
+                  className='size-4 text-gray-600'
+                />
+              )}
+            </HStack>
+          )}
         </Stack>
 
         <ProfileStats account={account} />

@@ -18,13 +18,15 @@ function useTimelineStream(...args: Parameters<typeof connectTimelineStream>) {
 
   const accessToken = useAppSelector(getAccessToken);
   const streamingUrl = instance.configuration.urls.streaming;
+  const anonymousPublicStreaming = instance.pleroma.metadata.features.includes('anonymous_public_streaming');
+  const anonymousLocalStreaming = instance.pleroma.metadata.features.includes('anonymous_local_streaming');
 
   const connect = () => {
     if (
       enabled &&
       streamingUrl &&
       !stream.current &&
-      (!requiresAccessToken(path) || accessToken)
+      (!requiresAccessToken(path, anonymousPublicStreaming, anonymousLocalStreaming) || accessToken)
     ) {
       stream.current = dispatch(connectTimelineStream(...args));
     }
@@ -47,10 +49,19 @@ function useTimelineStream(...args: Parameters<typeof connectTimelineStream>) {
   };
 }
 
-function requiresAccessToken(path: string) {
+function requiresAccessToken(
+  path: string,
+  anonymousPublicStreaming: boolean,
+  anonymousLocalStreaming: boolean,
+) {
   const stream = path.split('&', 1)[0];
 
-  return stream === 'direct' || stream === 'list' || stream === 'user' || stream.startsWith('user:');
+  return stream === 'direct'
+    || stream === 'list'
+    || stream === 'user'
+    || stream.startsWith('user:')
+    || (stream.startsWith('public:local') && !anonymousLocalStreaming)
+    || (stream.startsWith('public') && !stream.startsWith('public:local') && !anonymousPublicStreaming);
 }
 
 export { useTimelineStream };

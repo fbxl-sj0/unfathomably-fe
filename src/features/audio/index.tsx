@@ -11,6 +11,7 @@ import { defineMessages, useIntl } from 'react-intl';
 import SvgIcon from '@/components/ui/svg-icon.tsx';
 import { formatTime, getPointerPosition } from '@/features/video/index.tsx';
 import useMediaSourceFallback from '@/hooks/useMediaSourceFallback.ts';
+import { playMedia } from '@/utils/media.ts';
 
 import Visualizer from './visualizer.ts';
 
@@ -117,7 +118,7 @@ const Audio: React.FC<IAudio> = (props) => {
     }
 
     if (paused) {
-      audio.current?.play();
+      playMedia(audio.current);
     } else {
       audio.current?.pause();
     }
@@ -214,7 +215,7 @@ const Audio: React.FC<IAudio> = (props) => {
     document.removeEventListener('touchend', handleMouseUp, true);
 
     setDragging(false);
-    audio.current?.play();
+    playMedia(audio.current);
   };
 
   const handleMouseMove = throttle((e) => {

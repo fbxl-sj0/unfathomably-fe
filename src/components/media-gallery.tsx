@@ -10,7 +10,7 @@ import useMediaSourceFallback from '@/hooks/useMediaSourceFallback.ts';
 import { useSettings } from '@/hooks/useSettings.ts';
 import { useSoapboxConfig } from '@/hooks/useSoapboxConfig.ts';
 import { Attachment } from '@/schemas/index.ts';
-import { truncateFilename } from '@/utils/media.ts';
+import { playMedia, truncateFilename } from '@/utils/media.ts';
 
 import { isIOS } from '../is-mobile.ts';
 import { isPanoramic, isPortrait, isNonConformingRatio, minimumAspectRatio, maximumAspectRatio } from '../utils/media-aspect-ratio.ts';
@@ -91,7 +91,7 @@ const Item: React.FC<IItem> = ({
 
   const handleMouseEnter: React.MouseEventHandler<HTMLVideoElement> = ({ currentTarget: video }) => {
     if (hoverToPlay()) {
-      video.play();
+      playMedia(video);
     }
   };
 
@@ -128,7 +128,7 @@ const Item: React.FC<IItem> = ({
   const handleVideoHover = (event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget;
     video.playbackRate = 3.0;
-    video.play();
+    playMedia(video);
   };
 
   const handleVideoLeave = (event: React.SyntheticEvent<HTMLVideoElement>) => {

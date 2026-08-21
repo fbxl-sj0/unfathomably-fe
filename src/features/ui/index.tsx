@@ -239,12 +239,12 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         NOTE: we cannot nest routes in a fragment
         https://stackoverflow.com/a/68637108
       */}
-        {features.federating && <WrappedRoute path='/timeline/local' exact page={HomePage} component={HomeTimeline} content={children} publicRoute />}
-        {features.federating && <WrappedRoute path='/timeline/global' exact page={HomePage} component={PublicTimeline} content={children} publicRoute />}
-        {features.federating && <WrappedRoute path='/timeline/fediverse' exact page={HomePage} component={PublicTimeline} content={children} publicRoute />}
-        {features.federating && <WrappedRoute path='/worlds' exact page={HomePage} component={NativeFederationTimeline} content={children} publicRoute />}
-        {features.federating && <WrappedRoute path='/federation' exact page={HomePage} component={NativeFederationTimeline} content={children} publicRoute />}
-        {features.federating && <WrappedRoute path='/worlds/:family' exact page={HomePage} component={NativeFederationTimeline} content={children} publicRoute />}
+        {features.federating && <WrappedRoute path='/timeline/local' exact page={HomePage} component={HomeTimeline} content={children} publicRoute={features.anonymousLocalTimeline} />}
+        {features.federating && <WrappedRoute path='/timeline/global' exact page={HomePage} component={PublicTimeline} content={children} publicRoute={features.anonymousPublicTimeline} />}
+        {features.federating && <WrappedRoute path='/timeline/fediverse' exact page={HomePage} component={PublicTimeline} content={children} publicRoute={features.anonymousPublicTimeline} />}
+        {features.nativeFederation && <WrappedRoute path='/worlds' exact page={HomePage} component={NativeFederationTimeline} content={children} publicRoute />}
+        {features.nativeFederation && <WrappedRoute path='/federation' exact page={HomePage} component={NativeFederationTimeline} content={children} publicRoute />}
+        {features.nativeFederation && <WrappedRoute path='/worlds/:family' exact page={HomePage} component={NativeFederationTimeline} content={children} publicRoute />}
         {features.bubbleTimeline && <WrappedRoute path='/timeline/bubble' exact page={HomePage} component={BubbleTimeline} content={children} publicRoute />}
         {features.federating && <WrappedRoute path='/timeline/:instance' exact page={RemoteInstancePage} component={RemoteTimeline} content={children} publicRoute />}
 
@@ -313,11 +313,11 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         <WrappedRoute path='/notifications' page={DefaultPage} component={Notifications} content={children} />
 
         <Redirect from='/search' to='/explore' exact />
-        <WrappedRoute path='/explore' page={ExplorePage} component={Explore} content={children} publicRoute />
+        <WrappedRoute path='/explore' page={ExplorePage} component={Explore} content={children} publicRoute={features.anonymousPublicTimeline} />
         {features.ditto && <WrappedRoute path='/divine' page={DefaultPage} component={DivinePage} content={children} publicRoute />}
         {features.suggestionsLocal && <WrappedRoute path='/suggestions/local' publicRoute page={DefaultPage} component={FollowRecommendations} content={children} componentParams={{ local: true }} />}
         {features.suggestions && <WrappedRoute path='/suggestions' exact publicRoute page={DefaultPage} component={FollowRecommendations} content={children} />}
-        {features.profileDirectory && <WrappedRoute path='/directory' exact publicRoute page={DefaultPage} component={Directory} content={children} />}
+        {features.profileDirectory && <WrappedRoute path='/directory' exact publicRoute={features.nativeFederation} page={DefaultPage} component={Directory} content={children} />}
         {features.events && <WrappedRoute path='/events' page={EventsPage} component={Events} content={children} />}
 
         {features.chats && <WrappedRoute path='/chats' exact page={ChatsPage} component={ChatIndex} content={children} />}
@@ -338,15 +338,15 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
         <WrappedRoute path='/@:username/followers' publicRoute={!authenticatedProfile} component={Followers} page={ProfilePage} content={children} />
         <WrappedRoute path='/@:username/following' publicRoute={!authenticatedProfile} component={Following} page={ProfilePage} content={children} />
         <WrappedRoute path='/@:username/media' publicRoute={!authenticatedProfile} component={AccountGallery} page={ProfilePage} content={children} />
-        <WrappedRoute path='/@:username/worlds/:family' publicRoute={!authenticatedProfile} component={AccountWorlds} page={ProfilePage} content={children} />
+        {features.nativeFederation && <WrappedRoute path='/@:username/worlds/:family' publicRoute={!authenticatedProfile} component={AccountWorlds} page={ProfilePage} content={children} />}
         <WrappedRoute path='/@:username/tagged/:tag' exact component={AccountTimeline} page={ProfilePage} content={children} />
         <WrappedRoute path='/@:username/favorites' component={FavouritedStatuses} page={ProfilePage} content={children} />
         <WrappedRoute path='/@:username/pins' component={PinnedStatuses} page={ProfilePage} content={children} />
         <WrappedRoute path='/@:username/posts/:statusId' publicRoute exact page={StatusPage} component={Status} content={children} />
-        <WrappedRoute path='/@:username/posts/:statusId/quotes' publicRoute page={StatusPage} component={Quotes} content={children} />
+        {features.quotePostListing && <WrappedRoute path='/@:username/posts/:statusId/quotes' publicRoute page={StatusPage} component={Quotes} content={children} />}
         {features.events && <WrappedRoute path='/@:username/events/:statusId' publicRoute exact page={EventPage} component={EventInformation} content={children} />}
         {features.events && <WrappedRoute path='/@:username/events/:statusId/discussion' publicRoute exact page={EventPage} component={EventDiscussion} content={children} />}
-        <Redirect from='/@:username/:statusId' to='/@:username/posts/:statusId' />
+        <Redirect from='/@:username/:statusId' to='/@:username/posts/:statusId' exact />
         <WrappedRoute path='/posts/:statusId' publicRoute exact page={DefaultPage} component={Status} content={children} />
 
         {features.groups && <WrappedRoute path='/groups' exact page={GroupsPage} component={GroupsDefault} content={children} />}
@@ -417,14 +417,14 @@ const SwitchingColumnsArea: React.FC<ISwitchingColumnsArea> = ({ children }) => 
 
         <WrappedRoute path='/soapbox/admin' staffOnly page={AdminPage} component={Dashboard} content={children} exact />
         <WrappedRoute path='/soapbox/admin/approval' staffOnly page={AdminPage} component={Dashboard} content={children} exact />
-        <WrappedRoute path='/soapbox/admin/federation-connectors' staffOnly page={AdminPage} component={Dashboard} content={children} exact />
+        {features.nativeFederation && <WrappedRoute path='/soapbox/admin/federation-connectors' staffOnly page={AdminPage} component={Dashboard} content={children} exact />}
         <WrappedRoute path='/soapbox/admin/fasps' adminOnly page={AdminPage} component={Dashboard} content={children} exact />
         {features.ditto && <WrappedRoute path='/soapbox/admin/ditto-server' adminOnly page={WidePage} component={ManageDittoServer} content={children} exact />}
         <WrappedRoute path='/soapbox/admin/reports' staffOnly page={AdminPage} component={Dashboard} content={children} exact />
         <WrappedRoute path='/soapbox/admin/log' staffOnly page={AdminPage} component={ModerationLog} content={children} exact />
         <WrappedRoute path='/soapbox/admin/invites' adminOnly page={AdminPage} component={Invites} content={children} exact />
         <WrappedRoute path='/soapbox/admin/database-cleanup' adminOnly page={AdminPage} component={DatabaseCleanup} content={children} exact />
-        <WrappedRoute path='/soapbox/admin/federation-health' adminOnly page={AdminPage} component={FederationHealth} content={children} exact />
+        {features.nativeFederation && <WrappedRoute path='/soapbox/admin/federation-health' adminOnly page={AdminPage} component={FederationHealth} content={children} exact />}
         {features.ditto && <WrappedRoute path='/soapbox/admin/zap-split' staffOnly page={WidePage} component={ManageZapSplit} content={children} exact />}
         <WrappedRoute path='/soapbox/admin/users' staffOnly page={AdminPage} component={UserIndex} content={children} exact />
         <WrappedRoute path='/soapbox/admin/theme' staffOnly page={AdminPage} component={ThemeEditor} content={children} exact />

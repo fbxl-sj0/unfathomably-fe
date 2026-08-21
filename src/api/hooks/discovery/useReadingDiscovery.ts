@@ -52,6 +52,8 @@ export interface ReadingBookContext {
   subtitle?: string;
   authors: ReadingBookAuthor[];
   work_url?: string;
+  series?: string;
+  series_number?: string;
   isbn_10?: string;
   isbn_13?: string;
   catalogue_links: ReadingCatalogueLink[];
@@ -182,6 +184,10 @@ const normalizeBook = (value: unknown): ReadingBookContext | null => {
       ? value.authors.map(normalizeBookAuthor).filter((author): author is ReadingBookAuthor => author !== null).slice(0, 8)
       : [],
     work_url: safeHttpUrl(value.work_url),
+    series: stringValue(value.series),
+    series_number: typeof value.series_number === 'number' && Number.isFinite(value.series_number)
+      ? String(value.series_number)
+      : stringValue(value.series_number),
     isbn_10: stringValue(value.isbn_10),
     isbn_13: stringValue(value.isbn_13),
     catalogue_links: Array.isArray(value.catalogue_links)

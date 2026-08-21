@@ -20,6 +20,7 @@ import { BookLibrary } from '@/components/book-shelf-control.tsx';
 import MissingIndicator from '@/components/missing-indicator.tsx';
 import Spinner from '@/components/ui/spinner.tsx';
 import AccountTimeline from '@/features/account-timeline/index.tsx';
+import WorldObjectLibrary from '@/features/native-federation/world-object-library.tsx';
 
 const supportedFamilies = new Set([
   'audio', 'video', 'longform', 'photo', 'books', 'bookmarks', 'groups',
@@ -49,7 +50,16 @@ const AccountWorlds: React.FC<IAccountWorlds> = ({ params }) => {
     );
   }
 
-  return <AccountTimeline params={{ username: params.username }} nativeFamily={params.family} />;
+  return (
+    <>
+      <WorldObjectLibrary
+        accountId={account.id}
+        accountName={account.display_name || `@${account.acct}`}
+        family={params.family}
+      />
+      <AccountTimeline params={{ username: params.username }} nativeFamily={params.family} />
+    </>
+  );
 };
 
 export default AccountWorlds;

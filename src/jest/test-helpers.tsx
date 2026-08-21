@@ -66,10 +66,18 @@ const seedInstanceQuery = (state: any) => {
   const instance = state?.instance;
   if (!instance) return;
 
+  const instanceV1 = typeof instance.registrations === 'boolean'
+    ? instanceV1Schema.parse(instance)
+    : instanceV1Schema.parse({
+      ...instance,
+      registrations: instance.registrations.enabled,
+    });
+
   const instanceV2 = typeof instance.registrations === 'boolean'
-    ? upgradeInstance(instanceV1Schema.parse(instance))
+    ? upgradeInstance(instanceV1)
     : instanceV2Schema.parse(instance);
 
+  queryClient.setQueryData(['instance', location.origin, 'v1'], instanceV1);
   queryClient.setQueryData(['instance', location.origin, 'v2'], instanceV2);
 };
 

@@ -24,6 +24,7 @@ import { Link } from 'react-router-dom';
 import NativeDiscoveryLoading from '@/features/native-federation/native-discovery-loading.tsx';
 import NativeDiscoveryState from '@/features/native-federation/native-discovery-state.tsx';
 import { useEventDiscovery } from '@/api/hooks/discovery/useEventDiscovery.ts';
+import WorldObjectStateControl from '@/components/world-object-state-control.tsx';
 
 import type { EventDiscoveryItem } from '@/api/hooks/discovery/useEventDiscovery.ts';
 import { nativeResolvePath } from './native-resolve-path.ts';
@@ -147,6 +148,7 @@ const EventDiscoveryPanel: React.FC<EventDiscoveryPanelProps> = ({ enabled, fami
   const [query, setQuery] = useState('');
   const [submittedQuery, setSubmittedQuery] = useState('');
   const [offset, setOffset] = useState(0);
+  const [showAgenda, setShowAgenda] = useState(false);
   const visible = enabled && (family === 'all' || family === 'events');
   const result = useEventDiscovery(submittedQuery, offset, visible);
 
@@ -181,6 +183,27 @@ const EventDiscoveryPanel: React.FC<EventDiscoveryPanelProps> = ({ enabled, fami
         onSubmit={submit}
       />
 
+      <div className='flex items-center justify-end gap-2 border-b border-gray-200 px-4 py-2 black:border-gray-800 dark:border-gray-800 sm:px-5'>
+        <button
+          className={!showAgenda
+            ? 'rounded-full bg-primary-600 px-3 py-1 text-xs font-black text-white'
+            : 'rounded-full border border-primary-300 px-3 py-1 text-xs font-black text-primary-700 black:border-primary-700 black:text-primary-300 dark:border-primary-700 dark:text-primary-300'}
+          onClick={() => setShowAgenda(false)}
+          type='button'
+        >
+          Cards
+        </button>
+        <button
+          className={showAgenda
+            ? 'rounded-full bg-primary-600 px-3 py-1 text-xs font-black text-white'
+            : 'rounded-full border border-primary-300 px-3 py-1 text-xs font-black text-primary-700 black:border-primary-700 black:text-primary-300 dark:border-primary-700 dark:text-primary-300'}
+          onClick={() => setShowAgenda(true)}
+          type='button'
+        >
+          Agenda
+        </button>
+      </div>
+
       {result.isFetching && result.data.items.length === 0 ? (
         <NativeDiscoveryLoading />
       ) : result.isError || (result.data.providers.length > 0 && result.data.providers.every(item => item.status === 'unavailable')) ? (
@@ -199,6 +222,25 @@ const EventDiscoveryPanel: React.FC<EventDiscoveryPanelProps> = ({ enabled, fami
         </NativeDiscoveryState>
       ) : (
         <>
+          {showAgenda && (
+            <ol className='divide-y divide-solid divide-gray-200 border-b border-gray-200 black:divide-gray-800 black:border-gray-800 dark:divide-gray-800 dark:border-gray-800'>
+              {[...result.data.items]
+                .sort((left, right) => Date.parse(left.begins_at) - Date.parse(right.begins_at))
+                .map(event => (
+                  <li className='flex items-start gap-4 px-4 py-3 sm:px-5' key={`agenda:${event.id}`}>
+                    <time className='w-24 shrink-0 text-sm font-black text-primary-700 black:text-primary-300 dark:text-primary-300' dateTime={event.begins_at}>
+                      {intl.formatDate(new Date(event.begins_at), { month: 'short', day: 'numeric' })}
+                      <span className='block text-xs font-bold text-gray-500 black:text-gray-400 dark:text-gray-400'>{intl.formatTime(new Date(event.begins_at), { hour: 'numeric', minute: '2-digit' })}</span>
+                    </time>
+                    <div className='min-w-0 flex-1'>
+                      <Link className='block truncate font-black text-gray-950 hover:underline black:text-white dark:text-white' to={nativeResolvePath('events', event.activitypub_url)}>{event.title}</Link>
+                      <p className='truncate text-xs text-gray-600 black:text-gray-300 dark:text-gray-300'>{eventPlace(event)}</p>
+                    </div>
+                    <span className='shrink-0 text-xs font-bold text-gray-500 black:text-gray-400 dark:text-gray-400'>{lifecycleLabel(event)}</span>
+                  </li>
+                ))}
+            </ol>
+          )}
           <div className='divide-y divide-solid divide-gray-200 black:divide-gray-800 dark:divide-gray-800'>
             {result.data.items.map(event => (
               <NativeDiscoveryArticle item={event} key={event.id} className='bg-white black:bg-black dark:bg-primary-900 px-5 py-4'>
@@ -295,6 +337,16 @@ const EventDiscoveryPanel: React.FC<EventDiscoveryPanelProps> = ({ enabled, fami
                       ].filter(Boolean).join(' / ')}
                     </p>
                   )}
+                  <WorldObjectStateControl
+                    family='events'
+                    objectUri={event.activitypub_url}
+                    presentation={{
+                      image: event.image_url,
+                      source_host: event.source_host,
+                      subtitle: eventPlace(event),
+                      title: event.title,
+                    }}
+                  />
                   <div className='mt-4 flex flex-wrap gap-2'>
                     <Link to={nativeResolvePath('events', event.activitypub_url)} className='rounded-lg bg-primary-600 px-3 py-2 text-sm font-black text-white hover:bg-primary-500'>
                       {localAttendanceActionLabel(event)}

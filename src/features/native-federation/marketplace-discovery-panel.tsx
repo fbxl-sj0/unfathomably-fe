@@ -31,6 +31,7 @@ import {
 } from '@/api/hooks/discovery/useMarketplaceDiscovery.ts';
 import { useAppDispatch } from '@/hooks/useAppDispatch.ts';
 import { useOwnAccount } from '@/hooks/useOwnAccount.ts';
+import WorldObjectStateControl from '@/components/world-object-state-control.tsx';
 
 import NativeObjectUrlForm from './native-object-url-form.tsx';
 import { nativeResolvePath } from './native-resolve-path.ts';
@@ -192,6 +193,16 @@ const MarketplaceDiscoveryPanel: React.FC<MarketplaceDiscoveryPanelProps> = ({ e
                       defaultMessage='You can contact a known seller with a private Fediverse message without following them. Payment, delivery, and other marketplace-specific controls remain on the original listing.'
                     />
                   </p>
+                  <WorldObjectStateControl
+                    family='marketplace'
+                    objectUri={item.activitypub_url}
+                    presentation={{
+                      image: item.image_url,
+                      source_host: item.source_host,
+                      subtitle: price || item.location,
+                      title: item.title,
+                    }}
+                  />
                   <div className='mt-4 flex flex-wrap gap-2'>
                     {account && item.seller_id && (
                       <button type='button' className='rounded-lg bg-primary-600 px-3 py-2 text-sm font-black text-white hover:bg-primary-500' onClick={() => contactSeller(item)}>

@@ -105,6 +105,11 @@ const DetailedStatus: React.FC<IDetailedStatus> = ({
 
   let quote;
   const quoteState = actualStatus.pleroma.get('quote_state') as 'pending' | 'accepted' | 'rejected' | 'revoked' | null;
+  const quoteUrl = actualStatus.pleroma.get('quote_url') as string | null;
+  const quoteVisible = actualStatus.pleroma.get('quote_visible', true);
+  const quoteHref = quoteUrl
+    ? actualStatus.pleroma.getIn(['local_references', quoteUrl], quoteUrl) as string
+    : null;
   const quoteControls = quoteState ? (
     <QuoteAuthorizationControls
       statusId={actualStatus.id}
@@ -113,15 +118,27 @@ const DetailedStatus: React.FC<IDetailedStatus> = ({
     />
   ) : null;
 
-  if (actualStatus.quote) {
-    if (actualStatus.pleroma.get('quote_visible', true) === false) {
+  if (actualStatus.quote || quoteUrl) {
+    if (quoteVisible === false) {
       quote = (
         <div>
           <p><FormattedMessage id='status.quote_tombstone' defaultMessage='Post is unavailable.' /></p>
         </div>
       );
-    } else {
+    } else if (actualStatus.quote) {
       quote = <QuotedStatus statusId={actualStatus.quote as string} />;
+    } else if (quoteHref) {
+      quote = (
+        <a
+          href={quoteHref}
+          className='block rounded-lg border border-solid border-primary-200 bg-transparent p-4 text-sm text-primary-600 hover:underline dark:border-primary-800 dark:text-accent-blue'
+        >
+          <FormattedMessage
+            id='statuses.quote_pending_link'
+            defaultMessage='Quoted post is still loading. Open the original.'
+          />
+        </a>
+      );
     }
   }
 

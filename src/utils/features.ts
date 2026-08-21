@@ -120,11 +120,15 @@ export const UNFATHOMABLY_BE = 'unfathomably-be';
 /** Backend name reserved only for tests. */
 export const UNRELEASED = 'unreleased';
 
+/** True when a backend identifies itself as Unfathomably BE. */
+const isUnfathomablyFamily = (backend: Backend): boolean =>
+  backend.software === UNFATHOMABLY_BE ||
+  backend.build?.startsWith(UNFATHOMABLY_BE) === true;
+
 /** True when a backend exposes the Rebased API family under its own product name. */
 const isRebasedFamily = (backend: Backend): boolean =>
   (backend.software === PLEROMA && backend.build === REBASED) ||
-  backend.software === UNFATHOMABLY_BE ||
-  backend.build?.startsWith(UNFATHOMABLY_BE) === true;
+  isUnfathomablyFamily(backend);
 
 /** True when a backend exposes the Pleroma API family under any product name. */
 export const isPleromaApiFamily = (backend: Backend): boolean =>
@@ -262,6 +266,18 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see {@link https://docs.joinmastodon.org/methods/announcements/}
      */
     announcementsReactions: v.software === MASTODON && gte(v.compatVersion, parse('3.1.0')),
+
+    /** Can stream the local public timeline without an authenticated user. */
+    anonymousLocalStreaming: features.includes('anonymous_local_streaming'),
+
+    /** Can read the local public timeline without an authenticated user. */
+    anonymousLocalTimeline: features.includes('anonymous_local_timeline'),
+
+    /** Can stream the federated public timeline without an authenticated user. */
+    anonymousPublicStreaming: features.includes('anonymous_public_streaming'),
+
+    /** Can read the federated public timeline without an authenticated user. */
+    anonymousPublicTimeline: features.includes('anonymous_public_timeline'),
 
     /** Can link a Bluesky identity to the selective AT Protocol bridge. */
     atproto: instance.atproto?.enabled === true,
@@ -725,8 +741,9 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see DELETE /api/v1/admin/groups/:group_id
      */
     groups: any([
+      features.includes('groups'),
       v.software === TRUTHSOCIAL,
-      isRebasedFamily(v),
+      isUnfathomablyFamily(v),
     ]),
 
     /**
@@ -738,14 +755,18 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Can search for discoverable Groups.
      */
     groupsDiscovery: any([
+      features.includes('groups_discovery'),
       v.software === TRUTHSOCIAL,
-      isRebasedFamily(v),
+      isUnfathomablyFamily(v),
     ]),
 
     /**
      * Can kick user from Group.
      */
-    groupsKick: v.software !== TRUTHSOCIAL,
+    groupsKick: v.software !== TRUTHSOCIAL && any([
+      features.includes('groups'),
+      isUnfathomablyFamily(v),
+    ]),
 
     /**
      * Can mute a Group.
@@ -760,7 +781,10 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
     /**
     * Can promote members to Admins.
     */
-    groupsPromoteToAdmin: v.software !== TRUTHSOCIAL,
+    groupsPromoteToAdmin: v.software !== TRUTHSOCIAL && any([
+      features.includes('groups'),
+      isUnfathomablyFamily(v),
+    ]),
 
     /**
      * Can see trending/suggested Groups.
@@ -771,8 +795,9 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Can search my own groups.
      */
     groupsSearch: any([
+      features.includes('groups_search'),
       v.software === TRUTHSOCIAL,
-      isRebasedFamily(v),
+      isUnfathomablyFamily(v),
     ]),
 
     /**
@@ -899,6 +924,15 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Can set a Nostr username.
      * @see PATCH /api/v1/accounts/update_credentials
      */
+    /**
+     * Unfathomably's specialized object discovery and participation APIs.
+     *
+     * New backends advertise this contract explicitly. The identity fallback
+     * keeps mixed-version Unfathomably deployments usable during rolling
+     * upgrades without exposing Worlds against unrelated Rebased servers.
+     */
+    nativeFederation: features.includes('native_federation') || isUnfathomablyFamily(v),
+
     nip05: v.software === DITTO,
 
     /** Has a Nostr relay. */
@@ -1023,6 +1057,17 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
     publicTimelineLanguage: v.software === DITTO,
 
     /**
+     * Can enumerate statuses which quote a post through the Pleroma-style API.
+     * This is separate from composing quotes because other API families may
+     * support quote creation without implementing this listing endpoint.
+     */
+    quotePostListing: any([
+      features.includes('quote_post_listing'),
+      isPleromaApiFamily(v) && features.includes('quote_posting'),
+      isUnfathomablyFamily(v),
+    ]),
+
+    /**
      * Ability to quote posts in statuses.
      * @see POST /api/v1/statuses
      */
@@ -1142,7 +1187,7 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * @see GET /api/v1/feeds
      * @see POST /api/v1/feeds/:id/follow
      */
-    sources: features.includes('sources') || isRebasedFamily(v),
+    sources: features.includes('sources') || isUnfathomablyFamily(v),
 
     /**
      * Can set content warnings on statuses.
@@ -1190,12 +1235,13 @@ const getInstanceFeatures = (instance: InstanceV1 | InstanceV2) => {
      * Trending statuses.
      * @see GET /api/v1/trends/statuses
      */
-    trendingStatuses: any([
-      v.software === ICESHRIMP,
-      v.software === FRIENDICA && gte(v.version, parse('2022.12.0')),
-      v.software === MASTODON && gte(v.compatVersion, parse('3.5.0')),
-      v.software === DITTO,
-    ]),
+    trendingStatuses: features.includes('trending_statuses') ||
+      (!isUnfathomablyFamily(v) && any([
+        v.software === ICESHRIMP,
+        v.software === FRIENDICA && gte(v.version, parse('2022.12.0')),
+        v.software === MASTODON && gte(v.compatVersion, parse('3.5.0')),
+        v.software === DITTO,
+      ])),
 
     /**
      * Can display trending hashtags.

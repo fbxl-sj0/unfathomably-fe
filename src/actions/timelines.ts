@@ -222,7 +222,11 @@ const expandFollowsTimeline = ({ url, maxId }: ExpandFollowsTimelineOpts = {}, d
 };
 
 const expandPublicTimeline = ({ url, maxId, onlyMedia, language }: Record<string, any> = {}, done = noOp) =>
-  expandTimeline(`public${onlyMedia ? ':media' : ''}`, url || '/api/v1/timelines/public', url ? {} : { max_id: maxId, only_media: !!onlyMedia, language: language || undefined }, done);
+  expandTimeline(`public${onlyMedia ? ':media' : ''}`, url || '/api/v1/timelines/public', url ? {} : {
+    max_id: maxId,
+    ...(onlyMedia ? { only_media: true } : {}),
+    language: language || undefined,
+  }, done);
 
 // Native status cards may carry rich media and structured metadata. Keeping
 // each page at the standard incremental size makes Worlds responsive without
@@ -254,13 +258,13 @@ const expandNativeFederationTimeline = ({ url, maxId, family, query, timelineId:
 };
 
 const expandBubbleTimeline = ({ url, maxId, onlyMedia }: Record<string, any> = {}, done = noOp) =>
-  expandTimeline(`bubble${onlyMedia ? ':media' : ''}`, url || '/api/v1/timelines/bubble', url ? {} : { max_id: maxId, only_media: !!onlyMedia }, done);
+  expandTimeline(`bubble${onlyMedia ? ':media' : ''}`, url || '/api/v1/timelines/bubble', url ? {} : { max_id: maxId, ...(onlyMedia ? { only_media: true } : {}) }, done);
 
 const expandRemoteTimeline = (instance: string, { url, maxId, onlyMedia }: Record<string, any> = {}, done = noOp) =>
-  expandTimeline(`remote${onlyMedia ? ':media' : ''}:${instance}`, url || '/api/v1/timelines/public', url ? {} : { local: false, instance: instance, max_id: maxId, only_media: !!onlyMedia }, done);
+  expandTimeline(`remote${onlyMedia ? ':media' : ''}:${instance}`, url || '/api/v1/timelines/public', url ? {} : { local: false, instance: instance, max_id: maxId, ...(onlyMedia ? { only_media: true } : {}) }, done);
 
 const expandCommunityTimeline = ({ url, maxId, onlyMedia }: Record<string, any> = {}, done = noOp) =>
-  expandTimeline(`community${onlyMedia ? ':media' : ''}`, url || '/api/v1/timelines/public', url ? {} : { local: true, max_id: maxId, only_media: !!onlyMedia }, done);
+  expandTimeline(`community${onlyMedia ? ':media' : ''}`, url || '/api/v1/timelines/public', url ? {} : { local: true, max_id: maxId, ...(onlyMedia ? { only_media: true } : {}) }, done);
 
 const expandDirectTimeline = ({ url, maxId }: Record<string, any> = {}, done = noOp) =>
   expandTimeline('direct', url || '/api/v1/timelines/direct', url ? {} : { max_id: maxId }, done);
